@@ -1,0 +1,11 @@
+{
+  "owner": "steipete",
+  "slug": "weather",
+  "displayName": "Weather",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1767545394459,
+    "commit": null
+  },
+  "history": []
+}
