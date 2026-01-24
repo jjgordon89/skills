@@ -1,0 +1,11 @@
+{
+  "owner": "bert-builder",
+  "slug": "tavily",
+  "displayName": "Tavily AI Search",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1769287990264,
+    "commit": null
+  },
+  "history": []
+}
