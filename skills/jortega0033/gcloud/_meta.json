@@ -1,0 +1,11 @@
+{
+  "owner": "jortega0033",
+  "slug": "gcloud",
+  "displayName": "Google Cloud Platform",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1769716984230,
+    "commit": null
+  },
+  "history": []
+}
