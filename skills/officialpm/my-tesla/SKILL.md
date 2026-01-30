@@ -44,6 +44,12 @@ python3 {baseDir}/scripts/tesla.py --version
 # (or set MY_TESLA_DEBUG=1)
 python3 {baseDir}/scripts/tesla.py --debug status --no-wake
 
+# Reliability (transient API failures)
+# Many read-only commands fetch vehicle_data and will retry a couple times by default.
+# Tune/disable retries with:
+python3 {baseDir}/scripts/tesla.py --retries 0 status
+python3 {baseDir}/scripts/tesla.py --retries 5 --retry-delay 0.25 report
+
 # Pick a car (optional)
 # --car accepts: exact name, partial name (substring match), or a 1-based index from `list`
 python3 {baseDir}/scripts/tesla.py --car "Model" status
@@ -58,13 +64,17 @@ python3 {baseDir}/scripts/tesla.py summary --no-wake   # don't wake a sleeping c
 
 # Summary as JSON (privacy-safe)
 # Unlike `status --json`, this emits a small sanitized object (no location).
+# Includes `usable_level_percent` when the vehicle reports it.
 python3 {baseDir}/scripts/tesla.py summary --json
 python3 {baseDir}/scripts/tesla.py summary --json --raw-json   # raw vehicle_data (may include location)
 
 # One-screen report (chat friendly, more detail)
 # Includes battery/charging/climate + (when available) TPMS tire pressures.
+# Includes "Usable battery" when the vehicle reports it (helpful for health/degradation).
 # Also includes a quick openings summary (doors/trunk/frunk/windows) when available.
 # When available, includes a compact seat heater summary line.
+# When actively charging, also shows charging power details when available (kW / V / A).
+# When the vehicle reports it, includes fast-charger info (e.g., Supercharger/CCS).
 # When the vehicle reports it, includes scheduled departure / preconditioning / off-peak charging status.
 python3 {baseDir}/scripts/tesla.py report
 python3 {baseDir}/scripts/tesla.py report --no-wake
@@ -83,7 +93,7 @@ python3 {baseDir}/scripts/tesla.py report --json               # sanitized repor
 python3 {baseDir}/scripts/tesla.py status --json               # raw vehicle_data (may include location)
 python3 {baseDir}/scripts/tesla.py report --json --raw-json    # raw vehicle_data (may include location)
 python3 {baseDir}/scripts/tesla.py summary --json --raw-json   # raw vehicle_data (may include location)
-python3 {baseDir}/scripts/tesla.py charge status --json
+python3 {baseDir}/scripts/tesla.py charge status --json   # includes usable battery + (when charging) power details (kW/V/A)
 
 # Lock / unlock
 python3 {baseDir}/scripts/tesla.py lock
@@ -126,6 +136,9 @@ python3 {baseDir}/scripts/tesla.py location --digits 1   # coarser rounding
 python3 {baseDir}/scripts/tesla.py location --digits 3   # a bit more precise (still approximate)
 python3 {baseDir}/scripts/tesla.py location --yes
 
+# Wake (safety gated)
+python3 {baseDir}/scripts/tesla.py wake --yes
+
 # Tire pressures (TPMS)
 python3 {baseDir}/scripts/tesla.py tires
 python3 {baseDir}/scripts/tesla.py tires --no-wake
@@ -153,10 +166,17 @@ python3 {baseDir}/scripts/tesla.py seats status
 python3 {baseDir}/scripts/tesla.py seats status --no-wake
 python3 {baseDir}/scripts/tesla.py seats status --json
 
+# Seat heaters
+python3 {baseDir}/scripts/tesla.py seats status
+python3 {baseDir}/scripts/tesla.py seats status --no-wake
+
 # Seat heaters (safety gated)
 # seat: driver|passenger|rear-left|rear-center|rear-right|3rd-left|3rd-right (or 0–6)
 # level: 0–3 (0=off)
 python3 {baseDir}/scripts/tesla.py seats set driver 3 --yes
+
+# Turn ALL seat heaters off (safety gated)
+python3 {baseDir}/scripts/tesla.py seats off --yes
 
 # Sentry Mode (status is read-only; on/off safety gated)
 python3 {baseDir}/scripts/tesla.py sentry status
@@ -190,7 +210,7 @@ python3 {baseDir}/scripts/tesla.py flash  --yes
 ## Safety defaults
 
 Some actions require an explicit confirmation flag:
-- `unlock`, `charge start|stop|limit|amps`, `trunk`, `windows`, `seats set`, `sentry on|off`, `honk`, `flash`, `charge-port open|close`, and `scheduled-charging set|off` require `--yes`
+- `unlock`, `charge start|stop|limit|amps`, `trunk`, `windows`, `seats set|off`, `sentry on|off`, `honk`, `flash`, `charge-port open|close`, and `scheduled-charging set|off` require `--yes`
 - `location` is *approximate* by default; add `--yes` for precise coordinates (or `--digits N` to control rounding)
 
 ## Privacy

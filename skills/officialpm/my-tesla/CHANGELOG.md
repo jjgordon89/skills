@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.1.70 — 2026-01-29
+- Reliability: add versioning guardrail unit tests to ensure `VERSION`/`VERSION.txt` match and the changelog includes the current version heading.
+
+## 0.1.69 — 2026-01-29
+- New capability: add `seats off --yes` to turn off all seat heaters in one command (best-effort for heater ids 0–6).
+- Reliability: add unit test coverage for the new `seats off` behavior.
+
+## 0.1.68 — 2026-01-29
+- Better UX: `report` now includes fast-charger info (e.g., Supercharger/CCS) when the vehicle reports it.
+- Reliability: add unit test coverage for the new sanitized report JSON fields.
+
+## 0.1.67 — 2026-01-29
+- Docs: add explicit usage examples for `honk` and `flash` (both safety gated).
+
+## 0.1.66 — 2026-01-29
+- Reliability: add `fetch_vehicle_data` retry/backoff to reduce transient API errors on read-only commands.
+- UX: new global flags `--retries` and `--retry-delay` to tune/disable retries.
+- Reliability: add unit tests for the retry helper.
+
+## 0.1.65 — 2026-01-29
+- Safety: `wake` now requires `--yes` to avoid accidental wake-ups.
+- Docs: add the safety-gated `wake --yes` example.
+
+## 0.1.64 — 2026-01-29
+- Better UX: `charge status` now shows usable battery + (when charging) power details (kW/V/A) and charge port/cable state.
+- Reliability: add unit tests for charging status JSON helper.
+
+## 0.1.63 — 2026-01-29
+- Better UX: show "Usable battery" (when available) in `report`, and include `usable_level_percent` in `summary --json`.
+- Reliability: add unit tests for usable battery formatting.
+
 ## 0.1.62 — 2026-01-29
 - Better UX: add `scheduled-departure status` (read-only) for scheduled departure / preconditioning / off-peak charging.
 - Reliability: add unit tests for scheduled-departure JSON formatting.

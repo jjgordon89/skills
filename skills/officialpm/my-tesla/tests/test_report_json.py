@@ -22,6 +22,8 @@ class ReportJsonTests(unittest.TestCase):
                 "charge_rate": 30,
                 "charge_port_door_open": True,
                 "conn_charge_cable": "SAE",
+                "fast_charger_present": True,
+                "fast_charger_type": "Tesla",
                 "scheduled_charging_mode": "Start",
                 "scheduled_charging_pending": True,
                 "scheduled_charging_start_time": 60,  # 01:00
@@ -53,6 +55,8 @@ class ReportJsonTests(unittest.TestCase):
         self.assertEqual(out["charging"]["charging_state"], "Charging")
         self.assertEqual(out["charging"]["charge_port_door_open"], True)
         self.assertEqual(out["charging"]["conn_charge_cable"], "SAE")
+        self.assertEqual(out["charging"]["fast_charger_present"], True)
+        self.assertEqual(out["charging"]["fast_charger_type"], "Tesla")
         self.assertEqual(out["scheduled_charging"]["start_time_hhmm"], "01:00")
         self.assertEqual(out["security"]["locked"], False)
 

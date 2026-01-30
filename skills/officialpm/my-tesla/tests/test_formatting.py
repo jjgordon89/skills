@@ -70,6 +70,7 @@ class FormattingTests(unittest.TestCase):
         data = {
             "charge_state": {
                 "battery_level": 80,
+                "usable_battery_level": 78,
                 "battery_range": 250.2,
                 "charging_state": "Charging",
                 "charge_limit_soc": 90,
@@ -97,6 +98,7 @@ class FormattingTests(unittest.TestCase):
         self.assertIn("Locked: No", out)
         self.assertIn("Sentry: On", out)
         self.assertIn("Battery: 80% (250 mi)", out)
+        self.assertIn("Usable battery: 78%", out)
         self.assertIn("Charging: Charging", out)
         self.assertIn("Scheduled charging:", out)
         self.assertIn("02:00", out)

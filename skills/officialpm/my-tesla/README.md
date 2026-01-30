@@ -40,6 +40,12 @@ python3 scripts/tesla.py --version
 # (or set MY_TESLA_DEBUG=1)
 python3 scripts/tesla.py --debug status --no-wake
 
+# Reliability (transient API failures)
+# Many read-only commands fetch vehicle_data and will retry a couple times by default.
+# You can tune or disable this with:
+python3 scripts/tesla.py --retries 0 status
+python3 scripts/tesla.py --retries 5 --retry-delay 0.25 report
+
 # Pick a car (optional)
 # --car accepts: exact name, partial name (substring match), or a 1-based index from `list`
 python3 scripts/tesla.py --car "Model" report
@@ -54,14 +60,17 @@ python3 scripts/tesla.py summary --no-wake   # don't wake a sleeping car
 
 # Summary as JSON (privacy-safe)
 # Unlike `status --json`, this emits a small sanitized object (no location).
+# Includes `usable_level_percent` when the vehicle reports it.
 python3 scripts/tesla.py summary --json
 python3 scripts/tesla.py summary --json --raw-json   # raw vehicle_data (may include location)
 
 # One-screen report (chat friendly, more detail)
 # Includes battery/charging/climate + charge port/cable + (when available) TPMS tire pressures.
+# Includes "Usable battery" when the vehicle reports it (helpful for health/degradation).
 # Also includes a quick openings summary (doors/trunk/frunk/windows) when the vehicle reports it.
 # When available, includes a compact seat heater summary line.
 # When actively charging, also shows charging power details when available (kW / V / A).
+# When the vehicle reports it, includes fast-charger info (e.g., Supercharger/CCS).
 # When the vehicle reports it, includes scheduled departure / preconditioning / off-peak charging status.
 python3 scripts/tesla.py report
 python3 scripts/tesla.py report --no-wake
@@ -79,7 +88,7 @@ python3 scripts/tesla.py report --json               # sanitized report object (
 python3 scripts/tesla.py status --json               # raw vehicle_data (may include location)
 python3 scripts/tesla.py report --json --raw-json    # raw vehicle_data (may include location)
 python3 scripts/tesla.py summary --json --raw-json   # raw vehicle_data (may include location)
-python3 scripts/tesla.py charge status --json
+python3 scripts/tesla.py charge status --json   # includes usable battery + (when charging) power details (kW/V/A)
 
 python3 scripts/tesla.py --car "My Model 3" lock
 # Climate (status is read-only)
@@ -122,10 +131,17 @@ python3 scripts/tesla.py seats status
 python3 scripts/tesla.py seats status --no-wake
 python3 scripts/tesla.py seats status --json
 
+# Seat heaters
+python3 scripts/tesla.py seats status
+python3 scripts/tesla.py seats status --no-wake
+
 # Seat heaters (safety gated)
 # seat: driver|passenger|rear-left|rear-center|rear-right|3rd-left|3rd-right (or 0–6)
 # level: 0–3 (0=off)
 python3 scripts/tesla.py seats set driver 3 --yes
+
+# Turn ALL seat heaters off (safety gated)
+python3 scripts/tesla.py seats off --yes
 
 # Charge port door
 python3 scripts/tesla.py charge-port status
@@ -142,12 +158,19 @@ python3 scripts/tesla.py sentry status --no-wake
 python3 scripts/tesla.py sentry on  --yes
 python3 scripts/tesla.py sentry off --yes
 
+# Honk / flash (safety gated)
+python3 scripts/tesla.py honk  --yes
+python3 scripts/tesla.py flash --yes
+
 # Location (approx by default; use --yes for precise coordinates)
 python3 scripts/tesla.py location
 python3 scripts/tesla.py location --no-wake
 python3 scripts/tesla.py location --digits 1   # coarser rounding
 python3 scripts/tesla.py location --digits 3   # a bit more precise (still approximate)
 python3 scripts/tesla.py location --yes
+
+# Wake (safety gated)
+python3 scripts/tesla.py wake --yes
 
 # Tire pressures (TPMS)
 python3 scripts/tesla.py tires
@@ -231,6 +254,6 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 ## Privacy / safety
 
 - Never commit tokens, VINs, or location outputs.
-- Some commands (unlock/charge start|stop|limit|amps/trunk/windows/seats set/sentry on|off/honk/flash/charge-port open|close/scheduled-charging set|off) require `--yes`.
+- Some commands (unlock/charge start|stop|limit|amps/trunk/windows/seats set|off/sentry on|off/honk/flash/charge-port open|close/scheduled-charging set|off) require `--yes`.
 - Read-only commands support `--no-wake` to avoid waking the car (will fail if the vehicle is asleep/offline).
 - `location` shows *approximate* coords by default; add `--yes` for precise coordinates.

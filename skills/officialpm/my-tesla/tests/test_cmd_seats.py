@@ -101,6 +101,24 @@ class SeatsTests(unittest.TestCase):
         wake.assert_called_once()
         self.assertEqual(vehicle.command_calls, [("REMOTE_SEAT_HEATER_REQUEST", {"heater": 0, "level": 2})])
 
+    def test_seats_off_turns_all_heaters_off(self):
+        vehicle = DummyVehicle()
+
+        args = mock.Mock()
+        args.car = None
+        args.action = "off"
+        args.yes = True
+
+        with mock.patch.object(tesla, "get_tesla"), \
+             mock.patch.object(tesla, "get_vehicle", return_value=vehicle), \
+             mock.patch.object(tesla, "require_email", return_value="test@example.com"), \
+             mock.patch.object(tesla, "wake_vehicle") as wake:
+            tesla.cmd_seats(args)
+
+        wake.assert_called_once()
+        expected = [("REMOTE_SEAT_HEATER_REQUEST", {"heater": i, "level": 0}) for i in range(7)]
+        self.assertEqual(vehicle.command_calls, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

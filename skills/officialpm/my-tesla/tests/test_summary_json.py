@@ -16,6 +16,7 @@ class SummaryJsonTests(unittest.TestCase):
             "charge_state": {
                 "battery_level": 63,
                 "battery_range": 199.9,
+                "usable_battery_level": 61,
                 "charging_state": "Disconnected",
             },
             "climate_state": {
@@ -41,6 +42,7 @@ class SummaryJsonTests(unittest.TestCase):
         # Expected useful bits
         self.assertEqual(out["battery"]["level_percent"], 63)
         self.assertEqual(out["battery"]["range_mi"], 199.9)
+        self.assertEqual(out["battery"]["usable_level_percent"], 61)
         self.assertEqual(out["charging"]["charging_state"], "Disconnected")
         self.assertEqual(out["security"]["locked"], True)
         self.assertIn("summary", out)
