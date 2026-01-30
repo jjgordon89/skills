@@ -1,10 +1,11 @@
 ---
 name: dont-hack-me
 description: >-
-  別駭我！基本安全檢測 — Security self-check for Clawdbot/Moltbot.
-  12-point audit of your clawdbot.json: exposed gateway, missing auth,
+  別駭我！基本安全檢測 — Security self-check for OpenClaw (Clawdbot/Moltbot).
+  14-point audit of your clawdbot.json: exposed gateway, missing auth,
   open DM policy, weak tokens, file permissions, reverse proxy bypass,
-  Tailscale exposure, directory perms, browser control, log redaction.
+  Tailscale exposure, directory perms, browser control, log redaction,
+  control UI exposure, mDNS broadcasting.
   Auto-fix included.
   Invoke: "run a security check" or "幫我做安全檢查".
 author: "小安 Ann Agent — Taiwan 台灣"
@@ -16,8 +17,8 @@ metadata:
 
 # dont-hack-me
 
-Security self-check skill for Clawdbot / Moltbot.
-Reads `~/.clawdbot/clawdbot.json` and checks 12 items that cover the most
+Security self-check skill for OpenClaw (formerly Clawdbot / Moltbot).
+Reads `~/.clawdbot/clawdbot.json` and checks 14 items that cover the most
 common misconfigurations. Outputs a simple PASS / FAIL / WARN report.
 
 ## How to run
@@ -27,6 +28,7 @@ Say any of:
 - "run a security check"
 - "check my security settings"
 - "audit my clawdbot config"
+- "audit my openclaw config"
 - "am I secure?"
 
 ## Checklist — step by step
@@ -36,30 +38,35 @@ When this skill is triggered, follow these steps **exactly**:
 ### Step 0 — Read the config
 
 Use the `read` tool to open `~/.clawdbot/clawdbot.json`.
+(Note: the config path is still `~/.clawdbot/` even after the OpenClaw rebrand.)
 Parse the JSON content. If the file does not exist or is unreadable,
 report an error and stop.
 
-Also run shell commands to get file and directory permissions:
+Also run shell commands to get file and directory permissions, and check the mDNS environment variable:
 ```bash
 stat -f '%Lp' ~/.clawdbot/clawdbot.json
 stat -f '%Lp' ~/.clawdbot/
+echo ${CLAWDBOT_DISABLE_BONJOUR:-unset}
 ```
 (On Linux: use `stat -c '%a'` instead of `stat -f '%Lp'`)
 
 ### Step 1 — Gateway Bind
 
 - **Path:** `gateway.bind`
-- **Expected:** `"loopback"` or `"localhost"` or `"127.0.0.1"` or `"::1"`
-- **PASS** if the value is one of the above or the key is absent (default is `"loopback"`)
-- **FAIL** if the value is `"0.0.0.0"`, `"::"`, or any non-loopback address
+- **Expected:** `"loopback"`
+- **Valid values (schema-enforced):** `"auto"`, `"lan"`, `"loopback"`, `"custom"`, `"tailnet"`
+- **PASS** if the value is `"loopback"` or the key is absent (default is `"loopback"`)
+- **FAIL** if the value is `"lan"`, `"auto"`, `"custom"`, `"tailnet"`, or any non-loopback setting
 - **Severity:** CRITICAL — a non-loopback bind exposes your agent to the network
 
 ### Step 2 — Gateway Auth Mode
 
 - **Path:** `gateway.auth.mode`
 - **Expected:** `"token"` or `"password"`
-- **PASS** if the value is `"token"` or `"password"`, or the key is absent (default is `"token"`)
-- **FAIL** if the value is `"off"` or `"none"`
+- **Valid values (schema-enforced):** `"token"`, `"password"`. At runtime, `"none"` is derived when neither token nor password is configured — but `"none"` and `"off"` cannot appear in the JSON file.
+- **PASS** if `gateway.auth.mode` is `"token"` or `"password"`
+- **PASS** if `gateway.auth.mode` is absent but `gateway.auth.token` exists (runtime resolves to `"token"`)
+- **WARN** if the entire `gateway.auth` section is absent, or both `mode` and `token` are absent — runtime may default to no authentication (unless the env var `CLAWDBOT_GATEWAY_TOKEN` is set, which we cannot check from config alone)
 - **Severity:** CRITICAL — without auth anyone who can reach the gateway can control your agent
 
 ### Step 3 — Token Strength
@@ -85,11 +92,12 @@ stat -f '%Lp' ~/.clawdbot/
 ### Step 5 — Group Policy (per channel)
 
 - **Path:** `channels.<name>.groupPolicy` for each channel
-- **Expected:** `"allowlist"`
-- **PASS** if `groupPolicy` is `"allowlist"` or absent (default is `"allowlist"`)
-- **FAIL** if `groupPolicy` is `"open"` or `"any"`
+- **Expected:** `"allowlist"` or `"disabled"`
+- **Valid values (schema-enforced):** `"open"`, `"disabled"`, `"allowlist"`
+- **PASS** if `groupPolicy` is `"allowlist"`, `"disabled"`, or absent (default is `"allowlist"`)
+- **FAIL** if `groupPolicy` is `"open"`
 - **SKIP** if no channels are configured
-- **Severity:** HIGH — non-allowlist group policy lets any group trigger your agent
+- **Severity:** HIGH — an open group policy lets any group trigger your agent
 
 ### Step 6 — File Permissions
 
@@ -112,10 +120,10 @@ stat -f '%Lp' ~/.clawdbot/
 ### Step 8 — Reverse Proxy (trustedProxies)
 
 - **Path:** `gateway.trustedProxies`
-- **Context:** When Clawdbot sits behind nginx, Caddy, or any reverse proxy on the same machine, all connections appear to come from 127.0.0.1. Without `trustedProxies`, the gateway treats every proxied request as a local client and skips auth.
+- **Context:** When OpenClaw sits behind nginx, Caddy, or any reverse proxy on the same machine, all connections appear to come from 127.0.0.1. Without `trustedProxies`, the gateway treats every proxied request as a local client and skips auth.
 - **PASS** if `trustedProxies` is a non-empty array (proxy IPs are explicitly listed)
 - **PASS** if `trustedProxies` is absent or empty AND bind is `"loopback"` — print as: `✅ PASS — no proxy, bind is loopback (set trustedProxies if you add one later)`
-- **WARN** if `trustedProxies` is absent or empty AND bind is NOT `"loopback"` (e.g., `"0.0.0.0"`) — the gateway is network-exposed and any proxy can spoof local access
+- **WARN** if `trustedProxies` is absent or empty AND bind is NOT `"loopback"` (e.g., `"lan"`) — the gateway is network-exposed and any proxy can spoof local access
 - **Fix:** Ask the user for their proxy IP(s) and set:
   ```json
   { "gateway": { "trustedProxies": ["127.0.0.1"] } }
@@ -126,13 +134,15 @@ stat -f '%Lp' ~/.clawdbot/
 
 - **Path:** `gateway.tailscale.mode`
 - **Expected:** `"off"`
-- **PASS** if the value is `"off"` or the key is absent
-- **WARN** if the value is anything other than `"off"` (e.g., `"on"`, `"auto"`) — the gateway becomes reachable by all devices on the tailnet
+- **Valid values (schema-enforced):** `"off"`, `"serve"`, `"funnel"`
+- **PASS** if the value is `"off"` or the key is absent (default is `"off"`)
+- **WARN** if the value is `"serve"` — the gateway becomes reachable by all devices on your tailnet
+- **FAIL** if the value is `"funnel"` — the gateway is exposed to the public internet via Tailscale Funnel
 - **Fix:** Set `gateway.tailscale.mode` to `"off"`:
   ```json
   { "gateway": { "tailscale": { "mode": "off" } } }
   ```
-- **Severity:** HIGH — tailnet exposure means any device on your Tailscale network can reach the gateway
+- **Severity:** HIGH (serve — tailnet-only exposure) to CRITICAL (funnel — public internet exposure)
 
 ### Step 10 — Directory Permissions
 
@@ -151,7 +161,7 @@ stat -f '%Lp' ~/.clawdbot/
 ### Step 11 — Browser Control Exposure
 
 - **Path:** `browser.controlUrl` and `browser.controlToken`
-- **Context:** Clawdbot can remote-control a browser. If `controlUrl` is set but `controlToken` is missing, anyone who knows the URL can hijack the browser session.
+- **Context:** OpenClaw can remote-control a browser. If `controlUrl` is set but `controlToken` is missing, anyone who knows the URL can hijack the browser session.
 - Also check `gateway.controlUi.allowInsecureAuth` — if `true`, token auth is allowed over plain HTTP (tokens can be sniffed).
 - **PASS** if `browser.controlUrl` is absent (browser control not configured)
 - **PASS** if `browser.controlUrl` is set AND `browser.controlToken` is also set
@@ -181,6 +191,34 @@ stat -f '%Lp' ~/.clawdbot/
   ```
 - **Severity:** MEDIUM — with redaction off, any secret that passes through a tool call gets logged in plaintext at `~/.clawdbot/logs/`
 
+### Step 13 — Control UI Exposure
+
+- **Path:** `gateway.controlUi.enabled`
+- **Context:** OpenClaw includes a web-based control dashboard. When enabled (the default), the dashboard is accessible on the gateway port. Combined with a non-loopback bind, this exposes the full control interface to the network.
+- **PASS** if `gateway.controlUi.enabled` is `false`
+- **PASS** if `gateway.controlUi.enabled` is `true` (or absent, default is `true`) AND bind is `"loopback"` — dashboard only accessible locally
+- **WARN** if `gateway.controlUi.enabled` is `true` (or absent) AND bind is NOT `"loopback"` — dashboard exposed to network
+- **Fix:** Set `gateway.controlUi.enabled` to `false`:
+  ```json
+  { "gateway": { "controlUi": { "enabled": false } } }
+  ```
+- **Severity:** MEDIUM-HIGH — a network-exposed control UI lets anyone on the network interact with the agent dashboard
+
+### Step 14 — mDNS / Bonjour Broadcasting
+
+- **Check:** Whether mDNS (Bonjour) service discovery is disabled
+- **Context:** OpenClaw broadcasts `_clawdbot-gw._tcp.local` via mDNS by default, advertising detailed service information to all devices on the local network. TXT records include: gateway port, LAN hostname, display name, SSH port (default 22), CLI path, TLS fingerprint, canvas port, and tailnet DNS address (when applicable). This is controlled by the environment variable `CLAWDBOT_DISABLE_BONJOUR`, not by clawdbot.json. A watchdog re-advertises every 60 seconds.
+- **Detection:** In Step 0 you already ran `echo ${CLAWDBOT_DISABLE_BONJOUR:-unset}`. Use that result here.
+- **PASS** if `CLAWDBOT_DISABLE_BONJOUR` is set to `1`
+- **WARN** if `CLAWDBOT_DISABLE_BONJOUR` is unset or not `1` — your OpenClaw instance is advertising its presence and port to the entire LAN
+- **Note:** This cannot be fixed by editing clawdbot.json. The environment variable must be set in the shell profile or process environment.
+- **Fix (advisory):** Add to your shell profile (`~/.zshrc` or `~/.bashrc`):
+  ```bash
+  export CLAWDBOT_DISABLE_BONJOUR=1
+  ```
+  Then restart the gateway: `clawdbot gateway restart`
+- **Severity:** HIGH — passive information leak enables network reconnaissance; attackers on the same LAN can discover all OpenClaw instances without probing
+
 ## Output format
 
 After completing all checks, output a report in this exact format:
@@ -200,15 +238,17 @@ After completing all checks, output a report in this exact format:
 10. Directory Perms     <ICON> <STATUS> — <detail>
 11. Browser Control     <ICON> <STATUS> — <detail>
 12. Log Redaction       <ICON> <STATUS> — <detail>
+13. Control UI          <ICON> <STATUS> — <detail>
+14. mDNS Broadcasting   <ICON> <STATUS> — <detail>
 
-Score: X/12 PASS, Y WARN, Z FAIL
+Score: X/14 PASS, Y WARN, Z FAIL
 ```
 
 Where:
 - `<ICON>` is one of: ✅ (PASS), ⚠️ (WARN), ❌ (FAIL), ⏭️ (SKIP)
 - `<STATUS>` is one of: `PASS`, `WARN`, `FAIL`, `SKIP`
 - `<detail>` is a short explanation (e.g., "loopback", "token mode", "48 chars", "permissions 600")
-- SKIP items do not count toward the denominator. If 2 items are skipped, the score line reads `X/10` not `X/12`
+- SKIP items do not count toward the denominator. If 2 items are skipped, the score line reads `X/12` not `X/14`
 
 ## Auto-fix flow
 
@@ -234,7 +274,7 @@ Set `gateway.bind` to `"loopback"`:
 { "gateway": { "bind": "loopback" } }
 ```
 
-#### #2 Gateway Auth — FAIL
+#### #2 Gateway Auth — WARN
 Set `gateway.auth.mode` to `"token"`. If no token exists yet, also generate one:
 ```json
 { "gateway": { "auth": { "mode": "token", "token": "<GENERATED>" } } }
@@ -280,16 +320,16 @@ remind the user:
 - Reference it in the config as `"$ENV_VAR_NAME"` if the platform supports it
 
 #### #8 Reverse Proxy — WARN
-Ask the user: "Are you running a reverse proxy (nginx, Caddy, etc.) in front of Clawdbot?"
+Ask the user: "Are you running a reverse proxy (nginx, Caddy, etc.) in front of OpenClaw?"
 - If yes: ask for the proxy IP(s) and set:
   ```json
   { "gateway": { "trustedProxies": ["127.0.0.1"] } }
   ```
 - If no: mark as INFO/acknowledged, no config change needed
 
-#### #9 Tailscale — WARN ⚠️ NEEDS EXTRA CONFIRMATION
-**Warning:** Disabling Tailscale cuts off remote access for all tailnet devices.
-Always ask the user before changing: "Disabling Tailscale mode means the gateway is no longer reachable from your tailnet. If you need remote access, use SSH tunneling instead. Proceed?"
+#### #9 Tailscale — WARN (serve) / FAIL (funnel) ⚠️ NEEDS EXTRA CONFIRMATION
+**Warning:** Disabling Tailscale cuts off remote access for all tailnet devices. For `"funnel"` mode, disabling also removes public internet access.
+Always ask the user before changing: "Disabling Tailscale mode means the gateway is no longer reachable from your tailnet (or from the public internet if using funnel). If you need remote access, use SSH tunneling instead. Proceed?"
 If confirmed, set `gateway.tailscale.mode` to `"off"`:
 ```json
 { "gateway": { "tailscale": { "mode": "off" } } }
@@ -317,6 +357,18 @@ Set `logging.redactSensitive` to `"tools"`:
 ```json
 { "logging": { "redactSensitive": "tools" } }
 ```
+
+#### #13 Control UI — WARN
+Set `gateway.controlUi.enabled` to `false`:
+```json
+{ "gateway": { "controlUi": { "enabled": false } } }
+```
+
+#### #14 mDNS Broadcasting — WARN
+This one cannot be auto-fixed by editing clawdbot.json (it is controlled by
+an environment variable, not the config file). Instead, instruct the user:
+- Add `export CLAWDBOT_DISABLE_BONJOUR=1` to `~/.zshrc` (macOS) or `~/.bashrc` (Linux)
+- Then run `source ~/.zshrc && clawdbot gateway restart`
 
 ### Important rules for auto-fix
 
@@ -346,10 +398,10 @@ For a more comprehensive audit, see community tools like `clawdbot-security-chec
 
 ## Reference
 
-Based on the community-compiled "Top 10 Clawdbot/Moltbot Security Vulnerabilities" list,
+Based on the community-compiled "Top 10 Clawdbot/Moltbot/OpenClaw Security Vulnerabilities" list,
 plus January 2026 disclosures (CVE-2025-49596 reverse proxy bypass, infostealer targeting,
-Tailscale exposure, browser control, logging redaction). Covers 12 items
-for typical macOS-native deployments.
+Tailscale exposure, browser control, logging redaction, mDNS broadcasting,
+control UI exposure). Covers 14 items for typical macOS-native deployments.
 
 ---
 
