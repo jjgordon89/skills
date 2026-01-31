@@ -75,10 +75,28 @@ async function ask(query) {
         process.exit(1);
     }
 
+    // Start "Thinking..." indicator on stderr (doesn't break automated agents)
+    let dots = 0;
+    const thinkingInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        process.stderr.write(`\rThinking${'.'.repeat(dots)}   `);
+    }, 500);
+
     try {
         const answer = await ask(query);
+
+        // Stop indicator and clear the line
+        clearInterval(thinkingInterval);
+        process.stderr.write('\r               \r');
+
+        // Success output to stdout (captured by Moltbot/OpenClaw)
         console.log(answer);
     } catch (error) {
+        // Stop indicator and clear the line
+        clearInterval(thinkingInterval);
+        process.stderr.write('\r               \r');
+
+        // Error output to stderr
         console.error(`Error: ${error.message}`);
         process.exit(1);
     }
