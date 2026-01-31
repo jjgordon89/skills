@@ -3,11 +3,16 @@
   "slug": "chart-image",
   "displayName": "Chart Image",
   "latest": {
-    "version": "1.2.0",
-    "publishedAt": 1769858607918,
-    "commit": "https://github.com/clawdbot/skills/commit/bd77a9787b5ac52aab06452ba7cd5d1ce8c04692"
+    "version": "2.0.0",
+    "publishedAt": 1769867965714,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.0",
+      "publishedAt": 1769858607918,
+      "commit": "https://github.com/clawdbot/skills/commit/bd77a9787b5ac52aab06452ba7cd5d1ce8c04692"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1769726864748,

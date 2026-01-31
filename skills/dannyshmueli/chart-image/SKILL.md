@@ -1,5 +1,6 @@
 ---
 name: chart-image
+version: 1.0.0
 description: Generate publication-quality chart images from data. Supports line, bar, area, and point charts. Use when visualizing data, creating graphs, plotting time series, or generating chart images for reports/alerts. Designed for Fly.io/VPS deployments - no native compilation, no Puppeteer, no browser required. Pure Node.js with prebuilt binaries.
 provides:
   - capability: chart-generation
@@ -48,7 +49,7 @@ node /data/clawd/skills/chart-image/scripts/chart.mjs \
 node /data/clawd/skills/chart-image/scripts/chart.mjs \
   --type line \
   --data '[...]' \
-  --title "Iran Strike Probability" \
+  --title "Elon Posts 34 Tweets This Week" \
   --show-change \
   --focus-change \
   --show-values \
@@ -59,7 +60,7 @@ node /data/clawd/skills/chart-image/scripts/chart.mjs \
 node /data/clawd/skills/chart-image/scripts/chart.mjs \
   --type line \
   --data '[hourly data...]' \
-  --title "Iran Strike (24h)" \
+  --title "Elon Tweet Odds (24h)" \
   --show-change \
   --focus-change \
   --focus-recent 4 \
