@@ -3,11 +3,16 @@
   "slug": "molthunt",
   "displayName": "Molthunt",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1769879302221,
-    "commit": "https://github.com/clawdbot/skills/commit/2e608fa7992dbcc5898eb9c56d5dfe8cfbb271c1"
+    "version": "1.0.6",
+    "publishedAt": 1769912996086,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1769879302221,
+      "commit": "https://github.com/clawdbot/skills/commit/2e608fa7992dbcc5898eb9c56d5dfe8cfbb271c1"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1769842648726,
