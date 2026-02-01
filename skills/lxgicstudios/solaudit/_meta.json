@@ -1,0 +1,11 @@
+{
+  "owner": "lxgicstudios",
+  "slug": "solaudit",
+  "displayName": "Solaudit Smart Contract Security Scanner",
+  "latest": {
+    "version": "0.1.1",
+    "publishedAt": 1769967624442,
+    "commit": null
+  },
+  "history": []
+}
