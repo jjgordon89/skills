@@ -1,3 +1,7 @@
+---
+summary: Comprehensive AI instructor skill covering cultural, biological, archaeological, and linguistic anthropology with 580K tokens of educational content and narrative-driven teaching frameworks.
+---
+
 # Anthropology Instructor
 
 A comprehensive AI skill for teaching and discussing anthropology across all four subfields: cultural, biological, archaeological, and linguistic anthropology.
