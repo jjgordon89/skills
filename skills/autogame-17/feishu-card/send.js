@@ -53,32 +53,22 @@ async function sendCard(options) {
     }
 
     if (contentText) {
-        // Fix for Feishu Markdown code block rendering:
-        // 1. Convert ```lang ... ``` to just standard markdown (Feishu supports standard usually).
-        // 2. IMPORTANT: Feishu Interactive Cards text module usually handles Markdown OK, BUT:
-        //    - It often requires newlines before/after code blocks.
-        //    - It is strict about backticks.
-        //    - Sometimes `content` needs to be raw text, and specific styling works better with specific tags?
-        //    - NO, `lark_md` is the standard way.
-        // The issue is likely how newlines are passed. 
-        // We already did replace(/\\n/g, '\n'), but maybe we need more robust handling.
+        // Use the 'markdown' tag directly for better rendering support (code blocks, tables, etc.)
+        // Ref: https://open.feishu.cn/document/uAjLw4CM/ukzMukzMukzM/feishu-cards/card-json-v2-components/content-components/rich-text
+        const markdownElement = {
+            tag: 'markdown',
+            content: contentText
+        };
         
-        // Let's ensure a newline before/after code blocks if they are inline-ish?
-        // Actually, let's try to just pass it through, but log it clearly to debug if needed.
-        // Or maybe just ensure we don't accidentally escape the backticks if they came from shell?
-        // The user says "didn't use feishu format". Feishu format IS markdown.
-        // Maybe he means <at> or other specific tags?
-        // Or maybe he means the code block syntax specifically.
+        if (options.textSize) {
+            markdownElement.text_size = options.textSize;
+        }
         
-        // Attempt: Ensure `\n` is definitely a real newline character in JSON stringify.
-        
-        elements.push({
-            tag: 'div',
-            text: {
-                tag: 'lark_md',
-                content: contentText
-            }
-        });
+        if (options.textAlign) {
+            markdownElement.text_align = options.textAlign;
+        }
+
+        elements.push(markdownElement);
     }
 
     // Add Button if provided
@@ -173,14 +163,45 @@ program
   .option('--title <text>', 'Card header title')
   .option('--color <color>', 'Header color (blue/red/orange/purple/etc)', 'blue')
   .option('--button-text <text>', 'Bottom button text')
-  .option('--button-url <url>', 'Bottom button URL');
+  .option('--button-url <url>', 'Bottom button URL')
+  .option('--text-size <size>', 'Text size (normal/heading/heading-1/etc)')
+  .option('--text-align <align>', 'Text alignment (left/center/right)');
 
 program.parse(process.argv);
 const options = program.opts();
 
-if (!options.text && !options.textFile) {
-    console.error('Error: Either --text or --text-file must be provided.');
-    process.exit(1);
+async function readStdin() {
+    const { stdin } = process;
+    if (stdin.isTTY) return '';
+    stdin.setEncoding('utf8');
+    let data = '';
+    for await (const chunk of stdin) data += chunk;
+    return data;
 }
 
-sendCard(options);
+(async () => {
+    let textContent = options.text;
+
+    // Priority: --text-file > --text > STDIN
+    if (options.textFile) {
+        // Handled inside sendCard currently, but let's unify or leave as is
+        // logic below inside sendCard handles textFile vs text. 
+        // We only need to polyfill text from stdin if both are missing.
+    } else if (!textContent) {
+        try {
+             const stdinText = await readStdin();
+             if (stdinText.trim()) {
+                 options.text = stdinText;
+             }
+        } catch (e) {
+            // ignore stdin error
+        }
+    }
+
+    if (!options.text && !options.textFile) {
+        console.error('Error: Either --text, --text-file, or STDIN content must be provided.');
+        process.exit(1);
+    }
+
+    sendCard(options);
+})();
