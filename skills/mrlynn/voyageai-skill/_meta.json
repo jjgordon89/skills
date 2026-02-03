@@ -1,0 +1,11 @@
+{
+  "owner": "mrlynn",
+  "slug": "voyageai-skill",
+  "displayName": "Voyage AI CLI",
+  "latest": {
+    "version": "1.4.0",
+    "publishedAt": 1770124519386,
+    "commit": null
+  },
+  "history": []
+}
