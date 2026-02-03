@@ -1,6 +1,6 @@
 ---
 name: patent-assistant
-version: 1.0.0
+version: 1.1.0
 description: 专利交底书撰写与专利检索助手。帮助研发人员将技术方案转化为结构化交底书，并进行专利检索分析。当用户要求写专利、写交底书、专利检索、查新时使用。
 ---
 
@@ -125,11 +125,32 @@ description: 专利交底书撰写与专利检索助手。帮助研发人员将�
 
 ### Step 2: 执行检索
 
-使用 `scripts/patent_search.py` 进行检索：
+使用 `scripts/patent_search.py` 进行多平台检索：
 
 ```bash
+# 单平台检索（默认 Google Patents）
 python scripts/patent_search.py "关键词1 关键词2" --limit 20
+
+# 多平台并行检索（推荐）
+python scripts/patent_search.py "关键词" -s all -p
+
+# 指定平台检索
+python scripts/patent_search.py "关键词" -s google,cnipa,innojoy
+
+# 带相似度分析
+python scripts/patent_search.py "关键词" -s all -p -a
 ```
+
+**支持的检索平台：**
+| 平台 | 参数 | 说明 |
+|------|------|------|
+| Google Patents | google | 全球专利，免费，数据最全 |
+| Lens.org | lens | 专利+论文，免费开放 |
+| 大为Innojoy | innojoy | 中国专利，免费基础版 |
+| 百度学术 | baidu | 论文为主，部分专利 |
+| Espacenet | espacenet | 欧洲专利局，全球数据 |
+| 国知局CNIPA | cnipa | 中国官方，需登录账号 |
+| 全部平台 | all | 同时检索所有平台 |
 
 ### Step 3: 分析结果
 
