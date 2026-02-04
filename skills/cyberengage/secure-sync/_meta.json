@@ -1,0 +1,11 @@
+{
+  "owner": "cyberengage",
+  "slug": "secure-sync",
+  "displayName": "Secure Credential Sync",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770201624500,
+    "commit": null
+  },
+  "history": []
+}
