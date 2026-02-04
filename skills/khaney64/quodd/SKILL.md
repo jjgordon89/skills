@@ -95,3 +95,8 @@ AAPL     01/29/26    14:30    185.50   180.25   182.63   17:45:30     182.80
 - **Close** - Last traded price
 - **AH Time** - After hours trade time
 - **AH Price** - After hours price
+
+## Notes
+
+- Authentication tokens are cached at `~/.openclaw/credentials/quodd-token.json` for 20 hours
+- Use `--no-cache` if you encounter authentication errors after credential changes
