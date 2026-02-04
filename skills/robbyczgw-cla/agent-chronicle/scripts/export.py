@@ -33,10 +33,20 @@ def load_config():
 
 def get_workspace_root():
     """Find the workspace root"""
+    import os
+    
+    # Check environment variable first
+    env_workspace = os.getenv("OPENCLAW_WORKSPACE") or os.getenv("AGENT_WORKSPACE")
+    if env_workspace:
+        env_path = Path(env_workspace)
+        if (env_path / "memory").exists():
+            return env_path
+    
+    # Try common locations
     candidates = [
         Path.cwd(),
         Path.home() / "clawd",
-        Path("/root/clawd"),
+        Path.home() / ".openclaw" / "workspace",
     ]
     for path in candidates:
         if (path / "memory").exists():

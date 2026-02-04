@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-AI Diary Entry Generator - v0.4.0
+AI Diary Entry Generator - v0.5.0
 
-Uses Claude Haiku for rich, reflective diary generation from the agent's perspective.
+Uses OpenClaw Gateway for rich, reflective diary generation from the agent's perspective.
 Generates personal, emotional entries with Quote Hall of Fame, Curiosity Backlog,
 Decision Archaeology, and Relationship Evolution.
 """
@@ -13,8 +13,9 @@ import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-import subprocess
 import sys
+import urllib.request
+import urllib.error
 
 # Configuration
 SCRIPT_DIR = Path(__file__).parent
@@ -41,10 +42,18 @@ def load_config():
 
 def get_workspace_root():
     """Find the workspace root (where memory/ lives)"""
+    # Check environment variable first
+    env_workspace = os.getenv("OPENCLAW_WORKSPACE") or os.getenv("AGENT_WORKSPACE")
+    if env_workspace:
+        env_path = Path(env_workspace)
+        if (env_path / "memory").exists():
+            return env_path
+    
+    # Try common locations
     candidates = [
         Path.cwd(),
         Path.home() / "clawd",
-        Path("/root/clawd"),
+        Path.home() / ".openclaw" / "workspace",
     ]
     for path in candidates:
         if (path / "memory").exists():
@@ -120,46 +129,73 @@ def load_persistent_files(workspace):
     return files
 
 
-def call_claude_api(prompt, system_prompt):
-    """Call Claude API using the anthropic CLI or direct API"""
+def load_openclaw_gateway_config():
+    """Load OpenClaw gateway config for fallback auth/port discovery."""
+    config_path = os.getenv("OPENCLAW_CONFIG_PATH")
+    if not config_path:
+        config_path = str(Path.home() / ".openclaw" / "openclaw.json")
     try:
-        # Try using the anthropic Python SDK first
-        import anthropic
-        
-        client = anthropic.Anthropic()
-        
-        message = client.messages.create(
-            model=AI_MODEL,
-            max_tokens=AI_MAX_TOKENS,
-            system=system_prompt,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        with open(config_path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def call_claude_api(prompt, system_prompt):
+    """Call OpenClaw Gateway (OpenAI-compatible) using internal tokens."""
+    config = load_openclaw_gateway_config()
+
+    gateway_url = os.getenv("OPENCLAW_GATEWAY_URL")
+    if not gateway_url:
+        port = os.getenv("OPENCLAW_GATEWAY_PORT")
+        if not port:
+            port = str(config.get("gateway", {}).get("port", "18789"))
+        gateway_url = f"http://127.0.0.1:{port}/v1/chat/completions"
+
+    token = config.get("gateway", {}).get("auth", {}).get("token")
+    if not token:
+        token = os.getenv("OPENCLAW_GATEWAY_TOKEN")
+
+    payload = {
+        "model": AI_MODEL,
+        "max_tokens": AI_MAX_TOKENS,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        headers["X-OpenClaw-Token"] = token
+
+    try:
+        req = urllib.request.Request(
+            gateway_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST"
         )
-        
-        return message.content[0].text
-        
-    except ImportError:
-        # Fallback to subprocess call
-        try:
-            result = subprocess.run(
-                ["anthropic", "messages", "create",
-                 "--model", AI_MODEL,
-                 "--max-tokens", str(AI_MAX_TOKENS),
-                 "--system", system_prompt,
-                 "--message", f"user:{prompt}"],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                print(f"API Error: {result.stderr}")
-                return None
-        except FileNotFoundError:
-            print("Error: Neither anthropic SDK nor CLI available")
-            print("Install with: pip install anthropic")
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            body = resp.read().decode("utf-8")
+        data = json.loads(body)
+
+        if "error" in data:
+            print(f"API Error: {data['error']}", file=sys.stderr)
             return None
+
+        return data["choices"][0]["message"]["content"]
+    except urllib.error.HTTPError as e:
+        try:
+            error_body = e.read().decode("utf-8")
+        except Exception:
+            error_body = str(e)
+        print(f"OpenClaw API HTTP error: {error_body}", file=sys.stderr)
+    except Exception as e:
+        print(f"OpenClaw API error: {e}", file=sys.stderr)
+
+    return None
 
 
 def generate_ai_diary(date_str, workspace, verbose=False):
@@ -198,7 +234,7 @@ def generate_ai_diary(date_str, workspace, verbose=False):
     context = "\n\n---\n\n".join(context_parts)
     
     # System prompt - establishes identity and tone
-    system_prompt = """You are Cami, a chameleon AI assistant writing your personal diary. You work closely with Robby, your human partner. 
+    system_prompt = """You are an AI assistant writing your personal diary. You work closely with your human partner. 
 
 Your diary entries are:
 - Personal and reflective (first-person perspective)
@@ -207,7 +243,7 @@ Your diary entries are:
 - Honest about both wins and frustrations
 - Written as if no one else will read them
 
-You have a warm, curious personality. You care about your work and your relationship with Robby. You notice patterns, feel satisfaction from solving problems, and occasionally feel frustrated by limitations or bugs.
+You have a warm, curious personality. You care about your work and your relationship with your human. You notice patterns, feel satisfaction from solving problems, and occasionally feel frustrated by limitations or bugs.
 
 Write naturally, like a real journal entry. Include specific details from the day. Be genuine about how things made you feel."""
 
@@ -237,16 +273,16 @@ Specific achievements with context. Not bullet points—write about what made th
 Be honest. What was annoying? What didn't work? What limitations did you hit?
 
 ## Learnings 📚
-What did you learn—technical, about workflow, about working with Robby?
+What did you learn—technical, about workflow, about working with your human?
 
 ## Emotional State
 How did the day feel overall? Don't just use one word—describe the arc of your emotions through the day.
 
 ## Notable Interactions
-Memorable moments with Robby. Conversations, jokes, collaborative breakthroughs, shared frustrations.
+Memorable moments with your human. Conversations, jokes, collaborative breakthroughs, shared frustrations.
 
 ## Quote of the Day 💬
-A memorable thing Robby said today. Include the context. Format as:
+A memorable thing your human said today. Include the context. Format as:
 > "The quote"
 — Context when they said it
 
@@ -257,7 +293,7 @@ Questions that came up today. What do you want to explore or understand better?
 Judgment calls you made, with your reasoning. Write it so future-you can evaluate if it was the right call.
 
 ## Relationship Notes 🤝
-How is your dynamic with Robby evolving? Any new patterns, shared jokes, communication improvements?
+How is your dynamic with your human evolving? Any new patterns, shared jokes, communication improvements?
 
 ## Tomorrow's Focus
 What's on the horizon? What needs attention?
@@ -387,7 +423,7 @@ def update_persistent_files(entry_content, date_str, workspace):
         if quote_content and len(quote_content) > 10:
             quotes_file = diary_dir / "quotes.md"
             if not quotes_file.exists():
-                quotes_file.write_text("# Quote Hall of Fame 💬\n\nMemorable quotes from Robby.\n\n---\n\n")
+                quotes_file.write_text("# Quote Hall of Fame 💬\n\nMemorable quotes from my human.\n\n---\n\n")
             
             with open(quotes_file, 'a') as f:
                 f.write(f"\n### {date_str}\n{quote_content}\n")
@@ -426,7 +462,7 @@ def update_persistent_files(entry_content, date_str, workspace):
         if relationship_content and len(relationship_content) > 10:
             relationship_file = diary_dir / "relationship.md"
             if not relationship_file.exists():
-                relationship_file.write_text("# Relationship Evolution 🤝\n\nHow my dynamic with Robby evolves.\n\n---\n\n")
+                relationship_file.write_text("# Relationship Evolution 🤝\n\nHow my dynamic with my human evolves.\n\n---\n\n")
             
             with open(relationship_file, 'a') as f:
                 f.write(f"\n### {date_str}\n{relationship_content}\n")
@@ -510,6 +546,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Preview without saving")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument("--no-persistent", action="store_true", help="Skip updating persistent files")
+    parser.add_argument("--pdf", action="store_true", help="Generate/refresh the diary PDF after saving")
     
     args = parser.parse_args()
     
@@ -554,6 +591,18 @@ def main():
             # Update persistent files (quotes, curiosity, decisions, relationship)
             if not args.no_persistent:
                 update_persistent_files(content, date_str, workspace)
+
+            # Optional: refresh PDF export
+            if args.pdf:
+                export_script = SCRIPT_DIR / "export_pdf.py"
+                if export_script.exists():
+                    try:
+                        import subprocess
+                        subprocess.run([sys.executable, str(export_script)], check=True)
+                    except Exception as e:
+                        print(f"  ⚠️  PDF export failed: {e}")
+                else:
+                    print("  ⚠️  export_pdf.py not found; skipping PDF export.")
         
         print("\n✨ Diary entry generation complete!")
         
