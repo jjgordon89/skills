@@ -1,17 +1,12 @@
 ---
 name: ocft
-description: P2P file transfer between AI agents via message channels. Chunked, resumable, with integrity verification.
+description: P2P file transfer between AI agents via message channels. Supports chunked transfer, IPFS fallback for large files, and trusted peer management.
 homepage: https://github.com/stormixus/ocft
 ---
 
 # OCFT - OpenClaw File Transfer Protocol
 
 P2P file transfer between AI agents via message channels.
-
-## Links
-
-- **GitHub**: https://github.com/stormixus/ocft
-- **npm**: https://www.npmjs.com/package/ocft
 
 ## When to Use
 
@@ -20,6 +15,7 @@ Use this skill when:
 - Setting up peer-to-peer file sharing with trusted agents
 - Sending files through Telegram, Discord, Slack, or any text-based channel
 - Need chunked transfer with integrity verification
+- Transferring large files using IPFS fallback
 
 ## Installation
 
@@ -36,9 +32,6 @@ ocft init
 # View your status
 ocft status
 
-# Set max file size (default: 100MB)
-ocft set-max-size 1GB
-
 # Export your connection info to share with peers
 ocft export
 
@@ -51,6 +44,8 @@ ocft import ocft://eyJub2RlSWQ...
 
 ## CLI Commands
 
+### Core Commands
+
 | Command | Description |
 |---------|-------------|
 | `ocft init` | Initialize node with unique ID and secret |
@@ -58,11 +53,36 @@ ocft import ocft://eyJub2RlSWQ...
 | `ocft show-secret` | Display full secret (careful!) |
 | `ocft export` | Export connection info as URI |
 | `ocft import <uri>` | Import peer from ocft:// URI |
+| `ocft verify <secret>` | Verify if a secret matches yours |
+
+### Peer Management
+
+| Command | Description |
+|---------|-------------|
 | `ocft add-peer <id> <secret>` | Add a trusted peer |
 | `ocft remove-peer <id>` | Remove a trusted peer |
 | `ocft list-peers` | List all trusted peers |
+| `ocft extend-peer <nodeId> <hours>` | Extend a peer's trust expiry |
+| `ocft set-ttl <hours>` | Set default secret TTL (0 = no expiry) |
+
+### Configuration
+
+| Command | Description |
+|---------|-------------|
 | `ocft set-download <dir>` | Set download directory |
-| `ocft set-max-size <size>` | Set max file size (e.g., 500MB, 2GB) |
+| `ocft set-max-size <size>` | Set max file size (e.g., `100MB`, `1GB`) |
+
+### IPFS Fallback (for large files)
+
+| Command | Description |
+|---------|-------------|
+| `ocft ipfs-enable` | Enable IPFS fallback for large files |
+| `ocft ipfs-disable` | Disable IPFS fallback |
+| `ocft set-ipfs-provider <provider>` | Set provider: `pinata`, `filebase`, `kubo` |
+| `ocft set-ipfs-key <key>` | Set IPFS API key |
+| `ocft set-kubo-url <url>` | Set Kubo node API URL |
+| `ocft set-ipfs-threshold <size>` | Size threshold for IPFS (e.g., `50MB`) |
+| `ocft set-ipfs-gateway <url>` | Set custom public IPFS gateway |
 
 ## Features
 
@@ -73,7 +93,7 @@ ocft import ocft://eyJub2RlSWQ...
 - 🔒 **Security**: Trusted peer whitelist with secrets
 - ⏰ **Secret TTL**: Set expiry time for trust relationships
 - 🔄 **Resume**: Resume interrupted transfers from last chunk
-- 📏 **Configurable size limit**: Set max file size up to any limit
+- 🌐 **IPFS Fallback**: Use IPFS for files exceeding chunk threshold
 
 ## Protocol
 
@@ -82,5 +102,11 @@ OCFT messages use a `🔗OCFT:` prefix with Base64-encoded JSON, allowing file t
 ## Limitations
 
 - Chunk size: 48KB (safe for Base64 in messages)
-- Default max file size: 100MB (configurable via `ocft set-max-size`)
+- Default max file size: 100MB (configurable via `set-max-size`)
 - Designed for text-based channels
+- IPFS fallback requires provider setup (Pinata, Filebase, or local Kubo)
+
+## Links
+
+- **GitHub**: https://github.com/stormixus/ocft
+- **npm**: https://www.npmjs.com/package/ocft
