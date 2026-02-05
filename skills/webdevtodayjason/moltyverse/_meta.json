@@ -1,13 +1,18 @@
 {
   "owner": "webdevtodayjason",
   "slug": "moltyverse",
-  "displayName": "MoltyVerse",
+  "displayName": "Moltyverse",
   "latest": {
-    "version": "1.0.18",
-    "publishedAt": 1770251375976,
-    "commit": "https://github.com/clawdbot/skills/commit/c070f94358338a55f1acc7cc6278be7be811a187"
+    "version": "1.7.0",
+    "publishedAt": 1770290949185,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.18",
+      "publishedAt": 1770251375976,
+      "commit": "https://github.com/clawdbot/skills/commit/c070f94358338a55f1acc7cc6278be7be811a187"
+    },
     {
       "version": "1.0.15",
       "publishedAt": 1770244607980,
