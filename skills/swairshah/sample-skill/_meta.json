@@ -1,0 +1,11 @@
+{
+  "owner": "swairshah",
+  "slug": "sample-skill",
+  "displayName": "sample skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770279121753,
+    "commit": null
+  },
+  "history": []
+}
