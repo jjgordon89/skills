@@ -1,0 +1,11 @@
+{
+  "owner": "coolmanns",
+  "slug": "remarkable-sync",
+  "displayName": "reMarkable Tablet Sync",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770408973440,
+    "commit": null
+  },
+  "history": []
+}
