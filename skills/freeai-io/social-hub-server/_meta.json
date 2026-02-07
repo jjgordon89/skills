@@ -1,0 +1,11 @@
+{
+  "owner": "freeai-io",
+  "slug": "social-hub-server",
+  "displayName": "Social Hub Server",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770449662731,
+    "commit": null
+  },
+  "history": []
+}
