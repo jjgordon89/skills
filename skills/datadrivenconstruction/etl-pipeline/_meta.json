@@ -1,0 +1,11 @@
+{
+  "owner": "datadrivenconstruction",
+  "slug": "etl-pipeline",
+  "displayName": "Etl Pipeline",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770475755905,
+    "commit": null
+  },
+  "history": []
+}
