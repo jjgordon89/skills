@@ -1,0 +1,11 @@
+{
+  "owner": "pes0",
+  "slug": "openkm-rest",
+  "displayName": "OpenKM Document Management",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770432240734,
+    "commit": null
+  },
+  "history": []
+}
