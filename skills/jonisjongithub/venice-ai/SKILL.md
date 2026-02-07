@@ -33,7 +33,6 @@ metadata:
 Venice is also **uncensored**: no content filters, no refusals, no "I can't help with that." The AI answers what you actually ask, whether that's creative fiction, security research, controversial topics, or anything else mainstream AI platforms won't touch.
 
 **Why agents should care:**
-
 - **Private inference** — Models marked "Private" have zero data retention. Process sensitive data without it leaking into training sets.
 - **Uncensored responses** — No guardrails blocking legitimate use cases. Generate any content your workflow needs.
 - **OpenAI-compatible API** — Drop-in replacement. Same API format, just change the base URL.
@@ -62,28 +61,25 @@ This skill gives you the **full Venice platform**: model discovery, text generat
 ### Configure
 
 **Option A: Environment variable**
-
 ```bash
 export VENICE_API_KEY="vn_your_key_here"
 ```
 
 **Option B: Clawdbot config** (recommended)
-
 ```json5
 // ~/.clawdbot/clawdbot.json
 {
   skills: {
     entries: {
       "venice-ai": {
-        env: { VENICE_API_KEY: "vn_your_key_here" },
-      },
-    },
-  },
+        env: { VENICE_API_KEY: "vn_your_key_here" }
+      }
+    }
+  }
 }
 ```
 
 ### Verify
-
 ```bash
 python3 {baseDir}/scripts/venice.py models --type text
 ```
@@ -103,7 +99,6 @@ python3 {baseDir}/scripts/venice.py [command] [options]
 Venice has a huge model catalog spanning text, image, video, audio, and embeddings. The right model for a task depends on your needs: cost, speed, privacy, context length, and capabilities.
 
 ### Browse Models
-
 ```bash
 # List all text models
 python3 {baseDir}/scripts/venice.py models --type text
@@ -120,17 +115,17 @@ python3 {baseDir}/scripts/venice.py models --filter llama
 
 ### Model Selection Guide
 
-| Need                       | Recommended Model                             | Why                           |
-| -------------------------- | --------------------------------------------- | ----------------------------- |
-| **Cheapest text**          | `qwen3-4b` ($0.05/M in)                       | Tiny, private, fast           |
-| **Best uncensored**        | `venice-uncensored` ($0.20/M in)              | Venice's own uncensored model |
-| **Best private + smart**   | `deepseek-v3.2` ($0.40/M in)                  | Private, great reasoning      |
-| **Vision/multimodal**      | `qwen3-vl-235b-a22b` ($0.25/M in)             | Private, sees images          |
-| **Best coding**            | `qwen3-coder-480b-a35b-instruct` ($0.75/M in) | Private, massive coder        |
-| **Frontier (budget)**      | `grok-41-fast` ($0.50/M in)                   | Fast, 262K context            |
-| **Frontier (max quality)** | `claude-opus-45` ($6/M in)                    | Best overall quality          |
-| **Reasoning**              | `kimi-k2-thinking` ($0.75/M in)               | Strong chain-of-thought       |
-| **Web search**             | Any model + `enable_web_search`               | Built-in web search           |
+| Need | Recommended Model | Why |
+|------|------------------|-----|
+| **Cheapest text** | `qwen3-4b` ($0.05/M in) | Tiny, fast, efficient |
+| **Best uncensored** | `venice-uncensored` ($0.20/M in) | Venice's own uncensored model |
+| **Best private + smart** | `deepseek-v3.2` ($0.40/M in) | Great reasoning, efficient |
+| **Vision/multimodal** | `qwen3-vl-235b-a22b` ($0.25/M in) | Sees images |
+| **Best coding** | `qwen3-coder-480b-a35b-instruct` ($0.75/M in) | Massive coder model |
+| **Frontier (budget)** | `grok-41-fast` ($0.50/M in) | Fast, 262K context |
+| **Frontier (max quality)** | `claude-opus-4-6` ($6/M in) | Best overall quality (latest Opus) |
+| **Reasoning** | `kimi-k2-5` ($0.75/M in) | Strong chain-of-thought (K2.5) |
+| **Web search** | Any model + `enable_web_search` | Built-in web search |
 
 > **Privacy tiers:** "Private" = zero data retention. "Anonymized" = logs stripped of identity but may be retained.
 
@@ -141,7 +136,6 @@ python3 {baseDir}/scripts/venice.py models --filter llama
 Venice implements the OpenAI chat completions API with extra superpowers.
 
 ### Basic Generation
-
 ```bash
 # Simple prompt
 python3 {baseDir}/scripts/venice.py chat "What is the meaning of life?"
@@ -160,9 +154,7 @@ python3 {baseDir}/scripts/venice.py chat "Write a story" --stream
 ```
 
 ### Web Search Integration
-
 Venice can search the web before answering — no external tools needed:
-
 ```bash
 # Auto web search (model decides when to search)
 python3 {baseDir}/scripts/venice.py chat "What happened in tech news today?" --web-search auto
@@ -178,7 +170,6 @@ python3 {baseDir}/scripts/venice.py chat "Summarize this article: https://exampl
 ```
 
 ### Uncensored Mode
-
 ```bash
 # Use Venice's own uncensored model
 python3 {baseDir}/scripts/venice.py chat "Your uncensored question" --model venice-uncensored
@@ -188,10 +179,9 @@ python3 {baseDir}/scripts/venice.py chat "Your prompt" --no-venice-system-prompt
 ```
 
 ### Reasoning Models
-
 ```bash
 # Use a reasoning model with effort control
-python3 {baseDir}/scripts/venice.py chat "Solve this math problem..." --model kimi-k2-thinking --reasoning-effort high
+python3 {baseDir}/scripts/venice.py chat "Solve this math problem..." --model kimi-k2-5 --reasoning-effort high
 
 # Strip thinking from output
 python3 {baseDir}/scripts/venice.py chat "Debug this code" --model qwen3-4b --strip-thinking
@@ -201,16 +191,13 @@ python3 {baseDir}/scripts/venice.py chat "Simple question" --model qwen3-4b --di
 ```
 
 ### Character Personas
-
 Venice has public character personas that customize model behavior:
-
 ```bash
 # Use a Venice character
 python3 {baseDir}/scripts/venice.py chat "Tell me a story" --character coder-dan
 ```
 
 ### Advanced Options
-
 ```bash
 # Temperature and token control
 python3 {baseDir}/scripts/venice.py chat "Be creative" --temperature 1.2 --max-tokens 4000
@@ -310,31 +297,24 @@ Shows your Diem, USD, and VCU balances.
 ## Tips & Ideas to Try
 
 ### 🔍 Web Search + LLM = Research Assistant
-
 Use `--web-search on --web-citations` to build a research workflow. Venice searches the web, synthesizes results, and cites sources — all in one API call. Try different models to see which gives the best summaries.
 
 ### 🔓 Uncensored Creative Writing
-
 Venice's uncensored models don't have the guardrails that restrict other AI platforms. Great for fiction, roleplay scenarios, security research, or any topic other AIs refuse to engage with.
 
 ### 🧠 Model A/B Testing
-
 Not sure which model is best for your task? Use the `chat` command with different `--model` flags and compare. Smaller models are surprisingly capable and much cheaper.
 
 ### 🔒 Privacy-First Workflows
-
 If you're processing sensitive data, stick to "Private" models (shown in `models` output). Zero data retention means your prompts literally can't leak.
 
 ### 🎯 Prompt Caching for Agents
-
 If you're running an agent loop that sends the same system prompt repeatedly, use `--cache-key` to get up to 90% cost savings on the cached portion.
 
 ### 🎤 Audio Pipeline
-
 Combine TTS and transcription for audio workflows: generate spoken content with `tts`, process audio with `transcribe`. Both are private inference.
 
 ### 💡 Share What You Build
-
 Created something cool with Venice? The community at [discord.gg/askvenice](https://discord.gg/askvenice) loves seeing creative uses. Venice's Twitter [@AskVenice](https://x.com/AskVenice) also showcases community projects.
 
 ---
@@ -348,7 +328,6 @@ model_name:param1=value1:param2=value2
 ```
 
 Examples:
-
 ```bash
 # Strip thinking tags server-side
 --model "qwen3-4b:strip_thinking_response=true"
@@ -363,13 +342,13 @@ Useful when you can't pass `venice_parameters` directly (e.g., through OpenAI-co
 
 ## Troubleshooting
 
-| Problem                  | Solution                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------ |
-| `VENICE_API_KEY not set` | Set env var or configure in `~/.clawdbot/clawdbot.json`                                    |
-| `Invalid API key`        | Verify at [venice.ai/settings/api](https://venice.ai/settings/api) — keys start with `vn_` |
-| `Model not found`        | Run `models --type text` to see available models                                           |
-| Rate limited             | Check `--show-usage` output for rate limit info                                            |
-| Slow responses           | Try a smaller/faster model, or reduce `--max-tokens`                                       |
+| Problem | Solution |
+|---------|----------|
+| `VENICE_API_KEY not set` | Set env var or configure in `~/.clawdbot/clawdbot.json` |
+| `Invalid API key` | Verify at [venice.ai/settings/api](https://venice.ai/settings/api) — keys start with `vn_` |
+| `Model not found` | Run `models --type text` to see available models |
+| Rate limited | Check `--show-usage` output for rate limit info |
+| Slow responses | Try a smaller/faster model, or reduce `--max-tokens` |
 
 ## Resources
 
