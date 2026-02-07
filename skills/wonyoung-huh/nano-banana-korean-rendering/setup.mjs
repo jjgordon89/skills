@@ -32,14 +32,22 @@ const REQUIRED_FONTS = [
 ];
 
 // Google Fonts에서 폰트를 다운로드할 수 있는 URL 매핑
-// (모노레포 외부에서 사용 시)
+// Variable fonts from Google Fonts GitHub (모노레포 외부에서 사용 시)
 const FONT_DOWNLOAD_URLS = {
   'NotoSansKR-Regular.ttf':
-    'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/alternative/NotoSansKR-Regular.ttf',
+    'https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf',
   'NotoSansKR-Bold.ttf':
-    'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/alternative/NotoSansKR-Bold.ttf',
+    'https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf',
+  'NotoSansJP-Regular.ttf':
+    'https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf',
+  'NotoSansJP-Bold.ttf':
+    'https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf',
+  'NotoSansSC-Regular.ttf':
+    'https://github.com/google/fonts/raw/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf',
+  'NotoSansThai-Regular.ttf':
+    'https://github.com/google/fonts/raw/main/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf',
   'Inter-Regular.ttf':
-    'https://cdn.jsdelivr.net/gh/rsms/inter@v4.0/docs/font-files/Inter-Regular.ttf',
+    'https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf',
 };
 
 function log(msg) {
@@ -80,7 +88,7 @@ function installDeps() {
 }
 
 // ── 2. 폰트 파일 준비 ──
-function setupFonts() {
+async function setupFonts() {
   log('폰트 파일 확인 중...');
 
   // fonts 디렉토리가 이미 있고 모든 폰트가 있으면 스킵
@@ -114,7 +122,7 @@ function setupFonts() {
   } else {
     logWarn('모노레포 폰트 디렉토리를 찾을 수 없습니다.');
     log('폰트를 다운로드합니다...');
-    downloadFonts();
+    await downloadFonts();
   }
 
   // 최종 확인
@@ -133,6 +141,9 @@ function setupFonts() {
 }
 
 async function downloadFonts() {
+  // 동일 URL → 한 번만 다운로드, 여러 파일명에 복사
+  const urlCache = new Map(); // url → Buffer
+
   for (const fontFile of REQUIRED_FONTS) {
     const dst = path.join(FONTS_DIR, fontFile);
     if (fs.existsSync(dst)) continue;
@@ -145,12 +156,20 @@ async function downloadFonts() {
       continue;
     }
 
+    // 이미 같은 URL에서 다운로드 했으면 캐시에서 복사
+    if (urlCache.has(url)) {
+      fs.writeFileSync(dst, urlCache.get(url));
+      logOk(`캐시에서 복사: ${fontFile}`);
+      continue;
+    }
+
     log(`다운로드 중: ${fontFile}...`);
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { redirect: 'follow' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
       fs.writeFileSync(dst, buffer);
+      urlCache.set(url, buffer);
       logOk(`다운로드 완료: ${fontFile} (${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
     } catch (error) {
       logWarn(`다운로드 실패: ${fontFile} - ${error.message}`);
@@ -161,7 +180,7 @@ async function downloadFonts() {
 }
 
 // ── 3. 검증 ──
-function verify() {
+async function verify() {
   log('');
   log('=== 설치 검증 ===');
 
@@ -219,7 +238,7 @@ async function main() {
   log('');
 
   installDeps();
-  setupFonts();
+  await setupFonts();
   await verify();
 }
 
