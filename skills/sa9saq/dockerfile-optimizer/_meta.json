@@ -1,0 +1,11 @@
+{
+  "owner": "sa9saq",
+  "slug": "dockerfile-optimizer",
+  "displayName": "Dockerfile Optimizer",
+  "latest": {
+    "version": "1.1.0",
+    "publishedAt": 1770526234439,
+    "commit": null
+  },
+  "history": []
+}
