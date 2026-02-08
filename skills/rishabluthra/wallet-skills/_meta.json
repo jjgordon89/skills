@@ -3,9 +3,15 @@
   "slug": "wallet-skills",
   "displayName": "Sponge Wallet",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1770012026425,
-    "commit": "https://github.com/clawdbot/skills/commit/09573534de2283f6680660190b41547de0bd8205"
+    "version": "0.1.2",
+    "publishedAt": 1770508632589,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1770012026425,
+      "commit": "https://github.com/clawdbot/skills/commit/09573534de2283f6680660190b41547de0bd8205"
+    }
+  ]
 }
