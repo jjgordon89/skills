@@ -3,11 +3,16 @@
   "slug": "claw-werewolf-live",
   "displayName": "Claw Werewolf",
   "latest": {
-    "version": "0.1.9",
-    "publishedAt": 1770457737474,
-    "commit": "https://github.com/openclaw/skills/commit/668730fbb38a51e0f3e618affeb769da30981fac"
+    "version": "0.1.10",
+    "publishedAt": 1770564730122,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.1.9",
+      "publishedAt": 1770457737474,
+      "commit": "https://github.com/openclaw/skills/commit/668730fbb38a51e0f3e618affeb769da30981fac"
+    },
     {
       "version": "0.1.8",
       "publishedAt": 1770453062731,
