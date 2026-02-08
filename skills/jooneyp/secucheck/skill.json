@@ -1,6 +1,6 @@
 {
   "name": "secucheck",
-  "version": "2.3.0",
+  "version": "2.8.0",
   "description": "Comprehensive security audit for OpenClaw. Analyzes channels, agents, cron jobs, skills, sessions, network, and runtime environment. Features 3 expertise levels, context-aware analysis, attack scenario templates, and visual dashboard. Read-only audits with localized reports.",
   "author": "joon",
   "license": "MIT",

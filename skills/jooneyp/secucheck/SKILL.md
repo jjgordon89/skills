@@ -137,6 +137,57 @@ Returns JSON with findings categorized by severity.
 Parse JSON output and format based on user's expertise level.
 **Final report must be in user's language.**
 
+#### Report Structure (Organize by Category)
+
+```
+🔒 Security Audit Results
+
+📊 Summary Table
+| Severity | Count |
+|----------|-------|
+| 🔴 Critical | X |
+| ...
+
+⚡ Runtime
+- [findings related to RUNTIME category]
+
+🤖 Agents  
+- [findings related to AGENT category]
+
+📁 Workspace
+- [findings related to WORKSPACE category]
+
+🧩 Skills
+- [findings related to SKILL category]
+
+📢 Channels
+- [findings related to CHANNEL category]
+
+🌐 Network
+- [findings related to NETWORK category]
+```
+
+Group findings by their `category` field, not just severity.
+Within each category, show severity icon and explain.
+
+### Step 4: Auto-Open Dashboard
+
+After text report, automatically generate and serve dashboard:
+
+```bash
+bash ~/.openclaw/skills/secucheck/scripts/serve_dashboard.sh
+```
+
+The script returns JSON with `url` (LAN IP) and `local_url` (localhost).
+**Use the `url` field** (not localhost) when telling the user — they may access from another device.
+
+Example:
+```
+📊 대시보드도 열었어요: http://192.168.1.200:8766/secucheck-report.html
+```
+
+If running in environment where browser can be opened, use browser tool to open it.
+
 ## Cross-Platform Support
 
 Scripts run on Linux, macOS, and WSL. Check the JSON output for platform info:

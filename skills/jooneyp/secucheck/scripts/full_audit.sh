@@ -10,6 +10,9 @@ config=$(bash "$SCRIPT_DIR/gather_config.sh" 2>/dev/null)
 skills=$(bash "$SCRIPT_DIR/gather_skills.sh" 2>/dev/null)
 agents=$(bash "$SCRIPT_DIR/gather_agents.sh" 2>/dev/null)
 
+# Run OpenClaw's built-in security audit (--deep for live gateway probe)
+cli_audit=$(openclaw security audit --deep --json 2>&1 | sed -n '/^{/,/^}/p')
+
 # Initialize findings arrays
 declare -a critical_findings
 declare -a high_findings
@@ -149,6 +152,85 @@ if [ "$scripts_with_encoding" -gt 0 ] 2>/dev/null; then
 fi
 
 #############################################
+# Merge OpenClaw CLI Audit Results (Context-Aware)
+#############################################
+
+if [ -n "$cli_audit" ] && echo "$cli_audit" | jq -e '.findings' >/dev/null 2>&1; then
+    # Parse CLI audit findings with context-aware severity adjustment
+    while IFS= read -r finding; do
+        [ -z "$finding" ] && continue
+        
+        severity=$(echo "$finding" | jq -r '.severity')
+        check_id=$(echo "$finding" | jq -r '.checkId')
+        title=$(echo "$finding" | jq -r '.title')
+        detail=$(echo "$finding" | jq -r '.detail // ""' | tr '\n' ' ')
+        remediation=$(echo "$finding" | jq -r '.remediation // "Review and fix."')
+        
+        # Skip attack_surface summary (just info noise)
+        if [ "$check_id" = "summary.attack_surface" ]; then
+            continue
+        fi
+        
+        # Context-aware severity adjustment
+        adjusted_severity="$severity"
+        context_note=""
+        
+        case "$check_id" in
+            "gateway.control_ui.insecure_auth")
+                # allowInsecureAuth behind VPN is acceptable
+                if [ "$vpn_type" != "none" ]; then
+                    adjusted_severity="info"
+                    context_note="[VPN 보호됨 - 실제 위험 낮음]"
+                elif [ "$behind_nat" = "true" ] && [ "$potentially_exposed" = "false" ]; then
+                    adjusted_severity="warn"
+                    context_note="[NAT 뒤 - 외부 직접 노출 없음]"
+                else
+                    context_note="[⚠️ 외부 노출 시 실제 위험]"
+                fi
+                ;;
+            "config.secrets.gateway_password_in_config")
+                # Password in config is fine for single-user home setup
+                if [ "$vpn_type" != "none" ] || [ "$behind_nat" = "true" ]; then
+                    adjusted_severity="info"
+                    context_note="[1인 사용 환경 - 허용 가능]"
+                else
+                    context_note="[공유 서버라면 환경변수 권장]"
+                fi
+                ;;
+            "plugins.extensions_no_allowlist")
+                # Check if there are actually untrusted plugins
+                ext_count=$(echo "$detail" | grep -oP '\d+(?= extension)')
+                if [ "$ext_count" = "1" ] || [ -z "$ext_count" ]; then
+                    adjusted_severity="info"
+                    context_note="[소수 확장만 있음 - 낮은 위험]"
+                fi
+                ;;
+        esac
+        
+        # Build full title with context
+        full_title="$title"
+        if [ -n "$context_note" ]; then
+            full_title="$title $context_note"
+        fi
+        if [ -n "$detail" ] && [ "$detail" != "null" ]; then
+            full_title="$full_title ($detail)"
+        fi
+        
+        case "$adjusted_severity" in
+            critical)
+                critical_findings+=("CONFIG|$check_id|$full_title|$remediation")
+                ;;
+            warn)
+                high_findings+=("CONFIG|$check_id|$full_title|$remediation")
+                ;;
+            info)
+                info_findings+=("CONFIG|$check_id|$full_title|$remediation")
+                ;;
+        esac
+    done <<< "$(echo "$cli_audit" | jq -c '.findings[]' 2>/dev/null)"
+fi
+
+#############################################
 # Output Results
 #############################################
 
@@ -229,6 +311,14 @@ echo '    "root": '"$running_as_root"','
 echo '    "sudo": '"$can_sudo"','
 echo '    "exposed": '"$potentially_exposed"','
 echo '    "nat": '"$behind_nat"
-echo '  }'
+echo '  },'
+
+# Include CLI audit summary
+if [ -n "$cli_audit" ] && echo "$cli_audit" | jq -e '.summary' >/dev/null 2>&1; then
+    echo '  "cli_audit_included": true,'
+    echo '  "cli_audit_summary": '"$(echo "$cli_audit" | jq -c '.summary')"
+else
+    echo '  "cli_audit_included": false'
+fi
 
 echo "}"

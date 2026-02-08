@@ -7,131 +7,141 @@ Use this structure for the full audit report.
 ## Header
 
 ```markdown
-# 🔒 OpenClaw 보안 점검 리포트
+# 🔒 OpenClaw Security Audit
 
-**점검 일시**: {datetime}
-**점검 대상**: {hostname or identifier}
-**사용자 레벨**: {beginner|intermediate|expert}
+**Time**: {datetime}
+**Host**: {hostname}
+**Level**: {beginner|intermediate|expert}
 ```
 
-## Executive Summary
-
-For all user levels, start with a brief summary:
+## Summary Table
 
 ```markdown
-## 📊 요약
+## 📊 Summary
 
-| 위험도 | 발견 수 |
-|--------|---------|
-| 🔴 심각 | {count} |
-| 🟠 높음 | {count} |
-| 🟡 중간 | {count} |
-| 🟢 낮음 | {count} |
+| Severity | Count |
+|----------|-------|
+| 🔴 Critical | {count} |
+| 🟠 High | {count} |
+| 🟡 Medium | {count} |
+| 🟢 Low | {count} |
+| ⚪ Info | {count} |
 
-**전체 평가**: {overall assessment}
+**Status**: {🟢 Good / 🟡 Needs Attention / 🔴 Action Required}
 ```
 
-### Overall Assessment Examples
+## Findings by Category
 
-- 🟢 "현재 설정은 전반적으로 안전합니다. 몇 가지 개선 권장사항이 있습니다."
-- 🟡 "주의가 필요한 설정이 있습니다. 권장 조치를 검토해주세요."
-- 🟠 "보안 위험이 발견되었습니다. 가능한 빨리 조치가 필요합니다."
-- 🔴 "심각한 보안 문제가 있습니다. 즉시 조치해주세요."
-
-## Findings Section
-
-List findings by severity (critical first):
+**IMPORTANT**: Organize findings by category, not severity.
+Within each category, show findings with their severity icons.
 
 ```markdown
-## 🔍 발견 사항
+## ⚡ Runtime
 
-### 🔴 심각 (Critical)
+{List all RUNTIME findings with severity icons}
+- 🟡 Running on bare metal with sudo available
+- ⚪ Tailscale VPN active ✅
 
-{findings}
+## 🤖 Agents
 
-### 🟠 높음 (High)
+{List all AGENT findings}
+- 🟢 Agent 'molty' has exec but critical tools denied ✅
+- 🟢 8 agent directories have open permissions
 
-{findings}
+## 📁 Workspace
 
-### 🟡 중간 (Medium)
+{List all WORKSPACE findings}
+- (none or findings)
 
-{findings}
+## 🧩 Skills
 
-### 🟢 낮음 / 권장사항 (Low / Recommendations)
+{List all SKILL findings}
+- 🟡 4 skills access sensitive paths
+- 🟡 2 skills use base64 encoding
 
-{findings}
+## 📢 Channels
+
+{List all CHANNEL findings}
+- (none or findings)
+
+## 🌐 Network
+
+{List all NETWORK findings}
+- (none or findings)
 ```
 
-## Individual Finding Format
+## Quick Summary Box
 
-Use `templates/finding.md` structure for each finding.
-
-## Recommendations Section
+At the end, provide a quick reference:
 
 ```markdown
-## ✅ 권장 조치
+## 📋 Quick Status
 
-### 즉시 필요 (Immediate)
-
-1. {action 1}
-2. {action 2}
-
-### 계획 필요 (Planned)
-
-1. {action 1}
-2. {action 2}
-
-### 참고 사항 (FYI)
-
-1. {note 1}
+| Category | Status |
+|----------|--------|
+| VPN | ✅ Tailscale |
+| Container | ❌ Bare metal |
+| Root | ✅ Not root |
+| Sudo | ⚠️ Available |
+| Exposed | ⚠️ Yes (but VPN) |
 ```
 
-## Context Section (if user provided)
+## Recommendations
+
+Group by urgency:
 
 ```markdown
-## 📝 환경 정보
+## ✅ Recommended Actions
 
-- **네트워크 환경**: {VPN/public/etc}
-- **사용자 수**: {single/team/public}
-- **용도**: {personal/work/public service}
+### Do Now (Quick Fixes)
+1. `chmod 700 ~/.openclaw/agents/*`
 
-이 정보를 바탕으로 일부 발견 사항의 심각도가 조정되었습니다.
+### Review Later
+1. Check which skills access sensitive paths
+2. Review base64 usage in skills
+
+### No Action Needed
+- VPN is active, network exposure is mitigated
 ```
 
 ## User-Level Adaptations
 
-### For Beginners
+### Beginner
+- Use analogies (🏠 집, 🔑 열쇠, 🚪 문)
+- Simple language, no jargon
+- Focus on "what to do"
+- One-liner explanations
 
-- Use analogies and simple language
-- Avoid technical jargon
-- Focus on "what to do" not "why technically"
-- Provide step-by-step instructions
-- Include "도움이 필요하시면 말씀해주세요" notes
+### Intermediate  
+- Technical details with config examples
+- Explain the "why"
+- Reference commands
 
-### For Intermediate
+### Expert
+- Attack vectors and exploitation paths
+- Edge cases
+- Defense-in-depth options
 
-- Include technical details
-- Explain the reasoning
-- Provide config examples
-- Reference documentation
+## Dashboard Auto-Open
 
-### For Experts
+After text report, run:
+```bash
+bash ~/.openclaw/skills/secucheck/scripts/serve_dashboard.sh
+```
 
-- Focus on attack vectors
-- Include edge cases
-- Provide defense-in-depth options
-- Reference CVEs or known exploits if relevant
+Then tell user:
+```
+📊 Dashboard: http://localhost:8766/secucheck-report.html
+```
 
 ## Footer
 
 ```markdown
 ---
 
-**다음 단계**:
-- 위 권장 조치를 검토해주세요
-- 적용하고 싶은 항목이 있으면 말씀해주세요
-- 정기 점검을 원하시면 크론잡을 설정해드릴 수 있습니다
-
-💡 "상세 분석 보여줘" - 특정 항목의 자세한 내용 확인
-💡 "이 설정 적용해줘" - 권장 설정 적용 (확인 후 진행)
+**Next Steps**:
+- Review recommendations above
+- Tell me if you want to apply any fixes
+- "상세 분석" - Detailed analysis of specific item
+- "이거 적용해줘" - Apply recommended fix
 ```
