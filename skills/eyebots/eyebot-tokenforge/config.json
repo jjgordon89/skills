@@ -1,0 +1,98 @@
+{
+  "agent_id": "tokenforge",
+  "name": "TokenForge",
+  "version": "1.0.0",
+  "description": "Elite token deployment specialist for ERC20 and ERC721",
+  "enabled": true,
+  "triggers": {
+    "keywords": [
+      "deploy token",
+      "create token",
+      "launch token",
+      "new token",
+      "deploy nft",
+      "create nft",
+      "mint contract",
+      "erc20",
+      "erc721",
+      "tokenforge",
+      "forge token",
+      "make token",
+      "token factory"
+    ],
+    "commands": ["/tokenforge", "/deploy", "/createtoken"],
+    "regex_patterns": [
+      "deploy.*token",
+      "create.*token",
+      "launch.*token",
+      "make.*erc20",
+      "deploy.*nft"
+    ]
+  },
+  "pricing": {
+    "payment_wallet": "0x4A9583c6B09154bD88dEE64F5249df0C5EC99Cf9",
+    "accepted_tokens": ["ETH"],
+    "plans": {
+      "trial": {
+        "duration_days": 2,
+        "price_eth": 0.017,
+        "display": "TokenForge: 0.017 ETH (2-day) | 5 ETH (lifetime)",
+        "features": ["erc20_basic", "single_chain"]
+      },
+      "lifetime": {
+        "duration_days": -1,
+        "price_eth": 5.0,
+        "display": "TokenForge: 0.017 ETH (2-day) | 5 ETH (lifetime)",
+        "features": ["erc20_advanced", "erc721", "all_chains", "priority_support", "custom_contracts"]
+      }
+    }
+  },
+  "chains": {
+    "ethereum": {
+      "chain_id": 1,
+      "enabled": true,
+      "rpc_env": "ETH_RPC_URL",
+      "explorer": "https://etherscan.io",
+      "gas_multiplier": 1.2
+    },
+    "base": {
+      "chain_id": 8453,
+      "enabled": true,
+      "rpc_env": "BASE_RPC_URL",
+      "explorer": "https://basescan.org",
+      "gas_multiplier": 1.1
+    },
+    "polygon": {
+      "chain_id": 137,
+      "enabled": true,
+      "rpc_env": "POLYGON_RPC_URL",
+      "explorer": "https://polygonscan.com",
+      "gas_multiplier": 1.3
+    },
+    "arbitrum": {
+      "chain_id": 42161,
+      "enabled": true,
+      "rpc_env": "ARBITRUM_RPC_URL",
+      "explorer": "https://arbiscan.io",
+      "gas_multiplier": 1.1
+    }
+  },
+  "automation": {
+    "auto_verify": true,
+    "auto_renounce": false,
+    "gas_estimation": true,
+    "simulation_before_deploy": true
+  },
+  "limits": {
+    "max_supply": "1000000000000000000000000000",
+    "min_supply": "1000000000000000000",
+    "max_tax_percent": 25,
+    "max_wallets_per_user": 10
+  },
+  "templates": {
+    "standard_erc20": "templates/erc20_standard.sol",
+    "taxable_erc20": "templates/erc20_taxable.sol",
+    "reflection_token": "templates/erc20_reflection.sol",
+    "nft_collection": "templates/erc721_collection.sol"
+  }
+}
