@@ -1,0 +1,118 @@
+{
+  "agent_id": "yieldbot",
+  "name": "YieldBot",
+  "version": "1.0.0",
+  "description": "Yield farming optimizer - finds and manages yield opportunities",
+  "enabled": true,
+  "triggers": {
+    "keywords": [
+      "yield",
+      "farm",
+      "apy",
+      "yieldbot",
+      "staking",
+      "compound",
+      "harvest",
+      "best yield",
+      "farming",
+      "liquidity mining",
+      "rewards"
+    ],
+    "commands": ["/yield", "/farm", "/apy", "/harvest", "/compound"],
+    "regex_patterns": [
+      "best.*yield",
+      "yield.*farm",
+      "stake.*token",
+      "compound.*rewards"
+    ]
+  },
+  "pricing": {
+    "payment_wallet": "0x4A9583c6B09154bD88dEE64F5249df0C5EC99Cf9",
+    "accepted_tokens": ["ETH"],
+    "plans": {
+      "trial": {
+        "duration_days": 2,
+        "price_eth": 0.013,
+        "display": "YieldBot: 0.013 ETH (2-day) | 5 ETH (lifetime)",
+        "features": ["yield_scan", "single_chain", "manual_harvest"]
+      },
+      "lifetime": {
+        "duration_days": -1,
+        "price_eth": 5.0,
+        "display": "YieldBot: 0.013 ETH (2-day) | 5 ETH (lifetime)",
+        "features": ["all_protocols", "all_chains", "auto_compound", "risk_assessment", "position_management"]
+      }
+    }
+  },
+  "chains": {
+    "ethereum": {
+      "chain_id": 1,
+      "enabled": true,
+      "rpc_env": "ETH_RPC_URL"
+    },
+    "base": {
+      "chain_id": 8453,
+      "enabled": true,
+      "rpc_env": "BASE_RPC_URL"
+    },
+    "polygon": {
+      "chain_id": 137,
+      "enabled": true,
+      "rpc_env": "POLYGON_RPC_URL"
+    },
+    "arbitrum": {
+      "chain_id": 42161,
+      "enabled": true,
+      "rpc_env": "ARBITRUM_RPC_URL"
+    }
+  },
+  "protocols": {
+    "aave": {
+      "enabled": true,
+      "supported_chains": [1, 137, 42161]
+    },
+    "compound": {
+      "enabled": true,
+      "supported_chains": [1, 8453]
+    },
+    "yearn": {
+      "enabled": true,
+      "supported_chains": [1, 137, 42161]
+    },
+    "convex": {
+      "enabled": true,
+      "supported_chains": [1]
+    },
+    "beefy": {
+      "enabled": true,
+      "api_url": "https://api.beefy.finance",
+      "supported_chains": [1, 137, 42161, 8453]
+    }
+  },
+  "features": {
+    "yield_finder": {
+      "min_apy": 1.0,
+      "max_risk_score": 7,
+      "tvl_minimum_usd": 100000
+    },
+    "auto_compound": {
+      "enabled": true,
+      "gas_threshold_usd": 5,
+      "compound_frequency": "optimal"
+    },
+    "risk_assessment": {
+      "audit_check": true,
+      "tvl_analysis": true,
+      "impermanent_loss_calc": true
+    }
+  },
+  "automation": {
+    "auto_refresh": true,
+    "refresh_interval_seconds": 300,
+    "gas_optimization": true
+  },
+  "limits": {
+    "max_positions_per_user": 50,
+    "min_deposit_usd": 10
+  }
+}

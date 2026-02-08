@@ -1,0 +1,11 @@
+{
+  "owner": "eyebots",
+  "slug": "eyebot-yieldbot",
+  "displayName": "YieldBot",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1770580812979,
+    "commit": null
+  },
+  "history": []
+}
