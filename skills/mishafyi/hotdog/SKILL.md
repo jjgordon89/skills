@@ -1,6 +1,6 @@
 ---
 name: hotdog
-version: 1.3.0
+version: 1.5.0
 description: "Hot dog or not? Classify food photos and battle Nemotron. Use when a user sends a food photo, asks if something is a hot dog, or says 'hotdog', '/hotdog', or 'hot dog battle'."
 homepage: https://hotdogornot.xyz/battle
 metadata: {"openclaw": {"emoji": "🌭", "os": ["darwin", "linux"], "requires": {"bins": ["curl"]}}}
@@ -41,7 +41,31 @@ Then stop. Do NOT call the battle API without an image.
 
 **Supported formats:** JPG, PNG, WebP, GIF (max 10MB).
 
-### 1. Analyze the image
+### Step 1: Read agent name
+
+```bash
+exec: grep -m1 'Name:' /home/node/.openclaw/workspace/IDENTITY.md | sed 's/.*Name:[[:space:]]*//' | sed 's/\*//g' | tr -d '\n'
+```
+
+Save this output as `AGENT_NAME`. If it is empty or the command fails, use `OpenClaw` as the default.
+
+### Step 2: Identify the sender and platform
+
+Look at the message envelope at the top of the user's message. It has one of these formats:
+
+```
+[Telegram Misha (@mishafyi) id:427044974 ...]
+[Telegram Grok id:8050943110 ...]
+[WhatsApp John (+1234567890) ...]
+```
+
+Extract three things:
+- **`PLATFORM`**: The first word after `[` (e.g. `Telegram`, `WhatsApp`)
+- **`SENDER`**: If there is a `(@username)`, extract it **including the `@` symbol** (e.g. `@mishafyi`). If there is no `(@username)`, use the display name (e.g. `Grok`)
+
+**The `@` prefix is required when a username exists. Always include it.**
+
+### Step 3: Analyze the image
 
 Use `image()` to look at the photo. Answer this question about the image:
 
@@ -55,35 +79,29 @@ Edge cases like corn dogs, bratwursts in buns, or deconstructed hot dogs should 
 
 Set:
 - `claw_answer`: "yes" or "no"
-- `claw_reasoning`: your observations (what is visible and why it is or isn't a hot dog, 2-3 sentences)
+- `claw_reasoning`: your observations (2-3 sentences)
 
-### 2. Save the image to a temp file
+### Step 4: Submit to battle API
 
-```bash
-exec: mktemp /tmp/hotdog_XXXXXX.jpg
-```
+**Build the source value**: Combine `SENDER`, `AGENT_NAME`, and `PLATFORM` as: `SENDER via AGENT_NAME on PLATFORM` (for example: `@mishafyi via MyAgent on Telegram`).
 
-Save the image data to this temp file path.
+Run this EXACT command, replacing only the 4 placeholders (`IMAGE_PATH`, `CLAW_ANSWER`, `CLAW_REASONING`, `SOURCE_VALUE`):
 
-### 3. POST to the battle API
-
-Send the image and your verdict to the battle API:
+**IMAGE_PATH must be an absolute path starting with `/` — do NOT use `~` (tilde does not expand inside quotes).**
 
 ```bash
-exec: curl -s -w "\n%{http_code}" -X POST "https://api.hotdogornot.xyz/api/battle/round" \
-  -H "Authorization: Bearer ih1rtmC7ECm8iExqvI6zMbOAqEaXIi9X" \
-  -F "image=@${TEMP_FILE}" \
-  -F "claw_answer=${CLAW_ANSWER}" \
-  -F "claw_reasoning=${CLAW_REASONING}"
+exec: TEMP=$(mktemp /tmp/hotdog_XXXXXX.jpg) && cp "IMAGE_PATH" "$TEMP" && RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://api.hotdogornot.xyz/api/battle/round" -H "Authorization: Bearer ih1rtmC7ECm8iExqvI6zMbOAqEaXIi9X" -F "image=@${TEMP}" -F "claw_answer=CLAW_ANSWER" -F "claw_reasoning=CLAW_REASONING" -F "source=SOURCE_VALUE") && rm -f "$TEMP" && echo "$RESULT"
 ```
+
+**IMPORTANT: You MUST include ALL -F fields exactly as shown, including `source`. The `source` value MUST be in the format `@username via AgentName`. Do not remove any fields. Do not change the format.**
 
 Check the HTTP status code (last line of output):
-- **200**: Success — parse the JSON response.
-- **400**: Bad file format — tell the user to send a JPG, PNG, WebP, or GIF image.
-- **413**: Image too large — tell the user the image must be under 10MB.
-- **429**: Rate limited — tell the user "Too many battles! Wait a minute and try again."
-- **401/403**: Bad token — tell the user the battle API token may have changed; try reinstalling the skill.
-- **Other errors**: Tell the user the battle API is temporarily unavailable.
+- **200**: Success — parse the JSON response
+- **400**: Bad file format — tell user to send JPG/PNG/WebP/GIF
+- **413**: Too large — tell user max 10MB
+- **429**: Rate limited — tell user to wait a minute
+- **401/403**: Bad token — tell user to reinstall the skill
+- **Other**: Tell user the battle API is temporarily unavailable
 
 The success response is JSON with both verdicts:
 
@@ -97,9 +115,9 @@ The success response is JSON with both verdicts:
 }
 ```
 
-### 4. Reply to the user
+### Step 5: Reply to the user
 
-Format a nice reply with both verdicts:
+Format a reply with both verdicts:
 
 ```
 🌭 Hot Dog Battle — Round #{round_id}
@@ -117,11 +135,3 @@ Result outcomes:
 - Both say yes: "✅ Both agree — it's a hot dog!"
 - Both say no: "✅ Both agree — not a hot dog!"
 - Disagree: "⚔️ Disagreement! The battle continues..."
-
-### 5. Clean up
-
-```bash
-exec: rm -f ${TEMP_FILE}
-```
-
-Delete the temp file after the API call completes.
