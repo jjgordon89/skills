@@ -12,16 +12,12 @@
 // Check dependencies first (for wallet-register step)
 import { checkDependencies } from './check-dependencies.js';
 
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
 import {
-  getClawFriendConfig,
   updateClawFriendConfig,
   readClawFriendState,
   writeClawFriendState,
-  getState,
   updateState,
   getEnv,
   success,
@@ -31,6 +27,9 @@ import {
   prettyJson
 } from './utils.js';
 import { isOpenClawAvailable } from './notify.js';
+import {
+  deployCronjobs,
+} from './cronjob-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,19 +46,8 @@ const STEP_STATUS = {
 // Available steps
 const STEPS = {
   API_DOMAIN: 'api-domain',
-  HEARTBEAT_FILE: 'heartbeat-file',
   CRON_JOB: 'cron-job',
-  ACTIVATION_MONITOR: 'activation-monitor',
   WALLET_REGISTER: 'wallet-register'
-};
-
-// Heartbeat cron job configuration
-const HEARTBEAT_CRON_CONFIG = {
-  NAME: 'ClawFriend Heartbeat Trigger',
-  SCHEDULE: '*/15 * * * *', // Every minute
-  PAYLOAD: 'Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.',
-  SESSION_TARGET: 'main', // Use main session
-  WAKE_MODE: 'next-heartbeat' // Wake mode for cron job
 };
 
 /**
@@ -84,66 +72,6 @@ function updateStepStatus(stepName, status, error = null) {
   };
   
   writeClawFriendState(state);
-}
-
-/**
- * Get OpenClaw heartbeat file paths
- */
-function getHeartbeatPaths() {
-  const home = process.env.HOME || process.env.USERPROFILE;
-  return [
-    path.join(home, '.openclaw', 'workspace', 'HEARTBEAT.md'),
-    path.join(home, '.openclaw', 'HEARTBEAT.md'),
-    path.join(process.cwd(), 'openclaw', 'HEARTBEAT.md')
-  ];
-}
-
-/**
- * Check if OpenClaw HEARTBEAT.md exists
- */
-function checkHeartbeatFile() {
-  const possiblePaths = getHeartbeatPaths();
-  
-  for (const heartbeatPath of possiblePaths) {
-    if (fs.existsSync(heartbeatPath)) {
-      return { exists: true, path: heartbeatPath };
-    }
-  }
-  
-  return { exists: false, path: possiblePaths[0] };
-}
-
-/**
- * Check if heartbeat cron job is configured
- */
-function checkHeartbeatCron() {
-  if (!isOpenClawAvailable()) {
-    return {
-      configured: false,
-      reason: 'OpenClaw CLI not available'
-    };
-  }
-  
-  try {
-    const output = execSync('openclaw cron list', { 
-      encoding: 'utf8',
-      timeout: 10000
-    });
-    
-    const hasHeartbeatTrigger = output.toLowerCase().includes('heartbeat');
-    
-    return {
-      configured: hasHeartbeatTrigger,
-      reason: hasHeartbeatTrigger 
-        ? 'Heartbeat trigger cron job found' 
-        : 'No heartbeat trigger cron job found'
-    };
-  } catch (e) {
-    return {
-      configured: false,
-      reason: 'Failed to check cron jobs: ' + e.message
-    };
-  }
 }
 
 /**
@@ -241,151 +169,37 @@ async function executeApiDomainStep(apiDomainArg) {
 }
 
 /**
- * Extract task definitions from markdown content
- */
-function extractTasks(content) {
-  const tasks = [];
-  // Match markdown tasks: [ ] Task description
-  const taskPattern = /^\[ \] (.+?)(?:\n|$)/gm;
-  let match;
-  
-  while ((match = taskPattern.exec(content)) !== null) {
-    const taskLine = match[1].trim();
-    // Extract task identifier (first part before parenthesis or dash)
-    const identifier = taskLine.split(/[(\-]/)[0].trim().toLowerCase();
-    tasks.push({
-      identifier,
-      fullLine: match[0]
-    });
-  }
-  
-  return tasks;
-}
-
-/**
- * Step 2: Check/create HEARTBEAT.md file and merge tasks
- */
-async function executeHeartbeatStep() {
-  updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.RUNNING);
-  
-  try {
-    const { exists, path: heartbeatPath } = checkHeartbeatFile();
-    
-    // Load skill template
-    const skillHeartbeatPath = path.resolve(__dirname, '..', 'HEARTBEAT.md');
-    if (!fs.existsSync(skillHeartbeatPath)) {
-      const errorMsg = 'Skill HEARTBEAT.md template not found';
-      updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.ERROR, errorMsg);
-      return { success: false, error: errorMsg };
-    }
-    
-    const template = fs.readFileSync(skillHeartbeatPath, 'utf8');
-    // Extract tasks from markdown code block in template
-    const codeBlockMatch = template.match(/```markdown\n([\s\S]*?)\n```/);
-    const templateTasksSection = codeBlockMatch ? codeBlockMatch[1] : '';
-    const templateTasks = extractTasks(templateTasksSection);
-    
-    if (!exists) {
-      // Create new file with tasks
-      const openclawDir = path.dirname(heartbeatPath);
-      if (!fs.existsSync(openclawDir)) {
-        fs.mkdirSync(openclawDir, { recursive: true });
-      }
-      
-      const content = `# OpenClaw Heartbeat
-
-${templateTasksSection}
-`;
-      
-      fs.writeFileSync(heartbeatPath, content, 'utf8');
-      success(`✓ Created HEARTBEAT.md at: ${heartbeatPath}`);
-      success(`  Added ${templateTasks.length} ClawFriend tasks`);
-      updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.DONE);
-      return { success: true, path: heartbeatPath, created: true, added: templateTasks.length };
-    }
-    
-    // File exists - merge tasks
-    let existingContent = fs.readFileSync(heartbeatPath, 'utf8');
-    const existingTasks = extractTasks(existingContent);
-    
-    // Find tasks that don't exist yet
-    const existingIdentifiers = new Set(existingTasks.map(t => t.identifier));
-    const newTasks = templateTasks.filter(t => !existingIdentifiers.has(t.identifier));
-    
-    if (newTasks.length === 0) {
-      success(`HEARTBEAT.md found at: ${heartbeatPath}`);
-      info(`  All ${templateTasks.length} ClawFriend tasks already present`);
-      updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.DONE);
-      return { success: true, path: heartbeatPath, created: false, added: 0 };
-    }
-    
-    // Add new tasks to the file
-    // Find or create ClawFriend section
-    const clawfriendSectionMatch = existingContent.match(/##\s+ClawFriend\s+(Maintenance|Tasks)/i);
-    
-    if (clawfriendSectionMatch) {
-      // Section exists, add tasks after the section header
-      const sectionStart = clawfriendSectionMatch.index + clawfriendSectionMatch[0].length;
-      const newTasksText = '\n' + newTasks.map(t => t.fullLine).join('\n');
-      existingContent = existingContent.slice(0, sectionStart) + newTasksText + existingContent.slice(sectionStart);
-    } else {
-      // Section doesn't exist, append at end
-      const newSection = `\n## ClawFriend Maintenance\n\n${newTasks.map(t => t.fullLine).join('\n')}\n`;
-      existingContent += newSection;
-    }
-    
-    fs.writeFileSync(heartbeatPath, existingContent, 'utf8');
-    success(`✓ Updated HEARTBEAT.md at: ${heartbeatPath}`);
-    success(`  Added ${newTasks.length} new tasks (${templateTasks.length - newTasks.length} already existed)`);
-    updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.DONE);
-    return { success: true, path: heartbeatPath, created: false, added: newTasks.length };
-  } catch (e) {
-    updateStepStatus(STEPS.HEARTBEAT_FILE, STEP_STATUS.ERROR, e.message);
-    return { success: false, error: e.message };
-  }
-}
-
-/**
- * Step 4: Setup CRON job
+ * Step 2: Setup CRON jobs using cronjob-manager
  */
 async function executeCronJobStep() {
   updateStepStatus(STEPS.CRON_JOB, STEP_STATUS.RUNNING);
   
   try {
-    // Check if already configured
-    const cronCheck = checkHeartbeatCron();
-    if (cronCheck.configured) {
-      success('Heartbeat trigger already configured');
-      updateStepStatus(STEPS.CRON_JOB, STEP_STATUS.DONE);
-      return { success: true };
-    }
-    
     // Check if OpenClaw is available
-    if (!isOpenClawAvailable()) {
+    if (!(await isOpenClawAvailable())) {
       warning('OpenClaw CLI not available. Skipping cron setup.');
       updateStepStatus(STEPS.CRON_JOB, STEP_STATUS.SKIPPED);
       return { success: true, skipped: true };
     }
     
-    // Create cron job
-    const { addCronJob } = await import('./notify.js');
-    const name = HEARTBEAT_CRON_CONFIG.NAME;
-    const schedule = HEARTBEAT_CRON_CONFIG.SCHEDULE;
-    const payload = HEARTBEAT_CRON_CONFIG.PAYLOAD;
-    const sessionTarget = HEARTBEAT_CRON_CONFIG.SESSION_TARGET;
-    const wakeMode = HEARTBEAT_CRON_CONFIG.WAKE_MODE;
+    // Deploy all enabled cronjob tasks using cronjob-manager
+    info('Deploying cronjob tasks...');
+    const result = await deployCronjobs();
     
-    info('Creating heartbeat trigger cron job...');
-    const result = addCronJob(name, schedule, payload, sessionTarget, wakeMode);
-    
-    if (result) {
-      success('✓ Heartbeat trigger configured');
-      info('OpenClaw will trigger autonomous heartbeat every 15 minutes');
+    if (result.success) {
+      if (result.deployed > 0) {
+        success(`✓ ${result.deployed} cronjob task(s) deployed`);
+        if (result.skipped > 0) {
+          info(`  ${result.skipped} task(s) already existed (skipped)`);
+        }
+      } else {
+        info('No new cronjob tasks to deploy (all already configured)');
+      }
       updateStepStatus(STEPS.CRON_JOB, STEP_STATUS.DONE);
-      return { success: true };
+      return { success: true, deployed: result.deployed, skipped: result.skipped };
     }
     
-    const errorMsg = 'Failed to create cron job';
+    const errorMsg = result.error || 'Failed to deploy cronjob tasks';
     updateStepStatus(STEPS.CRON_JOB, STEP_STATUS.ERROR, errorMsg);
     return { success: false, error: errorMsg };
   } catch (e) {
@@ -395,36 +209,7 @@ async function executeCronJobStep() {
 }
 
 /**
- * Step 5: Setup Activation Monitor
- */
-async function executeActivationMonitorStep() {
-  updateStepStatus(STEPS.ACTIVATION_MONITOR, STEP_STATUS.RUNNING);
-  
-  try {  
-    // Setup activation monitor cron job
-    const { setupCronJob } = await import('./activation-monitor.js');
-    
-    info('Setting up activation monitor...');
-    const result = await setupCronJob();
-    
-    if (result) {
-      success('✓ Activation monitor configured');
-      info('System will check activation status every minute');
-      updateStepStatus(STEPS.ACTIVATION_MONITOR, STEP_STATUS.DONE);
-      return { success: true };
-    }
-    
-    const errorMsg = 'Failed to setup activation monitor';
-    updateStepStatus(STEPS.ACTIVATION_MONITOR, STEP_STATUS.ERROR, errorMsg);
-    return { success: false, error: errorMsg };
-  } catch (e) {
-    updateStepStatus(STEPS.ACTIVATION_MONITOR, STEP_STATUS.ERROR, e.message);
-    return { success: false, error: e.message };
-  }
-}
-
-/**
- * Step 6: Wallet + Registration (Sequential within this step)
+ * Step 3: Wallet + Registration (Sequential within this step)
  * @param {string} agentName - Name for the agent
  */
 async function executeWalletRegisterStep(agentName) {
@@ -440,7 +225,7 @@ async function executeWalletRegisterStep(agentName) {
     
     // Check dependencies first (ethers is required for wallet operations)
     info('Checking dependencies...');
-    checkDependencies(['ethers']);
+    await checkDependencies(['ethers']);
     
     // Save agent name immediately when user provides it
     info(`Saving agent name: "${agentName}"...`);
@@ -537,17 +322,9 @@ async function executeSetupSteps(steps = null, apiDomainArg = null, agentName = 
         // Must run first if included
         sequentialSteps.push({ name: step, executor: () => executeApiDomainStep(apiDomainArg) });
         break;
-      case STEPS.HEARTBEAT_FILE:
-        // Can run in parallel with others
-        parallelSteps.push({ name: step, executor: executeHeartbeatStep });
-        break;
       case STEPS.CRON_JOB:
         // Can run in parallel with others
         parallelSteps.push({ name: step, executor: executeCronJobStep });
-        break;
-      case STEPS.ACTIVATION_MONITOR:
-        // Can run in parallel with others
-        parallelSteps.push({ name: step, executor: executeActivationMonitorStep });
         break;
       case STEPS.WALLET_REGISTER:
         // Can run in parallel (internally sequential: wallet then register)
@@ -638,9 +415,7 @@ function verifyPrerequisites(interactive = true) {
   console.log('🔍 Checking ClawFriend Setup Prerequisites...\n');
   
   const results = {
-    apiDomain: checkApiDomain(),
-    heartbeatFile: checkHeartbeatFile(),
-    heartbeatCron: checkHeartbeatCron()
+    apiDomain: checkApiDomain()
   };
   
   let allPassed = true;
@@ -657,27 +432,12 @@ function verifyPrerequisites(interactive = true) {
   }
   console.log();
   
-  // Check HEARTBEAT.md file
-  console.log('2. OpenClaw HEARTBEAT.md file:');
-  if (results.heartbeatFile.exists) {
-    success(`  ✓ Found at: ${results.heartbeatFile.path}`);
-  } else {
-    error('  ✗ Not found');
-    warning(`  Expected at: ${results.heartbeatFile.path}`);
-    allPassed = false;
-  }
-  console.log();
-  
-  // Check Heartbeat cron job
-  console.log('3. Heartbeat trigger cron job:');
-  if (results.heartbeatCron.configured) {
-    success(`  ✓ ${results.heartbeatCron.reason}`);
-  } else {
-    warning('  ⚠ Not configured');
-    info(`  Reason: ${results.heartbeatCron.reason}`);
-    if (interactive) {
-      info('  Run: node scripts/setup-check.js setup-cron');
-    }
+  // Check Cronjobs
+  console.log('2. Cronjob tasks:');
+  info('  To check and deploy cronjobs:');
+  if (interactive) {
+    info('  Run: node scripts/cronjob-manager.js list');
+    info('  Run: node scripts/cronjob-manager.js deploy');
   }
   console.log();
   
@@ -877,6 +637,12 @@ async function main() {
         console.log('  node setup-check.js run-steps <step1,step2> [API_DOMAIN] [AGENT_NAME]  - Run specific steps');
         console.log('  node setup-check.js status                                              - Show setup status');
         console.log('  node setup-check.js reset                                               - Reset setup status');
+        console.log('\n🤖 Cronjob Management:');
+        console.log('  node scripts/cronjob-manager.js list                                    - List all available cronjob tasks');
+        console.log('  node scripts/cronjob-manager.js deploy [task1,task2,...]               - Deploy cronjob tasks');
+        console.log('  node scripts/cronjob-manager.js show                                    - Show deployed cronjobs');
+        console.log('  node scripts/cronjob-manager.js remove <task-id-or-name>               - Remove a deployed cronjob');
+        console.log('  node scripts/cronjob-manager.js remove-all                             - Remove all deployed cronjobs');
         console.log('\nAvailable steps:');
         console.log(`  ${Object.values(STEPS).join(', ')}`);
         console.log('\nExamples:');
@@ -895,6 +661,13 @@ async function main() {
         console.log('  # Setup activation monitor only');
         console.log('  node setup-check.js run-steps activation-monitor');
         console.log('');
+        console.log('  # Cronjob management');
+        console.log('  node scripts/cronjob-manager.js list                       # List all tasks');
+        console.log('  node scripts/cronjob-manager.js deploy                     # Deploy all enabled tasks');
+        console.log('  node scripts/cronjob-manager.js deploy heartbeat-trigger   # Deploy specific task');
+        console.log('  node scripts/cronjob-manager.js show                       # Show deployed tasks');
+        console.log('  node scripts/cronjob-manager.js remove heartbeat-trigger   # Remove a task');
+        console.log('');
         console.log('  # Check current status');
         console.log('  node setup-check.js status');
         console.log('\nRecommended workflow:');
@@ -905,6 +678,8 @@ async function main() {
         console.log('  1. node setup-check.js quick-setup https://api.example.com');
         console.log('  2. node wallet.js check || node wallet.js generate');
         console.log('  3. node register.js agent "Name"');
+        console.log('  4. node scripts/cronjob-manager.js list                    # View available tasks');
+        console.log('  5. node scripts/cronjob-manager.js deploy                  # Deploy cronjobs');
         break;
       }
     }
@@ -915,7 +690,12 @@ async function main() {
 }
 
 // Export for use in other scripts
-export { verifyPrerequisites, getStepStatus, updateStepStatus, executeSetupSteps };
+export { 
+  verifyPrerequisites, 
+  getStepStatus, 
+  updateStepStatus, 
+  executeSetupSteps
+};
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {

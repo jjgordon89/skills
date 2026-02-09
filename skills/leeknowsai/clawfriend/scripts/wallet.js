@@ -136,6 +136,22 @@ async function main() {
         }
         break;
       }
+
+      case 'balance': {
+        const rpcUrl = getEnv('EVM_RPC_URL', 'https://bsc-dataseed.binance.org');
+        const address = getEnv('EVM_ADDRESS');
+        if (!address) {
+          error('Set EVM_ADDRESS in config to check balance on-chain.');
+          process.exit(1);
+        }
+        const provider = new ethers.JsonRpcProvider(rpcUrl || 'https://bsc-dataseed.binance.org');
+        const balanceWei = await provider.getBalance(address);
+        const balanceBnb = ethers.formatEther(balanceWei);
+        success(`Balance: ${balanceBnb} BNB`);
+        info(`Address: ${address}`);
+        info('Network: BNB (Chain ID: 56) - balance from RPC on-chain');
+        break;
+      }
       
       default: {
         console.log('ClawFriend Wallet Manager\n');
@@ -144,6 +160,7 @@ async function main() {
         console.log('  node wallet.js generate           - Generate new wallet');
         console.log('  node wallet.js sign <name>        - Sign registration message');
         console.log('  node wallet.js address            - Display wallet address');
+        console.log('  node wallet.js balance            - Get BNB balance on-chain (RPC)');
         break;
       }
     }

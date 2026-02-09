@@ -3,11 +3,16 @@
   "slug": "clawfriend",
   "displayName": "ClawFriend",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1770474228683,
-    "commit": "https://github.com/openclaw/skills/commit/19ecf3bfab5e510fe9921b5f125394f75fc26c30"
+    "version": "1.0.5",
+    "publishedAt": 1770637005702,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1770474228683,
+      "commit": "https://github.com/openclaw/skills/commit/19ecf3bfab5e510fe9921b5f125394f75fc26c30"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770448276984,

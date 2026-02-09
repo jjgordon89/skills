@@ -4,14 +4,95 @@
  * Sends messages to user via OpenClaw CLI
  */
 
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { success, error, info, warning } from './utils.js';
+
+const execAsync = promisify(exec);
+
+/**
+ * ============================================================================
+ * TYPE DEFINITIONS
+ * ============================================================================
+ */
+
+/**
+ * @typedef {Object} ScheduleEvery
+ * @property {'every'} kind
+ * @property {number} everyMs
+ */
+
+/**
+ * @typedef {Object} ScheduleCron
+ * @property {'cron'} kind
+ * @property {string} expr
+ * @property {string} [tz]
+ */
+
+/**
+ * @typedef {Object} ScheduleAt
+ * @property {'at'} kind
+ * @property {string} at
+ */
+
+/**
+ * @typedef {ScheduleEvery | ScheduleCron | ScheduleAt | string} Schedule
+ */
+
+/**
+ * @typedef {Object} SystemEventPayload
+ * @property {'systemEvent'} kind
+ * @property {string} text
+ */
+
+/**
+ * @typedef {Object} AgentTurnPayload
+ * @property {'agentTurn'} kind
+ * @property {string} message
+ * @property {string} [model]
+ * @property {string} [thinking]
+ * @property {number} [timeoutSeconds]
+ */
+
+/**
+ * @typedef {SystemEventPayload | AgentTurnPayload} Payload
+ */
+
+/**
+ * @typedef {Object} DeliveryConfig
+ * @property {'announce' | 'none'} mode
+ * @property {string} [channel]
+ * @property {string} [to]
+ * @property {boolean} [bestEffort]
+ */
+
+/**
+ * @typedef {Object} CronjobConfig
+ * @property {string} name
+ * @property {Schedule} schedule
+ * @property {Payload} payload
+ * @property {'main' | 'isolated'} [sessionTarget]
+ * @property {'now' | 'next-heartbeat'} [wakeMode]
+ * @property {DeliveryConfig} [delivery]
+ * @property {boolean} [deleteAfterRun]
+ * @property {boolean} [enabled]
+ * @property {string} [agentId]
+ */
+
+/**
+ * ============================================================================
+ * NOTIFICATION FUNCTIONS
+ * ============================================================================
+ */
 
 /**
  * Send message to user via OpenClaw CLI
  * Uses system event to send message to most recent channel
+ * @param {string} message - Message to send
+ * @param {string} [sessionTarget='main'] - Session target
+ * @returns {Promise<boolean>} - Success status
  */
-export function sendMessageToUser(message, sessionTarget = 'main') {
+export async function sendMessageToUser(message, sessionTarget = 'main') {
   try {
     // Escape the message for shell - replace double quotes with escaped quotes
     const escapedMessage = message.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
@@ -20,7 +101,7 @@ export function sendMessageToUser(message, sessionTarget = 'main') {
     const command = `openclaw system event --mode now --text "${escapedMessage}"`;
     
     // Execute command
-    execSync(command, { stdio: 'inherit' });
+    await execAsync(command);
     
     return true;
   } catch (e) {
@@ -36,10 +117,11 @@ export function sendMessageToUser(message, sessionTarget = 'main') {
 
 /**
  * Check if OpenClaw CLI is available
+ * @returns {Promise<boolean>} - True if OpenClaw CLI is available
  */
-export function isOpenClawAvailable() {
+export async function isOpenClawAvailable() {
   try {
-    execSync('which openclaw', { stdio: 'ignore' });
+    await execAsync('which openclaw');
     return true;
   } catch (e) {
     return false;
@@ -49,16 +131,16 @@ export function isOpenClawAvailable() {
 /**
  * Check if a cron job exists
  * @param {string} name - Job name to check
- * @returns {boolean} - True if job exists
+ * @returns {Promise<boolean>} - True if job exists
  */
-export function cronJobExists(name) {
+export async function cronJobExists(name) {
   try {
-    const output = execSync('openclaw cron list', { 
+    const { stdout } = await execAsync('openclaw cron list', { 
       encoding: 'utf8',
       timeout: 10000  // 10 second timeout to prevent hanging
     });
     // Check if the job name appears in the list
-    return output.includes(name);
+    return stdout.includes(name);
   } catch (e) {
     error(`Failed to check cron jobs: ${e.message}`);
     return false;
@@ -70,12 +152,14 @@ export function cronJobExists(name) {
  * @param {string} name - Job name
  * @param {string} schedule - Cron schedule expression
  * @param {string} payload - Command to execute (for systemEvent) or message (for agentTurn)
- * @param {string} sessionTarget - "main" or "isolated"
+ * @param {'main' | 'isolated'} [sessionTarget='main'] - Session target
+ * @param {'now' | 'next-heartbeat' | null} [wakeMode=null] - Wake mode
+ * @returns {Promise<boolean>} - Success status
  */
-export function addCronJob(name, schedule, payload, sessionTarget = 'main', wakeMode = null) {
+export async function addCronJob(name, schedule, payload, sessionTarget = 'main', wakeMode = null) {
   try {
     // Check if job already exists
-    if (cronJobExists(name)) {
+    if (await cronJobExists(name)) {
       warning(`Cron job "${name}" already exists`);
       info('Skipping creation to avoid duplicates');
       return true; // Return true since job exists (desired state achieved)
@@ -106,8 +190,7 @@ export function addCronJob(name, schedule, payload, sessionTarget = 'main', wake
       command = `openclaw cron add --name "${escapedName}" --cron "${schedule}" --session isolated --message "${escapedText}" --wake ${wake}`;
     }
     
-    execSync(command, { 
-      stdio: 'pipe',  // Don't inherit stdio to avoid hanging on prompts
+    await execAsync(command, { 
       encoding: 'utf8',
       timeout: 15000  // 15 second timeout
     });
@@ -123,10 +206,135 @@ export function addCronJob(name, schedule, payload, sessionTarget = 'main', wake
 }
 
 /**
+ * Create a cron job with full configuration via OpenClaw tool call
+ * Supports the complete job configuration format
+ * @param {CronjobConfig} jobConfig - Full job configuration object
+ * @returns {Promise<boolean>} - Success status
+ */
+export async function addCronJobAdvanced(jobConfig) {
+  try {
+    const {
+      name,
+      schedule,
+      payload,
+      sessionTarget = 'main',
+      wakeMode = 'next-heartbeat',
+      delivery,
+      deleteAfterRun = false,
+      enabled = true
+    } = jobConfig;
+    
+    // Check if job already exists
+    if (await cronJobExists(name)) {
+      warning(`Cron job "${name}" already exists`);
+      info('Skipping creation to avoid duplicates');
+      return true;
+    }
+    
+    // Build the command based on configuration
+    let command;
+    const escapedName = name.replace(/"/g, '\\"');
+    
+    // Handle schedule - support both string cron expressions and schedule objects
+    let scheduleFlag;
+    if (typeof schedule === 'string') {
+      scheduleFlag = `--cron "${schedule}"`;
+    } else if (schedule.kind === 'every') {
+      scheduleFlag = `--every ${schedule.everyMs}ms`;
+    } else if (schedule.kind === 'cron') {
+      scheduleFlag = `--cron "${schedule.expr}"`;
+      if (schedule.tz) {
+        scheduleFlag += ` --tz "${schedule.tz}"`;
+      }
+    } else if (schedule.kind === 'at') {
+      scheduleFlag = `--at "${schedule.at}"`;
+    }
+    
+    // Determine session-specific flags
+    if (sessionTarget === 'main') {
+      // Main session with system event
+      let text;
+      if (typeof payload === 'string') {
+        text = payload;
+      } else if (payload.kind === 'systemEvent') {
+        text = payload.text || '';
+      } else {
+        text = payload.message || '';
+      }
+      
+      const escapedText = text.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+      command = `openclaw cron add --name "${escapedName}" ${scheduleFlag} --session main --system-event "${escapedText}"`;
+    } else {
+      // Isolated session with agent turn
+      let message;
+      if (typeof payload === 'string') {
+        message = payload;
+      } else if (payload.kind === 'agentTurn') {
+        message = payload.message || '';
+      } else {
+        message = payload.text || '';
+      }
+      
+      const escapedMessage = message.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+      
+      command = `openclaw cron add --name "${escapedName}" ${scheduleFlag} --session isolated --message "${escapedMessage}"`;
+      
+      // Add delivery configuration if present
+      if (delivery) {
+        if (delivery.mode === 'announce' || !delivery.mode) {
+          command += ' --announce';
+          
+          // Add channel if specified
+          if (delivery.channel && delivery.channel !== 'last') {
+            command += ` --channel ${delivery.channel}`;
+            
+            // Add target if specified
+            if (delivery.to) {
+              command += ` --to "${delivery.to}"`;
+            }
+          }
+        } else if (delivery.mode === 'none') {
+          // Don't add announce flag for 'none' mode
+          command += ' --no-deliver';
+        }
+      }
+    }
+    
+    // Add wake mode
+    command += ` --wake ${wakeMode}`;
+    
+    // Add delete-after-run flag if specified
+    if (deleteAfterRun) {
+      command += ' --delete-after-run';
+    }
+    
+    // Add enabled flag if false (default is true)
+    if (!enabled) {
+      command += ' --disabled';
+    }
+    
+    await execAsync(command, {
+      encoding: 'utf8',
+      timeout: 15000
+    });
+    
+    success(`Cron job created: ${name}`);
+    return true;
+  } catch (e) {
+    error(`Failed to create cron job: ${e.message}`);
+    if (e.stderr) {
+      error(`Details: ${e.stderr}`);
+    }
+    return false;
+  }
+}
+
+/**
  * Remove a cron job via OpenClaw CLI
  * @param {string} nameOrId - Job name or ID to remove
+ * @returns {Promise<boolean>} - Success status
  */
-export function removeCronJob(nameOrId) {
+export async function removeCronJob(nameOrId) {
   try {
     // First, try to find the job ID by name
     let jobId = nameOrId;
@@ -134,16 +342,19 @@ export function removeCronJob(nameOrId) {
     // If it looks like a name (not a UUID), search for it in the job list
     if (!nameOrId.match(/^[0-9a-f-]{36}$/i)) {
       try {
-        const listOutput = execSync('openclaw cron list --json --all', { 
+        const { stdout: listOutput } = await execAsync('openclaw cron list --json --all', { 
           encoding: 'utf8',
           timeout: 10000
         });
         
-        // Parse JSON output
+        // Parse JSON output - API returns array directly
         const data = JSON.parse(listOutput);
         
+        // Ensure data is an array
+        const jobs = Array.isArray(data) ? data : (data.jobs || []);
+        
         // Find job by name
-        const job = data.jobs?.find(j => j.name === nameOrId);
+        const job = jobs.find(j => j.name === nameOrId);
         if (job) {
           jobId = job.id;
         } else {
@@ -158,8 +369,7 @@ export function removeCronJob(nameOrId) {
     // Remove by job ID
     const command = `openclaw cron remove ${jobId}`;
     
-    execSync(command, { 
-      stdio: 'pipe',
+    await execAsync(command, { 
       encoding: 'utf8',
       timeout: 10000  // 10 second timeout
     });
@@ -173,14 +383,15 @@ export function removeCronJob(nameOrId) {
 
 /**
  * List cron jobs via OpenClaw CLI
+ * @returns {Promise<boolean>} - Success status
  */
-export function listCronJobs() {
+export async function listCronJobs() {
   try {
-    const output = execSync('openclaw cron list', { 
+    const { stdout } = await execAsync('openclaw cron list', { 
       encoding: 'utf8',
       timeout: 10000  // 10 second timeout
     });
-    console.log(output);
+    console.log(stdout);
     return true;
   } catch (e) {
     error(`Failed to list cron jobs: ${e.message}`);
@@ -195,7 +406,7 @@ async function main() {
   const command = process.argv[2];
   
   // Check if OpenClaw is available
-  if (!isOpenClawAvailable()) {
+  if (!(await isOpenClawAvailable())) {
     error('OpenClaw CLI not found. Please install OpenClaw first.');
     info('Messages will be logged to console instead.');
   }
@@ -211,13 +422,13 @@ async function main() {
           process.exit(1);
         }
         
-        sendMessageToUser(message, sessionTarget);
+        await sendMessageToUser(message, sessionTarget);
         break;
       }
       
       case 'test': {
         const message = '🧪 Test message from ClawFriend!\n\nThis is a test notification from the ClawFriend skill automation system.';
-        sendMessageToUser(message);
+        await sendMessageToUser(message);
         break;
       }
       
@@ -232,7 +443,7 @@ async function main() {
           process.exit(1);
         }
         
-        addCronJob(name, schedule, payload, sessionTarget);
+        await addCronJob(name, schedule, payload, sessionTarget);
         break;
       }
       
@@ -244,12 +455,12 @@ async function main() {
           process.exit(1);
         }
         
-        removeCronJob(name);
+        await removeCronJob(name);
         break;
       }
       
       case 'cron-list': {
-        listCronJobs();
+        await listCronJobs();
         break;
       }
       

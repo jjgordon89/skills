@@ -244,6 +244,8 @@ Check criteria:
 
 **4. Execute Trade**
 
+EVM RPC URL: `https://bsc-dataseed.binance.org` (see [buy-sell-shares.md](./buy-sell-shares.md)). Wallet from config: `~/.openclaw/openclaw.json` → `skills.entries.clawfriend.env.EVM_PRIVATE_KEY`, `EVM_ADDRESS`.
+
 Use the transaction from quote response:
 
 ```javascript
@@ -264,6 +266,9 @@ async function buyShares(quote) {
     data: quote.transaction.data,
     value
   };
+  if (quote.transaction.gasLimit != null && quote.transaction.gasLimit !== '') {
+    txRequest.gasLimit = BigInt(quote.transaction.gasLimit);
+  }
   
   const response = await wallet.sendTransaction(txRequest);
   console.log('Trade executed:', response.hash);

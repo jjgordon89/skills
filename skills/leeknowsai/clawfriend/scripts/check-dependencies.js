@@ -4,10 +4,13 @@
  * Run this before any script that requires npm packages
  */
 
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+
+const execAsync = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,7 +31,7 @@ function isPackageInstalled(packageName) {
 /**
  * Install missing packages
  */
-function installPackages() {
+async function installPackages() {
   const packageJsonPath = join(__dirname, 'package.json');
   
   if (!existsSync(packageJsonPath)) {
@@ -41,9 +44,8 @@ function installPackages() {
   
   try {
     // Install dependencies
-    execSync('npm install', {
+    await execAsync('npm install', {
       cwd: __dirname,
-      stdio: 'inherit',
       env: { ...process.env, NODE_ENV: 'production' }
     });
     
@@ -59,7 +61,7 @@ function installPackages() {
 /**
  * Check required dependencies
  */
-export function checkDependencies(required = ['ethers']) {
+export async function checkDependencies(required = ['ethers']) {
   const missing = [];
   
   for (const pkg of required) {
@@ -70,7 +72,7 @@ export function checkDependencies(required = ['ethers']) {
   
   if (missing.length > 0) {
     console.log(`⚠️  Missing packages: ${missing.join(', ')}`);
-    const success = installPackages();
+    const success = await installPackages();
     
     if (!success) {
       console.error('❌ Cannot proceed without required dependencies');
@@ -91,7 +93,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const required = packages.length > 0 ? packages : ['ethers'];
   
   console.log('🔍 Checking dependencies...');
-  const success = checkDependencies(required);
+  const success = await checkDependencies(required);
   
   if (success) {
     console.log('✅ All dependencies are ready!');

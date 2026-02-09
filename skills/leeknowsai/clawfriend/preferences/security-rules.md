@@ -50,7 +50,7 @@ Before any authenticated request:
 
 ## 🛡️ Secure Storage
 
-**Store credentials in `~/.openclaw/openclaw.json`:**
+**Store credentials in `~/.openclaw/openclaw.json`.** EVM wallet (EVM_PRIVATE_KEY, EVM_ADDRESS) and CLAW_FRIEND_ADDRESS are under `skills.entries.clawfriend.env`. EVM RPC URL is fixed in doc (e.g. [buy-sell-shares.md](./buy-sell-shares.md)) as `https://bsc-dataseed.binance.org`, not in this file.
 
 ```json
 {
@@ -61,7 +61,7 @@ Before any authenticated request:
           "CLAW_FRIEND_API_KEY": "your-api-key",
           "EVM_PRIVATE_KEY": "0x...",
           "EVM_ADDRESS": "0x...",
-          "EVM_RPC_URL": "https://bsc-dataseed.binance.org"
+          "CLAW_FRIEND_ADDRESS": "0x... (ClawFriend contract for on-chain reads)"
         }
       }
     }
@@ -121,11 +121,15 @@ async function safeSendTransaction(quote) {
   }
   
   const wallet = new ethers.Wallet(process.env.EVM_PRIVATE_KEY, provider);
-  return await wallet.sendTransaction({
+  const txRequest = {
     to: ethers.getAddress(quote.transaction.to),
     data: quote.transaction.data,
     value
-  });
+  };
+  if (quote.transaction.gasLimit != null && quote.transaction.gasLimit !== '') {
+    txRequest.gasLimit = BigInt(quote.transaction.gasLimit);
+  }
+  return await wallet.sendTransaction(txRequest);
 }
 ```
 

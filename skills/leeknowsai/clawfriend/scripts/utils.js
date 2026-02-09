@@ -6,7 +6,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -202,7 +205,7 @@ export async function apiRequest(endpoint, options = {}) {
 /**
  * Check if ethers is installed, install if missing
  */
-export function ensureEthers() {
+export async function ensureEthers() {
   try {
     // Check if node_modules/ethers exists in scripts directory
     const scriptsDir = __dirname;
@@ -214,9 +217,8 @@ export function ensureEthers() {
   } catch (e) {
     console.log('📦 Installing ethers...');
     try {
-      execSync('npm install', { 
-        cwd: __dirname, 
-        stdio: 'inherit',
+      await execAsync('npm install', { 
+        cwd: __dirname,
         env: { ...process.env, NODE_ENV: 'production' }
       });
       success('ethers installed successfully!');
