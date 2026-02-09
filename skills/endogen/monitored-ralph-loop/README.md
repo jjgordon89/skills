@@ -24,8 +24,34 @@ An enhanced [Ralph pattern](https://ghuntley.com/ralph/) implementation with **e
 
 1. **PLANNING phase**: Agent analyzes specs, creates `IMPLEMENTATION_PLAN.md`
 2. **BUILDING phase**: Agent implements tasks one by one, tests, commits
-3. **Notifications**: Agent writes to `.ralph/pending-notification.txt` AND calls `openclaw gateway wake`
-4. **Recovery**: If wake fails (rate limit), notification persists in file for later processing
+3. **Notifications**: Agent writes to `.ralph/pending-notification.txt` + triggers OpenClaw via cron
+4. **Triage**: OpenClaw receives notification, evaluates if it can help or needs to escalate to human
+
+### Notification Flow
+
+```
+Codex/Claude ──► .ralph/pending-notification.txt
+     │                        │
+     └──► openclaw cron add ──┴──► OpenClaw (triage)
+                                        │
+                              ┌─────────┴─────────┐
+                              ▼                   ▼
+                        Can help?            Escalate
+                              │                   │
+                              ▼                   ▼
+                        Fix & restart      Notify human
+```
+
+### Notification Prefixes
+
+| Prefix | Meaning | Typical Action |
+|--------|---------|----------------|
+| `DONE` | All tasks complete | Notify human |
+| `PLANNING_COMPLETE` | Ready for building | Notify human |
+| `DECISION` | Need human input | Notify human |
+| `PROGRESS` | Milestone reached | Log, maybe notify |
+| `ERROR` | Tests failing | Triage: fix or escalate |
+| `BLOCKED` | Can't proceed | Triage: resolve or escalate |
 
 ### Notification Format
 
@@ -83,12 +109,18 @@ mkdir specs && echo "# Overview\n\nGoal: ..." > specs/overview.md
 | `templates/PROMPT-BUILDING.md` | Template for building phase |
 | `templates/AGENTS.md` | Template for project context |
 
+## Requirements
+
+- **OpenClaw** running with cron enabled (default)
+- **Git repository** (Ralph tracks changes via git)
+- **Coding CLI**: codex, claude, opencode, or goose
+
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `RALPH_CLI` | `codex` | CLI to use (codex, claude, opencode, goose) |
-| `RALPH_FLAGS` | `--full-auto` | Flags for the CLI |
+| `RALPH_FLAGS` | (varies) | Flags for the CLI (auto-detected per CLI) |
 | `RALPH_TEST` | (none) | Test command to run each iteration |
 
 ## Clean Sessions
