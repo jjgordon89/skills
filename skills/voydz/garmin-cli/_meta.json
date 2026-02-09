@@ -1,11 +1,17 @@
 {
   "owner": "voydz",
   "slug": "garmin-cli",
-  "displayName": "Garmin Connect CLI",
+  "displayName": "Garmin Cli",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1770480350754,
-    "commit": "https://github.com/openclaw/skills/commit/91c0a473d3738531480a479570d00d5b02ffcad5"
+    "version": "1.0.2",
+    "publishedAt": 1770651035170,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1770480350754,
+      "commit": "https://github.com/openclaw/skills/commit/91c0a473d3738531480a479570d00d5b02ffcad5"
+    }
+  ]
 }

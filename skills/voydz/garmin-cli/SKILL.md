@@ -1,22 +1,19 @@
 ---
 name: garmin
-description: Read health, fitness, and activity data from Garmin Connect via a non-interactive CLI. Use when accessing Garmin health data like steps, sleep, heart rate, activities, body battery, stress levels, or training metrics.
+description: Read health, fitness, and activity data from Garmin Connect via a non-interactive CLI.
+metadata: {"clawdbot":{"emoji":"⌚","requires":{"bins":["gc"]}}}
 ---
 
 # Garmin Connect CLI
 
 This skill provides read access to Garmin Connect health and fitness data through the `gc` CLI.
 
-## Requirements
-
-- Binary: `gc` (install via `brew install voydz/tap/gc`)
-
 ## Setup
 
 1.  **Install via Homebrew tap:**
     ```bash
     brew tap voydz/homebrew-tap
-    brew install gc
+    brew install garmin-cli
     ```
 
 2.  **Authentication:**
@@ -169,6 +166,10 @@ gc workouts [--start N --limit N]
 gc workouts get WORKOUT_ID
 gc workouts download WORKOUT_ID [-o FILE]
 gc workouts scheduled WORKOUT_ID
+gc workouts create --file workout.json
+gc workouts create --name "Zone 2 Grundlage" --sport cycling --steps '[{"type":"warmup","duration":600},{"type":"interval","duration":3600,"target":"hr_zone:2"},{"type":"cooldown","duration":300}]'
+gc workouts update WORKOUT_ID --file workout.json
+gc workouts delete WORKOUT_ID
 gc training-plans
 gc training-plans get PLAN_ID
 gc training-plans adaptive PLAN_ID
