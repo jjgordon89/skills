@@ -1,0 +1,11 @@
+{
+  "owner": "zaynjarvis",
+  "slug": "openviking-mcp",
+  "displayName": "OpenViking MCP Server",
+  "latest": {
+    "version": "0.1.2",
+    "publishedAt": 1770635155069,
+    "commit": null
+  },
+  "history": []
+}
