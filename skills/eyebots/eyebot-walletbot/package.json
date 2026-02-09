@@ -1,0 +1,8 @@
+{
+  "name": "eyebot-walletbot",
+  "version": "1.0.0",
+  "description": "Wallet operations and portfolio management",
+  "author": "ILL4NE",
+  "license": "MIT",
+  "keywords": ["eyebot", "wallet", "portfolio", "balance", "crypto", "a2a"]
+}
