@@ -1,0 +1,11 @@
+{
+  "owner": "cplusdev",
+  "slug": "urlcheck",
+  "displayName": "URLCheck Intent-Aware URL Assessment",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770625184815,
+    "commit": null
+  },
+  "history": []
+}
