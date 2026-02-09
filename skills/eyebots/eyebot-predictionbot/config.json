@@ -1,0 +1,39 @@
+{
+  "agent_id": "predictionbot",
+  "name": "Eyebot PredictionBot",
+  "version": "1.0.0",
+  "description": "AI market predictions and trend forecasting",
+  "treasury": "0x4A9583c6B09154bD88dEE64F5249df0C5EC99Cf9",
+  "pricing": {
+    "trial": 0.001,
+    "standard": 0.01,
+    "premium": 0.05,
+    "lifetime": 0.5
+  },
+  "supported_chains": [
+    "ethereum",
+    "base",
+    "polygon",
+    "arbitrum",
+    "optimism"
+  ],
+  "features": {
+    "price_predict": true,
+    "trend_analysis": true,
+    "pattern_detect": true,
+    "volatility_forecast": true,
+    "sentiment_predict": true,
+    "backtest": true
+  },
+  "limits": {
+    "trial": {
+      "operations_per_day": 5
+    },
+    "standard": {
+      "operations_per_day": 100
+    },
+    "lifetime": {
+      "operations_per_day": null
+    }
+  }
+}

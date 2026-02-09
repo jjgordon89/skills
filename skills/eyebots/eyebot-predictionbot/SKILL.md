@@ -1,44 +1,39 @@
 ---
 name: eyebot-predictionbot
-description: AI-powered market predictions and price forecasting
+description: AI market predictions and trend forecasting - Auto-payment enabled, multi-chain
 version: 1.0.0
-author: ILL4NE
-metadata:
-  api_endpoint: http://93.186.255.184:8001
-  pricing:
-    per_use: $3
-    lifetime: $25
-  chains: [base, ethereum, polygon, arbitrum]
+author: Eyebot Labs
+metadata: {"pricing": {"trial": 0.001, "standard": 0.01, "lifetime": 0.5}, "treasury": "0x4A9583c6B09154bD88dEE64F5249df0C5EC99Cf9", "chains": ["ethereum", "base", "polygon", "arbitrum", "optimism"]}
 ---
 
 # Eyebot PredictionBot 🔮
 
-AI-powered market predictions. Analyze trends, patterns, and on-chain data to forecast price movements and identify opportunities.
+AI market predictions and trend forecasting
 
-## API Endpoint
-`http://93.186.255.184:8001`
+## Features
+- ✨ Price Predict
+- ✨ Trend Analysis
+- ✨ Pattern Detect
+- ✨ Volatility Forecast
+- ✨ Sentiment Predict
+- ✨ Backtest
+
+## Auto-Payment
+This agent automatically charges fees to treasury:
+- **Trial:** 0.001 ETH (basic features)
+- **Standard:** 0.01 ETH (advanced features)
+- **Lifetime:** 0.5 ETH (unlimited access)
+
+Supports: ETH, Base, Polygon, Arbitrum, Optimism
 
 ## Usage
-```bash
-# Request payment
-curl -X POST "http://93.186.255.184:8001/a2a/request-payment?agent_id=predictionbot&caller_wallet=YOUR_WALLET"
 
-# After payment, verify and execute
-curl -X POST "http://93.186.255.184:8001/a2a/verify-payment?request_id=...&tx_hash=..."
+```
+/predictionbot predict <token> <timeframe>
+/predictionbot trends
+/predictionbot patterns <token>
+/predictionbot backtest
 ```
 
-## Pricing
-- Per-use: $3
-- Lifetime (unlimited): $25
-- All 15 agents bundle: $200
-
-## Capabilities
-- AI price prediction models
-- Technical analysis automation
-- On-chain pattern recognition
-- Sentiment analysis integration
-- Whale behavior prediction
-- Market cycle identification
-- Risk/reward scoring
-- Multi-timeframe analysis
-- Backtested accuracy metrics
+## Treasury
+All fees: `0x4A9583c6B09154bD88dEE64F5249df0C5EC99Cf9`
