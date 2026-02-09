@@ -3,11 +3,16 @@
   "slug": "elevenlabs-tts",
   "displayName": "ElevenLabs TTS",
   "latest": {
-    "version": "1.3.2",
-    "publishedAt": 1770207262141,
-    "commit": "https://github.com/clawdbot/skills/commit/c4795bb64b86ee284639f0a7d6ed8951a0bfff84"
+    "version": "2.1.0",
+    "publishedAt": 1770644808695,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.3.2",
+      "publishedAt": 1770207262141,
+      "commit": "https://github.com/clawdbot/skills/commit/c4795bb64b86ee284639f0a7d6ed8951a0bfff84"
+    },
     {
       "version": "1.2.8",
       "publishedAt": 1770156597449,

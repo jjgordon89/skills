@@ -216,6 +216,37 @@ Sarah: [annoyed] I was TRYING to tell you that!
 
 ---
 
+## Singing
+
+The `[singing]` tag can produce melodic intonation. Results are inconsistent - v3 is a TTS model, not a music model.
+
+**Format** (tag on its own line before lyrics):
+```
+
+[singing]
+Oh Tommy boy, the pipes the pipes are calling,
+from glen to glen and down the mountain side.
+```
+
+**Best settings for singing:**
+- **Stability**: Creative (0.0) - most expressive, best for singing
+- **Voice**: Use v3-optimized premade voices (Adam, Charlotte, etc.)
+- **Language**: English works best; Hebrew is less reliable for singing
+- **Non-deterministic**: Generate multiple times - each result is different
+
+**Tips:**
+- Put `[singing]` on its own line before lyrics
+- Use known songs the model might recognize
+- Stack with emotion: `[happy]\n[singing]\nlyrics...`
+- Keep lyrics short per generation
+
+**Limitations:**
+- Not real singing with full melody - more like melodic speech
+- Results vary heavily by voice and generation
+- For actual music generation, use **Suno** or **Udio**
+
+---
+
 ## Troubleshooting
 
 **Tags being read aloud?**
