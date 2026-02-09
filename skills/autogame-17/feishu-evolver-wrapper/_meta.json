@@ -3,11 +3,16 @@
   "slug": "feishu-evolver-wrapper",
   "displayName": "Feishu Evolver Wrapper",
   "latest": {
-    "version": "1.2.0",
-    "publishedAt": 1770321027995,
-    "commit": "https://github.com/clawdbot/skills/commit/45b75b255f84bae596edb3f3a179d5c22be4f70a"
+    "version": "1.4.0",
+    "publishedAt": 1770650695702,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.0",
+      "publishedAt": 1770321027995,
+      "commit": "https://github.com/clawdbot/skills/commit/45b75b255f84bae596edb3f3a179d5c22be4f70a"
+    },
     {
       "version": "1.0.42",
       "publishedAt": 1770140214500,

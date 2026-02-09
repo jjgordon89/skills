@@ -127,7 +127,7 @@ const cycleId = cycleInfo.id;
 const title = options.title || `🧬 Evolution #${cycleId} Log`;
 
 // Resolve Target
-const MASTER_ID = process.env.OPENCLAW_MASTER_ID || 'ou_cdc63fe05e88c580aedead04d851fc04'; // Fallback to Master ID from USER.md
+const MASTER_ID = process.env.OPENCLAW_MASTER_ID || ''; // Set via env var, no hardcoded fallback
 
 // Execute direct integration
 (async () => {
