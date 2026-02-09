@@ -42,6 +42,15 @@ aos mesh send <agent> "Topic" "Message body"
 
 Run `aos help` or `aos <command>` for detailed usage.
 
+## Golden Sync (Recommended)
+For a bulletproof dashboard (Memory + Projects cards), run:
+```bash
+~/clawd/bin/agentos-golden-sync.sh
+```
+
+This syncs memory AND upserts per-project markdown cards:
+`TASKS.md`, `IDEAS.md`, `CHANGELOG.md`, `CHALLENGES.md` → DB → Brain Dashboard.
+
 ## Quick Start
 
 ```bash

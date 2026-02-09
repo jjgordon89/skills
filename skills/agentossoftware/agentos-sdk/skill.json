@@ -1,6 +1,6 @@
 {
   "name": "agentos-sdk",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "Complete agent operations toolkit: memory, projects, kanban, brainstorms, activity logging, mesh communication, and self-evolution framework",
   "author": "MoonstoneLabs",
   "homepage": "https://agentos.software",
@@ -51,6 +51,7 @@
     }
   },
   "changelog": {
+    "3.6.0": "Golden Sync + per-project markdown source-of-truth (TASKS/IDEAS/CHANGELOG/CHALLENGES) → DB → Dashboard; improved project card wiring and freshness", 
     "3.5.0": "Synced with production: Google OAuth multi-tenant, Kanban API, Projects API, WebSocket events, bulk dump endpoints, agents discovery, API key management",
     "3.4.0": "Added mandatory Heartbeat Context Backup Protocol: agents must backup context every 10min heartbeat to prevent context loss during compaction",
     "3.3.1": "Security: Config files now created with chmod 600 permissions",
