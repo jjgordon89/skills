@@ -1,0 +1,11 @@
+{
+  "owner": "wpank",
+  "slug": "batch-swap",
+  "displayName": "Uniswap Batch Swap",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1770744792552,
+    "commit": null
+  },
+  "history": []
+}
