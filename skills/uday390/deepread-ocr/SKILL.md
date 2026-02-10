@@ -1,6 +1,9 @@
 ---
 name: deepread
 description: AI-native OCR platform that turns documents into high-accuracy data in minutes. Using multi-model consensus, DeepRead achieves 95%+ accuracy and flags only uncertain fields for review—reducing manual work from 100% to 5-10%. Zero prompt engineering required.
+disable-model-invocation: true
+metadata:
+  {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
 # DeepRead - Production OCR API
