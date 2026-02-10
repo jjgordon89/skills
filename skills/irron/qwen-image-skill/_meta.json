@@ -1,0 +1,11 @@
+{
+  "owner": "irron",
+  "slug": "qwen-image-skill",
+  "displayName": "qwenz-image-gen",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770693195834,
+    "commit": null
+  },
+  "history": []
+}
