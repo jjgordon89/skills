@@ -1,0 +1,11 @@
+{
+  "owner": "taoleeh",
+  "slug": "bittensor-sdk",
+  "displayName": "Bittensor SDK",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1770647506069,
+    "commit": null
+  },
+  "history": []
+}
