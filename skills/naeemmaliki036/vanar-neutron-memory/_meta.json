@@ -3,11 +3,16 @@
   "slug": "vanar-neutron-memory",
   "displayName": "Vanar Neutron Memory",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1770677658880,
-    "commit": "https://github.com/openclaw/skills/commit/26eb4809011c406470e21d0ae86a31822f1492af"
+    "version": "1.1.0",
+    "publishedAt": 1770678548967,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1770677658880,
+      "commit": "https://github.com/openclaw/skills/commit/26eb4809011c406470e21d0ae86a31822f1492af"
+    },
     {
       "version": "1.0.3",
       "publishedAt": 1770410035468,

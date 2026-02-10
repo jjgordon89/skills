@@ -9,6 +9,14 @@ metadata: {"openclaw": {"emoji": "🧠", "requires": {"env": ["NEUTRON_API_KEY",
 
 Persistent memory storage with semantic search for AI agents. Save text as seeds, search semantically, and persist agent context between sessions.
 
+## Features
+
+- **Auto-Recall**: Automatically queries relevant memories before each AI turn and injects as context
+- **Auto-Capture**: Automatically saves conversations after each AI turn
+- **Semantic Search**: Find memories by meaning using Jina Embeddings v4 (1024 dimensions)
+- **Memory Types**: Episodic, semantic, procedural, and working memory
+- **Blockchain Attestation**: Tamper-evident memory storage with transaction hashes
+
 ## Prerequisites
 
 API credentials via environment variables:
@@ -32,6 +40,33 @@ Or stored in `~/.config/neutron/credentials.json`:
 Verify your setup:
 ```bash
 ./scripts/neutron-memory.sh test  # Test API connection
+```
+
+## Hooks (Auto-Capture & Auto-Recall)
+
+The skill includes OpenClaw hooks for automatic memory management:
+
+- `hooks/pre-tool-use.sh` - **Auto-Recall**: Queries memories before AI turn, injects relevant context
+- `hooks/post-tool-use.sh` - **Auto-Capture**: Saves conversation after AI turn
+
+### Configuration
+
+Both features are **enabled by default**. To disable:
+
+```bash
+export VANAR_AUTO_RECALL=false   # Disable auto-recall
+export VANAR_AUTO_CAPTURE=false  # Disable auto-capture
+```
+
+Or add to your credentials file:
+```json
+{
+  "api_key": "your_key_here",
+  "agent_id": "your_agent_id_here",
+  "your_agent_identifier": "your_agent_name_or_id",
+  "auto_recall": true,
+  "auto_capture": true
+}
 ```
 
 ## Scripts
