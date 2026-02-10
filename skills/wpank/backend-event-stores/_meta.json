@@ -1,0 +1,11 @@
+{
+  "owner": "wpank",
+  "slug": "backend-event-stores",
+  "displayName": "Backend Event Stores",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770725689034,
+    "commit": null
+  },
+  "history": []
+}
