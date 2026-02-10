@@ -1,0 +1,11 @@
+{
+  "owner": "aenjoy",
+  "slug": "lybic-sandbox",
+  "displayName": "A skill for controlling Lybic cloud sandboxes(computer).",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1770688555180,
+    "commit": null
+  },
+  "history": []
+}
