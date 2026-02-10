@@ -1,0 +1,11 @@
+{
+  "owner": "wpank",
+  "slug": "bridge-tokens",
+  "displayName": "Uniswap Bridge Tokens",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1770744812590,
+    "commit": null
+  },
+  "history": []
+}
