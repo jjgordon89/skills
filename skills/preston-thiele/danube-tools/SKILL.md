@@ -1,25 +1,28 @@
 ---
 name: tools-marketplace
-description: All your tools. None of your passwords. Use Danube's API tools (Gmail, GitHub, Notion, etc.) through MCP. Search for tools, check authentication, execute with parameters, and handle errors gracefully.
+description: All your tools. None of your passwords. Use Danube's 44 API and MCP services (Gmail, Slack, GitHub, Notion, etc.) through MCP. Search for tools, check authentication, execute with parameters, and handle errors gracefully.
 license: MIT
 compatibility: openclaw
 metadata:
   author: danube
-  version: "1.0.0"
+  version: "1.1.0"
   tags: [danube, mcp, apis, tools]
 ---
 
 # Using Danube Tools
 
-All your tools. None of your passwords. Connect to Gmail, GitHub, Notion, Google Calendar, and more through Danube's MCP integration.
+All your tools. None of your passwords. Connect to Gmail, Slack, GitHub, Notion, Google Calendar, and 39 more services through Danube's MCP integration.
 
 **Setup:** If not configured yet, run `bash scripts/setup.sh` to add Danube MCP to OpenClaw.
 
 ## When to Use
 
 Use Danube when users want to:
-- Send emails, create issues, manage calendars
-- Interact with cloud services (GitHub, Notion, Google Drive)
+- Send emails, Slack messages, or notifications
+- Interact with cloud services (GitHub, Notion, Google Sheets)
+- Manage calendars, forms, links, and contacts
+- Generate images, translate text, transcribe audio
+- Search the web, get weather, browse prediction markets
 - Execute any external API action
 
 **Don't use for:** Local file operations, calculations, or non-API tasks.
@@ -33,9 +36,10 @@ Every tool interaction follows this pattern:
 Use `search_tools()` with natural language:
 
 ```python
-search_tools("send email")        # → Gmail, Outlook
+search_tools("send email")          # → Gmail - Send Email, SendGrid, Resend
 search_tools("create github issue") # → GitHub - Create Issue
-search_tools("calendar events")   # → Google Calendar
+search_tools("send slack message")  # → Slack - Post Message
+search_tools("calendar events")     # → Google Calendar
 ```
 
 ### 2. Check Authentication
@@ -100,7 +104,7 @@ https://danubeai.com/dashboard → Tools → Gmail"
 
 ## Common Patterns
 
-### Email Tools
+### Email Tools (Gmail, SendGrid, Resend)
 ```
 User: "Email john@example.com about the project"
 
@@ -111,6 +115,19 @@ User: "Email john@example.com about the project"
 5. Confirm: "I'll send email to john@example.com. Proceed?"
 6. execute_tool()
 7. Report: "✅ Email sent!"
+```
+
+### Slack Tools
+```
+User: "Send a message to #general about the deployment"
+
+1. search_tools("slack send message") → Find Slack - Post Message
+2. Check Slack authentication
+3. search_tools("slack list channels") → Get channel list
+4. execute_tool() to list channels → Find #general channel ID
+5. Confirm: "I'll post to #general. Proceed?"
+6. execute_tool() to post message
+7. Report: "✅ Message posted to #general!"
 ```
 
 ### GitHub Tools
@@ -153,15 +170,31 @@ User: "What's on my calendar today?"
 - Give vague responses like "Error" or "Done"
 - Skip authentication checks
 
-## Available Tools
+## Available MCP Tools
 
 | Tool | Purpose |
 |------|---------|
-| `list_services` | Browse available services |
-| `search_tools` | Find tools by query |
-| `get_service_tools` | List tools for a service |
-| `execute_tool` | Run tool with parameters |
+| `list_services` | Browse all 44 available services |
+| `search_tools` | Find tools by natural language query |
+| `get_service_tools` | List all tools for a specific service |
+| `execute_tool` | Run a tool with parameters |
 | `search_contacts` | Find user's contacts |
+
+## Available Services (44)
+
+**Communication & Email:** Gmail, Slack, SendGrid, Resend, Loops, AgentMail
+
+**Development & DevOps:** GitHub, Supabase, DigitalOcean (Droplets, Databases, App Platform, Kubernetes, Networking, Spaces, Accounts, Insights, Marketplace), Stripe, Apify
+
+**Productivity:** Notion, Google Calendar, Google Sheets, Monday, Typeform, Bitly
+
+**AI & ML:** Replicate, Together AI, Stability AI, AssemblyAI, Remove.bg
+
+**Search & Data:** Exa, Exa Websets, Firecrawl, Serper, Context7, Microsoft Learn, AlphaVantage
+
+**Translation:** DeepL
+
+**Public Data (No Auth):** Hacker News, Open-Meteo Weather, OpenWeather, REST Countries, Polymarket, Kalshi
 
 ## Error Handling
 
@@ -191,14 +224,15 @@ Visit https://danubeai.com/dashboard → Tools → [Service] → Connect"
 Some tasks need multiple tools:
 
 ```
-User: "Email me a summary of today's GitHub commits"
+User: "Post a summary of today's GitHub commits to Slack"
 
 1. search_tools("github commits") → Get tool
 2. execute_tool() → Fetch commits
 3. Format into summary
-4. search_tools("send email") → Get Gmail
-5. execute_tool() → Send email
-6. Report: "✅ Sent summary of 5 commits!"
+4. search_tools("slack post message") → Get Slack tool
+5. search_tools("slack list channels") → Find target channel
+6. execute_tool() → Post to Slack
+7. Report: "✅ Posted summary of 5 commits to #dev-updates!"
 ```
 
 ## Communication Templates
@@ -244,6 +278,6 @@ Proceed?"
 - **Connect Services:** https://danubeai.com/dashboard → Tools
 
 **Debug:**
-- Check API key: `cat ~/.openclaw/.env | grep DANUBE`
 - Restart: `openclaw gateway restart`
 - Check errors: `openclaw doctor`
+- Verify API key at: https://danubeai.com/dashboard
