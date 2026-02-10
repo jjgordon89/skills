@@ -1,0 +1,11 @@
+{
+  "owner": "awspace",
+  "slug": "play-music",
+  "displayName": "Play Local Music",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1770649953512,
+    "commit": null
+  },
+  "history": []
+}
