@@ -3,11 +3,16 @@
   "slug": "deepresearch-conversation",
   "displayName": "Deepresearch Conversation",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1770608950040,
-    "commit": "https://github.com/openclaw/skills/commit/b0e840bd19bcedf2eb8eb7ebdd5e24d7618597bc"
+    "version": "1.0.5",
+    "publishedAt": 1770791166158,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1770608950040,
+      "commit": "https://github.com/openclaw/skills/commit/b0e840bd19bcedf2eb8eb7ebdd5e24d7618597bc"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770564541283,
