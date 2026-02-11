@@ -35,6 +35,29 @@ This creates:
 - Python venv at `~/.openclaw/rag-env`
 - ChromaDB database at `~/.openclaw/chroma-db`
 - CLI scripts in `~/.local/bin/`
+- OpenClaw plugin config in `openclaw.json`
+
+### Why Python?
+
+The core search and embedding functionality uses Python libraries:
+
+- **ChromaDB** — Vector database for semantic search
+- **sentence-transformers** — Local embedding models (no API needed)
+
+These are the gold standard for local RAG. There are no good Node.js equivalents that work fully offline.
+
+### Why a Separate Venv?
+
+The venv at `~/.openclaw/rag-env` provides:
+
+| Benefit | Why It Matters |
+|---------|----------------|
+| **Isolation** | Won't conflict with your other Python projects |
+| **No sudo** | Installs to your home directory, no root needed |
+| **Clean uninstall** | Delete the folder and it's gone |
+| **Reproducibility** | Same versions everywhere |
+
+The dependencies are heavy (~200MB total with the embedding model), but this is a one-time download that runs entirely locally.
 
 ### Basic Usage
 
@@ -174,6 +197,32 @@ recall "product info" --public-only
 recall "product info"
 ```
 
+### Moltbook Agent Setup (v0.4.0+)
+
+For the moltbook-scanner (or any sandboxed agent), use the built-in setup:
+
+```bash
+# Configure sandboxed agent with --public-only restriction
+npx jasper-recall moltbook-setup
+
+# Verify the setup is correct
+npx jasper-recall moltbook-verify
+```
+
+This creates:
+- `~/bin/recall` — Wrapper that forces `--public-only` flag
+- `shared/` — Symlink to main workspace's shared memory
+
+The sandboxed agent can then use:
+```bash
+~/bin/recall "query"  # Automatically restricted to public memories
+```
+
+**Privacy model:**
+1. Main agent tags memories as `[public]` or `[private]` in daily notes
+2. `sync-shared` extracts `[public]` content to `memory/shared/`
+3. Sandboxed agents can ONLY search the `shared` collection
+
 ### Privacy Workflow
 
 ```bash
@@ -292,6 +341,76 @@ export RECALL_SESSIONS_DIR=~/.openclaw/agents/main/sessions
 Default settings in index-digests:
 - Chunk size: 500 characters
 - Overlap: 100 characters
+
+## Security Considerations
+
+⚠️ **Review these settings before enabling in production:**
+
+### Server Binding
+
+The `serve` command defaults to `127.0.0.1` (localhost only). **Do not use `--host 0.0.0.0`** unless you explicitly intend to expose the API externally and have secured it appropriately.
+
+### Private Memory Access
+
+The server enforces `public_only=true` by default. The env var `RECALL_ALLOW_PRIVATE=true` bypasses this restriction. **Never set this on public/shared hosts** — it exposes your private memories to any client.
+
+### autoRecall Plugin
+
+When `autoRecall: true` in the OpenClaw plugin config, memories are automatically injected before every agent message. Consider:
+
+- Set `publicOnly: true` in plugin config for sandboxed agents
+- Review which collections will be searched
+- Use `minScore` to filter low-relevance injections
+
+**What's automatically skipped (no recall triggered):**
+- Heartbeat polls (`HEARTBEAT`, `Read HEARTBEAT.md`, `HEARTBEAT_OK`)
+- Messages containing `NO_REPLY`
+- Messages < 10 characters
+- Agent-to-agent messages (cron jobs, workers, spawned agents)
+- Automated reports (`📋 PR Review`, `🤖 Codex Watch`, `ANNOUNCE_*`)
+- Messages from senders starting with `agent:` or `worker-`
+
+**Safer config for untrusted contexts:**
+```json
+"jasper-recall": {
+  "enabled": true,
+  "config": {
+    "autoRecall": true,
+    "publicOnly": true,
+    "minScore": 0.5
+  }
+}
+```
+
+### Environment Variables
+
+The following env vars affect behavior — set them explicitly rather than relying on defaults:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `RECALL_WORKSPACE` | `~/.openclaw/workspace` | Memory files location |
+| `RECALL_CHROMA_DB` | `~/.openclaw/chroma-db` | Vector database path |
+| `RECALL_SESSIONS_DIR` | `~/.openclaw/agents/main/sessions` | Session logs |
+| `RECALL_ALLOW_PRIVATE` | `false` | Server private access |
+| `RECALL_PORT` | `3458` | Server port |
+| `RECALL_HOST` | `127.0.0.1` | Server bind address |
+
+### Dry-Run First
+
+Before sharing or syncing, use dry-run options to preview what will be exposed:
+
+```bash
+privacy-check --file notes.md     # Scan for sensitive data
+sync-shared --dry-run             # Preview public extraction
+digest-sessions --dry-run         # Preview session processing
+```
+
+### Sandboxed Environments
+
+For maximum isolation, run jasper-recall in a container or dedicated account:
+- Limits risk of accidental data exposure
+- Separates private memory from shared contexts
+- Recommended for multi-agent setups with untrusted agents
 
 ## Troubleshooting
 
