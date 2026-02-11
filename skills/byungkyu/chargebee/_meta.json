@@ -3,11 +3,16 @@
   "slug": "chargebee",
   "displayName": "Chargebee",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1770344288023,
-    "commit": "https://github.com/openclaw/skills/commit/b155e1a07d03986efbf3c6847f2dbffd906c2b8e"
+    "version": "1.0.5",
+    "publishedAt": 1770755745798,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1770344288023,
+      "commit": "https://github.com/openclaw/skills/commit/b155e1a07d03986efbf3c6847f2dbffd906c2b8e"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770255378660,

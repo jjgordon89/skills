@@ -6,6 +6,11 @@ compatibility: Requires network access and valid Maton API key
 metadata:
   author: maton
   version: "1.0"
+  clawdbot:
+    emoji: 🧠
+    requires:
+      env:
+        - MATON_API_KEY
 ---
 
 # Chargebee
@@ -308,9 +313,7 @@ response = requests.get(
 | 429 | Rate limited (10 req/sec per account) |
 | 4xx/5xx | Passthrough error from Chargebee API |
 
-### Troubleshooting: Invalid API Key
-
-**When you receive a "Invalid API key" error, ALWAYS follow these steps before concluding there is an issue:**
+### Troubleshooting: API Key Issues
 
 1. Check that the `MATON_API_KEY` environment variable is set:
 
@@ -329,6 +332,13 @@ print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
 ```
 
+### Troubleshooting: Invalid App Name
+
+1. Ensure your URL path starts with `chargebee`. For example:
+
+- Correct: `https://gateway.maton.ai/chargebee/api/v2/customers`
+- Incorrect: `https://gateway.maton.ai/api/v2/customers`
+
 ## Resources
 
 - [Chargebee API Overview](https://apidocs.chargebee.com/docs/api)
@@ -336,3 +346,5 @@ EOF
 - [Subscriptions](https://apidocs.chargebee.com/docs/api/subscriptions)
 - [Invoices](https://apidocs.chargebee.com/docs/api/invoices)
 - [Hosted Pages](https://apidocs.chargebee.com/docs/api/hosted_pages)
+- [Maton Community](https://discord.com/invite/dBfFAcefs2)
+- [Maton Support](mailto:support@maton.ai)
