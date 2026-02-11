@@ -1,0 +1,11 @@
+{
+  "owner": "roasbeef",
+  "slug": "lnd-macaroon-bakery",
+  "displayName": "lnd macaroon bakery",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1770777646123,
+    "commit": null
+  },
+  "history": []
+}
