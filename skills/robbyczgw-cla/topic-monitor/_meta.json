@@ -3,11 +3,16 @@
   "slug": "topic-monitor",
   "displayName": "Topic Monitor",
   "latest": {
-    "version": "1.2.1",
-    "publishedAt": 1770246251158,
-    "commit": "https://github.com/clawdbot/skills/commit/c10cfce74cab05b8084a3ee657c47aaab99c7615"
+    "version": "1.3.4",
+    "publishedAt": 1770804279316,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.1",
+      "publishedAt": 1770246251158,
+      "commit": "https://github.com/clawdbot/skills/commit/c10cfce74cab05b8084a3ee657c47aaab99c7615"
+    },
     {
       "version": "1.2.0",
       "publishedAt": 1770207604643,
