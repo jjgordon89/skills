@@ -7,7 +7,7 @@ Full schema for `emoclaw.yaml`.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `name` | string | `"my-agent"` | Agent name. Used in socket paths and log messages. |
-| `timezone_offset_hours` | float | `1` | UTC offset for time-of-day feature. CET = 1, EST = -5, etc. |
+| `timezone_offset_hours` | float | `0` | UTC offset for time-of-day feature. e.g. EST = -5, CET = 1. |
 
 ## `paths`
 

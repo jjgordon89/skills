@@ -23,5 +23,5 @@ where = ["."]
 include = ["emotion_model*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["emotion_model/tests"]
 pythonpath = ["."]

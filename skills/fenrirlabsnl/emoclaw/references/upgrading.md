@@ -1,5 +1,66 @@
 # Upgrading the Emotion Skill
 
+## v1.0.2 to v1.0.3 — Security & Transparency
+
+Addresses all five items from the OpenClaw registry security review. No breaking changes — this is a drop-in upgrade.
+
+### What Changed
+
+| Concern | Resolution |
+|---------|-----------|
+| **Undeclared credentials** | `_meta.json` now declares `ANTHROPIC_API_KEY` as optional, with description of when it's needed. |
+| **Unconstrained file reads** | `extract.py` validates every path resolves within the repo root before reading. Traversal attempts are rejected with a warning. |
+| **No secret redaction** | Extracted passages are filtered through configurable regex patterns before writing to JSONL. Covers API keys, tokens, PATs, SSH keys, and generic credentials by default. |
+| **No API consent** | `label.py` shows passage count, character total, and source file list, then requires explicit `y` before any API call. `--yes` flag available for automation. |
+| **Missing security docs** | SKILL.md now has a "Security & Privacy" section covering data flow, network access, file permissions, redaction config, and isolation recommendations. |
+
+### Upgrade Steps
+
+**1. Update the skill files**
+
+Copy the updated scripts and config into your installed skill:
+
+```bash
+# From your project root
+cp skills/emoclaw/scripts/extract.py skills/emoclaw/scripts/extract.py
+cp skills/emoclaw/scripts/label.py skills/emoclaw/scripts/label.py
+```
+
+Or re-run setup if you prefer a clean install.
+
+**2. Add redact_patterns to your emoclaw.yaml** (optional)
+
+If you have a customized `emoclaw.yaml`, add the new `bootstrap.redact_patterns` section:
+
+```yaml
+bootstrap:
+  # ... existing source_files and memory_patterns ...
+  redact_patterns:
+    - '(?i)sk-ant-[a-zA-Z0-9_-]{20,}'
+    - '(?i)(?:api[_-]?key|token|secret|password|credential)\s*[:=]\s*\S+'
+    - '(?i)bearer\s+[a-zA-Z0-9._~+/=-]+'
+    - 'ghp_[a-zA-Z0-9]{36}'
+    - '(?i)ssh-(?:rsa|ed25519)\s+\S+'
+```
+
+If you don't add these, the built-in defaults apply automatically.
+
+**3. Verify**
+
+```bash
+# Confirm path validation works
+python scripts/extract.py
+
+# Confirm consent prompt appears
+python scripts/label.py --dry-run
+```
+
+### Breaking Changes
+
+None. All changes are additive and backward-compatible.
+
+---
+
 ## v0.1 to v0.3
 
 v0.3 adds three features: **custom dimensions**, **incremental retraining**, and **self-calibration**. This is a code-only upgrade — your trained model, data, and emotional state are all forward-compatible.

@@ -33,14 +33,38 @@ def load_config() -> dict:
     return {
         "source_files": config.BOOTSTRAP_SOURCE_FILES,
         "memory_patterns": config.BOOTSTRAP_MEMORY_PATTERNS,
+        "redact_patterns": config.BOOTSTRAP_REDACT_PATTERNS,
         "data_dir": config.DATA_DIR,
         "repo_root": config.REPO_ROOT,
     }
 
 
-def extract_passages_from_file(filepath: Path, repo_root: Path) -> list[dict]:
+def _validate_path(filepath: Path, repo_root: Path) -> bool:
+    """Check that filepath resolves to within repo_root (no traversal)."""
+    try:
+        return filepath.resolve().is_relative_to(repo_root.resolve())
+    except (ValueError, OSError):
+        return False
+
+
+def _redact_text(text: str, patterns: list[str]) -> str:
+    """Replace matches of any redact pattern with [REDACTED]."""
+    for pattern in patterns:
+        text = re.sub(pattern, "[REDACTED]", text)
+    return text
+
+
+def extract_passages_from_file(
+    filepath: Path, repo_root: Path, redact_patterns: list[str] | None = None,
+) -> list[dict]:
     """Extract passages from a markdown file, split by headings."""
+    if not _validate_path(filepath, repo_root):
+        print(f"  WARNING: Skipping {filepath} — resolves outside repo root")
+        return []
+
     text = filepath.read_text(encoding="utf-8")
+    if redact_patterns:
+        text = _redact_text(text, redact_patterns)
 
     # Split by markdown headings (##, ###)
     sections = re.split(r"\n(?=#{2,3}\s)", text)
@@ -99,13 +123,17 @@ def main() -> None:
     cfg = load_config()
     repo_root = cfg["repo_root"]
     data_dir = cfg["data_dir"]
+    redact_patterns = cfg.get("redact_patterns", [])
     all_passages: list[dict] = []
+
+    if redact_patterns:
+        print(f"Redaction: {len(redact_patterns)} patterns active")
 
     # Source files (SOUL.md, IDENTITY.md, etc.)
     for filename in cfg["source_files"]:
         filepath = repo_root / filename
         if filepath.exists():
-            passages = extract_passages_from_file(filepath, repo_root)
+            passages = extract_passages_from_file(filepath, repo_root, redact_patterns)
             print(f"  {filename}: {len(passages)} passages")
             all_passages.extend(passages)
         else:
@@ -118,7 +146,7 @@ def main() -> None:
         pattern_count = 0
         for filepath_str in matched_files:
             filepath = Path(filepath_str)
-            passages = extract_passages_from_file(filepath, repo_root)
+            passages = extract_passages_from_file(filepath, repo_root, redact_patterns)
             pattern_count += len(passages)
             all_passages.extend(passages)
         print(f"  {pattern}: {len(matched_files)} files, {pattern_count} passages")

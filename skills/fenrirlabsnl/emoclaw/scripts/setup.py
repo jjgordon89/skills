@@ -45,9 +45,10 @@ def main() -> None:
     elif BUNDLED_ENGINE.exists():
         print(f"  Copying bundled engine to {PACKAGE_DIR.relative_to(REPO_ROOT)}...")
         shutil.copytree(BUNDLED_ENGINE, PACKAGE_DIR, dirs_exist_ok=True)
-        # Copy pyproject.toml to parent of emotion_model/ (the engine root)
+        # Copy pyproject.toml to repo root (above emotion_model/) — matching
+        # the engine/ layout where setuptools finds the emotion_model package.
         if BUNDLED_PYPROJECT.exists():
-            shutil.copy2(BUNDLED_PYPROJECT, PACKAGE_DIR / "pyproject.toml")
+            shutil.copy2(BUNDLED_PYPROJECT, REPO_ROOT / "pyproject.toml")
         print("  Engine installed.")
     else:
         print(
@@ -79,7 +80,7 @@ def main() -> None:
 
     print("  Installing emotion_model package (editable)...")
     result = subprocess.run(
-        [str(pip), "install", "-e", str(PACKAGE_DIR)],
+        [str(pip), "install", "-e", str(REPO_ROOT)],
         capture_output=True,
         text=True,
     )
@@ -115,6 +116,10 @@ def main() -> None:
     print("  2. Run the bootstrap pipeline:")
     print("     python skills/emoclaw/scripts/bootstrap.py")
     print("  3. Or extract + label + train manually (see SKILL.md)")
+    print("  4. Add emotional state refresh to your HEARTBEAT.md:")
+    print("     - task: Refresh emotional state")
+    print("       schedule: session_start")
+    print("       run: python skills/emoclaw/scripts/inject_state.py")
     print()
     print("To activate the venv manually:")
     print(f"  source {VENV_DIR.relative_to(REPO_ROOT)}/bin/activate")

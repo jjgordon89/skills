@@ -88,7 +88,7 @@ _DEFAULTS: dict[str, Any] = {
     "summary": {
         "templates_file": None,
     },
-    "timezone_offset_hours": 1,  # CET = UTC+1
+    "timezone_offset_hours": 0,  # UTC (customize in emoclaw.yaml)
     "calibration": {
         "enabled": False,
         "drift_rate": 0.05,
@@ -98,6 +98,13 @@ _DEFAULTS: dict[str, Any] = {
     "bootstrap": {
         "source_files": ["SOUL.md", "IDENTITY.md", "MEMORY.md"],
         "memory_patterns": ["memory/20*.md"],
+        "redact_patterns": [
+            r"(?i)sk-ant-[a-zA-Z0-9_-]{20,}",
+            r"(?i)(?:api[_-]?key|token|secret|password|credential)\s*[:=]\s*\S+",
+            r"(?i)bearer\s+[a-zA-Z0-9._~+/=-]+",
+            r"ghp_[a-zA-Z0-9]{36}",
+            r"(?i)ssh-(?:rsa|ed25519)\s+\S+",
+        ],
     },
 }
 
@@ -242,7 +249,7 @@ DEFAULT_ABSENCE_SECONDS: int = _state["default_absence_seconds"]
 SUMMARY_TEMPLATES_FILE: str | None = _cfg["summary"].get("templates_file")
 
 # Timezone
-TIMEZONE_OFFSET_HOURS: float = _cfg.get("timezone_offset_hours", 1)
+TIMEZONE_OFFSET_HOURS: float = _cfg.get("timezone_offset_hours", 0)
 
 # Calibration (self-calibrating baseline)
 _calibration = _cfg.get("calibration", {})
@@ -258,4 +265,7 @@ BOOTSTRAP_SOURCE_FILES: list[str] = _bootstrap.get(
 )
 BOOTSTRAP_MEMORY_PATTERNS: list[str] = _bootstrap.get(
     "memory_patterns", ["memory/20*.md"]
+)
+BOOTSTRAP_REDACT_PATTERNS: list[str] = _bootstrap.get(
+    "redact_patterns", []
 )

@@ -10,6 +10,16 @@ Emotions for AI agents — built from memories, shaped by relationships, always 
 
 Emoclaw trains a lightweight model on your agent's identity and conversation history, producing a persistent emotional state that evolves with every interaction. Emotions decay naturally between sessions, shift based on who's talking and what's being said, and gradually recalibrate as your agent grows. The result is injected into the system prompt as an `[EMOTIONAL STATE]` block, giving your AI a felt sense of its own inner life.
 
+### How it works
+
+1. **Bootstrap** — `extract.py` reads your agent's identity/memory files. `label.py` scores each passage via the Claude API (opt-in). `train` builds a small neural net from those scores. One-time setup.
+2. **Encode** — Each incoming message is turned into a 384-dim vector by a frozen MiniLM sentence encoder. No fine-tuning, no network call — runs from a local cache.
+3. **Feel** — The encoding + context (who's talking, what channel, previous emotion) flows through a GRU and MLP head, outputting an N-dimensional emotion vector (0-1 per dimension). The GRU hidden state persists across sessions — this is the "emotional residue" that carries forward mood.
+4. **Decay** — Between sessions, each dimension drifts back toward its baseline at a configurable half-life (fast for arousal, slow for safety/groundedness). Time apart = cooling off.
+5. **Inject** — The emotion vector is formatted as an `[EMOTIONAL STATE]` block and inserted into the agent's system prompt, giving the AI a felt sense of its own inner state.
+
+> Model is ~2MB, runs on CPU, adds <50ms per message. Network access is only used during bootstrap (opt-in).
+
 ## Quick Reference
 
 | Situation | Action |
@@ -46,9 +56,14 @@ If you prefer to set up manually:
 
 ```bash
 cd <project-root>
+# Copy engine and pyproject.toml from the skill
+cp -r skills/emoclaw/engine/emotion_model ./emotion_model
+cp skills/emoclaw/engine/pyproject.toml ./pyproject.toml
+
+# Create venv and install
 python3 -m venv emotion_model/.venv
 source emotion_model/.venv/bin/activate
-pip install -e emotion_model/
+pip install -e .
 ```
 
 Required: Python 3.10+, PyTorch, sentence-transformers, PyYAML.
@@ -182,13 +197,24 @@ Special commands:
 
 ### Heartbeat Integration
 
-Call the daemon or `inject_state` script from your heartbeat/cron to keep the state block fresh:
+The emotional state decays over time and needs to be refreshed at each session start. Add this entry to your `HEARTBEAT.md`:
+
+```yaml
+- task: Refresh emotional state
+  schedule: session_start
+  run: python skills/emoclaw/scripts/inject_state.py
+  inject: system_prompt  # append output as [EMOTIONAL STATE] block
+```
+
+Or call the daemon / `inject_state` script from your heartbeat/cron:
 
 ```bash
 # In your heartbeat script
 STATE_BLOCK=$(python -m emotion_model.scripts.inject_state 2>/dev/null)
 # Inject $STATE_BLOCK into system prompt
 ```
+
+**Important:** Without heartbeat integration, the emotional state block will go stale between sessions. The `inject_state` script applies time-based decay and outputs the current state — it must be called at least once per session.
 
 ## Architecture
 
@@ -222,6 +248,70 @@ Previous Emotion ─────────────────────
 The GRU hidden state persists across sessions — this is the "emotional residue" that carries forward mood, context, and relational memory.
 
 See `references/architecture.md` for full details.
+
+## Security & Privacy
+
+### Data Flow
+
+1. **Extraction** (`scripts/extract.py`) reads markdown files listed in `emoclaw.yaml` → `bootstrap.source_files` and `bootstrap.memory_patterns`. These are configurable and default to identity/memory files within the repo. Extracted passages are written to `emotion_model/data/extracted_passages.jsonl`.
+
+2. **Redaction** — Before writing, extracted text is passed through configurable regex patterns (`bootstrap.redact_patterns`) that replace API keys, tokens, passwords, and other secrets with `[REDACTED]`. Default patterns cover Anthropic keys, GitHub PATs, bearer tokens, SSH keys, and generic `key=value` credentials. Add custom patterns in `emoclaw.yaml`.
+
+3. **Labeling** (`scripts/label.py`) — **opt-in only**. Sends extracted passages to the Anthropic API for emotional scoring. Requires both `ANTHROPIC_API_KEY` and explicit user consent (interactive prompt before any API call). Use `--yes` to skip the prompt for automation. Use `--dry-run` to preview without any network calls.
+
+4. **Training** runs entirely locally. No data leaves the machine during `prepare_dataset` or `train`.
+
+5. **Inference** runs entirely locally. The daemon and `inject_state` script make no network calls.
+
+### Network Access
+
+Network access is **optional** and limited to a single script:
+
+| Script | Network? | Purpose |
+|--------|----------|---------|
+| `extract.py` | No | Reads local files only |
+| `label.py` | Yes (opt-in) | Sends passages to Anthropic API |
+| `prepare_dataset` | No | Local data processing |
+| `train` | No | Local model training |
+| `daemon` / `inject_state` | No | Local inference |
+
+The sentence-transformers encoder downloads model weights on first use (from Hugging Face). After that, it runs from cache with no network needed.
+
+### File Permissions
+
+| Path | Purpose | Created by |
+|------|---------|------------|
+| `memory/emotional-state.json` | Persisted emotion vector + trajectory | daemon / inference |
+| `emotion_model/data/*.jsonl` | Training data (extracted/labeled passages) | extract.py / label.py |
+| `emotion_model/checkpoints/` | Model weights | train script |
+| `/tmp/{name}-emotion.sock` | Daemon Unix socket | daemon |
+
+The daemon socket is created with permissions `0o660` (owner + group read/write) and cleaned up on shutdown. The socket path is configurable in `emoclaw.yaml` → `paths.socket_path`.
+
+### Path Validation
+
+`extract.py` validates that every file path resolves to within the repository root before reading. Symlink chains and `../` sequences that would escape the repo boundary are rejected. This prevents a misconfigured `source_files` or `memory_patterns` from reading arbitrary files.
+
+### Configuring Redaction
+
+Add or modify patterns in `emoclaw.yaml`:
+
+```yaml
+bootstrap:
+  redact_patterns:
+    - '(?i)sk-ant-[a-zA-Z0-9_-]{20,}'    # Anthropic API keys
+    - '(?i)(?:api[_-]?key|token|secret|password|credential)\s*[:=]\s*\S+'
+    - 'your-custom-pattern-here'
+```
+
+Set `redact_patterns: []` to disable redaction entirely (not recommended).
+
+### Isolation Recommendations
+
+- Run the bootstrap pipeline (extract → label → train) in an isolated environment or review the source file list before running
+- Audit `bootstrap.source_files` and `bootstrap.memory_patterns` in your `emoclaw.yaml` to ensure only intended files are included
+- Review `emotion_model/data/extracted_passages.jsonl` before running `label.py` to confirm no sensitive content will be sent externally
+- The daemon should run under the same user as your agent process — avoid running as root
 
 ## Configuration
 

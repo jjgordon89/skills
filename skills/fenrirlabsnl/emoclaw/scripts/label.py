@@ -168,6 +168,10 @@ def main() -> None:
         help="Show the prompt without calling the API",
     )
     parser.add_argument(
+        "--yes", "-y", action="store_true",
+        help="Skip the consent prompt (for automation)",
+    )
+    parser.add_argument(
         "--model", type=str, default="claude-sonnet-4-20250514",
         help="Claude model to use for labeling",
     )
@@ -216,6 +220,29 @@ def main() -> None:
                   f"Heading: {passages[0].get('heading', '')}\n\n---\n"
                   f"{passages[0]['text'][:400]}\n---")
         return
+
+    # --- Consent prompt ---
+    total_chars = sum(len(p["text"]) for p in passages)
+    source_files = sorted(set(p.get("source_file", "unknown") for p in passages))
+
+    print(f"\n{'=' * 60}")
+    print(f"  Passages to label:  {len(passages)}")
+    print(f"  Total characters:   {total_chars:,}")
+    print(f"  Source files ({len(source_files)}):")
+    for sf in source_files:
+        print(f"    - {sf}")
+    print(f"\n  These passages will be sent to the Anthropic API")
+    print(f"  for emotional labeling (model: {args.model}).")
+    print(f"{'=' * 60}")
+
+    if not args.yes:
+        try:
+            answer = input("\nContinue? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            answer = ""
+        if answer not in ("y", "yes"):
+            print("Aborted.")
+            sys.exit(0)
 
     # Check for API key
     api_key = os.environ.get("ANTHROPIC_API_KEY")

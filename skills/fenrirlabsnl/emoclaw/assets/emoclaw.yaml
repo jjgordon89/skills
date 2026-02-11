@@ -192,3 +192,11 @@ bootstrap:
     - MEMORY.md
   memory_patterns:
     - "memory/20*.md"
+  # Regex patterns to redact from extracted passages before writing to JSONL.
+  # Matched content is replaced with [REDACTED].
+  redact_patterns:
+    - '(?i)sk-ant-[a-zA-Z0-9_-]{20,}'          # Anthropic API keys
+    - '(?i)(?:api[_-]?key|token|secret|password|credential)\s*[:=]\s*\S+'
+    - '(?i)bearer\s+[a-zA-Z0-9._~+/=-]+'       # Bearer tokens
+    - 'ghp_[a-zA-Z0-9]{36}'                     # GitHub personal access tokens
+    - '(?i)ssh-(?:rsa|ed25519)\s+\S+'           # SSH keys
