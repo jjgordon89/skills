@@ -1,0 +1,11 @@
+{
+  "owner": "cinience",
+  "slug": "alicloud-network-dns-cli",
+  "displayName": "Alicloud Network Dns Cli",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1770768560045,
+    "commit": null
+  },
+  "history": []
+}
