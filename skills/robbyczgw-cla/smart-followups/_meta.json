@@ -1,13 +1,18 @@
 {
   "owner": "robbyczgw-cla",
   "slug": "smart-followups",
-  "displayName": "Smart Followups",
+  "displayName": "Smart Follow-ups",
   "latest": {
-    "version": "2.1.2",
-    "publishedAt": 1770288425097,
-    "commit": "https://github.com/clawdbot/skills/commit/bca2f8b38622a8587fe9f1056f4f44d4d24ee699"
+    "version": "2.1.5",
+    "publishedAt": 1770802236955,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.1.2",
+      "publishedAt": 1770288425097,
+      "commit": "https://github.com/clawdbot/skills/commit/bca2f8b38622a8587fe9f1056f4f44d4d24ee699"
+    },
     {
       "version": "2.1.1",
       "publishedAt": 1770246201373,
