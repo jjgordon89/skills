@@ -3,11 +3,16 @@
   "slug": "openclaw-godot-skill",
   "displayName": "Godot Skill",
   "latest": {
-    "version": "1.2.2",
-    "publishedAt": 1770603056262,
-    "commit": "https://github.com/openclaw/skills/commit/d0155aa5200bd16e4728e825d37493ce31f2348e"
+    "version": "1.2.4",
+    "publishedAt": 1770794823848,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.2",
+      "publishedAt": 1770603056262,
+      "commit": "https://github.com/openclaw/skills/commit/d0155aa5200bd16e4728e825d37493ce31f2348e"
+    },
     {
       "version": "1.2.1",
       "publishedAt": 1770554686143,
