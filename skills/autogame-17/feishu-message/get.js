@@ -47,6 +47,8 @@ async function fetchMessage(messageId) {
     const json = await res.json();
     
     if (json.code !== 0) {
+        // If message not found, maybe it's a merge forward item?
+        // But we can't fetch merge forward items directly via this API usually.
         throw new Error(`API Error ${json.code}: ${json.msg}`);
     }
     return json.data;
@@ -60,25 +62,32 @@ function parseContent(msgBody) {
             // Post type
             return `[Post] ${content.title}\n` + content.content.map(p => p.map(e => e.text).join('')).join('\n');
         }
+        if (content.image_key) return `[Image key=${content.image_key}]`;
         return JSON.stringify(content);
     } catch (e) {
         return msgBody.content;
     }
 }
 
-async function formatMessage(msg, depth = 0) {
+async function formatMessage(msg, depth = 0, recursive = false) {
     const indent = '  '.repeat(depth);
     let output = '';
     
-    const sender = msg.sender.sender_type === 'user' ? (msg.sender.id || 'User') : 'App';
+    const sender = msg.sender && msg.sender.sender_type === 'user' ? (msg.sender.id || 'User') : 'App';
     const time = new Date(parseInt(msg.create_time)).toISOString().replace('T', ' ').substring(0, 19);
     
     if (msg.msg_type === 'merge_forward') {
         output += `${indent}📂 [Merged Forward] (${time})\n`;
-        // Feishu returns items in data.items for merge_forward type specifically
+        // If recursive is true, we should try to fetch the merged content if it's not present
+        // But standard message API doesn't return merged content unless specific params are used?
+        // Actually for merge_forward, the content is usually just a placeholder or list of IDs.
+        // We might need a separate API call to get merged content? 
+        // For now, let's just print what we have.
+        
+        // If items are present (e.g. from a specialized fetch), print them
         if (msg.items && Array.isArray(msg.items)) {
             for (const item of msg.items) {
-                output += await formatMessage(item, depth + 1);
+                output += await formatMessage(item, depth + 1, recursive);
             }
         } else {
              output += `${indent}  (No items found or not expanded)\n`;
@@ -92,44 +101,32 @@ async function formatMessage(msg, depth = 0) {
 }
 
 program
-    .argument('<message_id>', 'Message ID to read')
+    .argument('[message_id]', 'Message ID to read (positional)') // Make optional to allow --message-id usage
+    .option('-m, --message-id <id>', 'Message ID to read (alternative)')
     .option('-r, --raw', 'Output raw JSON')
-    .action(async (messageId, options) => {
+    .option('-R, --recursive', 'Recursively fetch merged messages (dummy for now)')
+    .action(async (posMessageId, options) => {
         try {
+            const messageId = posMessageId || options.messageId;
+            if (!messageId) {
+                console.error("Error: Message ID is required (argument or --message-id)");
+                process.exit(1);
+            }
+
             const data = await fetchMessage(messageId);
-            
-            // data.items is present if it's a merge_forward and we fetched it by ID
-            // If data.items exists, we treat it as a collection
             
             if (options.raw) {
                 console.log(JSON.stringify(data, null, 2));
             } else {
-                // If the root message is merge_forward, data.items contains the children
-                // data.items[0] is the root container usually? No, items array contains the children.
-                
                 if (data.items && data.items.length > 0) {
-                    console.log(`📦 Merged Message (${data.items.length} items):\n`);
+                    console.log(`📦 Merged Message Container (${data.items.length} items):\n`);
                     for (const item of data.items) {
-                        // The items list includes the forwarded messages.
-                        // Sometimes the first item is the container?
-                        // Let's just print all items.
-                        if (item.message_id === messageId) continue; // Skip self if present
-                        console.log(await formatMessage(item));
+                        if (item.message_id === messageId && data.items.length > 1) continue; 
+                        console.log(await formatMessage(item, 0, options.recursive));
                     }
                 } else {
-                    // Single message? Or items inside items[0]?
-                    // Based on debug output: data.items contains the list.
-                    // If it's a single message (not merge), data might not have items or have items=[msg]
-                    if (data.items) {
-                         for (const item of data.items) console.log(await formatMessage(item));
-                    } else {
-                        // Fallback for single message structure?
-                        // The get-message-by-id endpoint usually returns { items: [msg] } if queried properly?
-                        // Actually regular get returns { items: [msg] } in some versions or just data=msg?
-                        // The debug output showed data: { items: [...] } for the merge message ID.
-                        // Let's assume data.items is the standard list container.
-                        console.log(await formatMessage(data.items ? data.items[0] : data));
-                    }
+                    // Single message
+                    console.log(await formatMessage(data.items ? data.items[0] : data, 0, options.recursive));
                 }
             }
         } catch (e) {

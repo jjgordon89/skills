@@ -61,12 +61,13 @@ program
     .argument('<name>', 'Name of the group chat')
     .argument('<users...>', 'List of user OpenIDs (space separated)')
     .option('-d, --desc <description>', 'Group description')
+    .option('--content <description>', 'Group description (alias)')
     .action(async (name, users, options) => {
         if (!process.env.FEISHU_APP_ID || !process.env.FEISHU_APP_SECRET) {
             console.error('Error: FEISHU_APP_ID or FEISHU_APP_SECRET not set in env');
             process.exit(1);
         }
-        await createGroupChat(name, users, options.desc);
+        await createGroupChat(name, users, options.desc || options.content);
     });
 
 program.parse(process.argv);
