@@ -3,9 +3,15 @@
   "slug": "ghost-cms",
   "displayName": "Ghost CMS",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1770784752793,
-    "commit": "https://github.com/openclaw/skills/commit/7f5bdc0b692bb4919a498e027656f570bb313c02"
+    "version": "0.1.5",
+    "publishedAt": 1770829186604,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1770784752793,
+      "commit": "https://github.com/openclaw/skills/commit/7f5bdc0b692bb4919a498e027656f570bb313c02"
+    }
+  ]
 }
