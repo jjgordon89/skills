@@ -74,6 +74,28 @@ function list() {
     })));
 }
 
+function search(query) {
+    const db = loadDB();
+    const results = Object.values(db).filter(u => {
+        const nameMatch = u.name && u.name.toLowerCase().includes(query.toLowerCase());
+        const aliasMatch = u.alias && u.alias.toLowerCase().includes(query.toLowerCase());
+        return nameMatch || aliasMatch;
+    });
+
+    if (results.length === 0) {
+        console.log(`No users found matching "${query}".`);
+        console.log(`Try running: node skills/identity-manager/sync.js`);
+        return;
+    }
+
+    console.table(results.map(u => ({
+        Name: u.name,
+        Role: u.role,
+        Alias: u.alias,
+        ID: u.id
+    })));
+}
+
 // --- CLI Entry ---
 const cmd = process.argv[2];
 const args = process.argv.slice(3);
@@ -92,6 +114,13 @@ switch (cmd) {
     case 'list':
         list();
         break;
+    case 'search':
+        if (!args[0]) {
+            console.error("Usage: search <query>");
+            process.exit(1);
+        }
+        search(args[0]);
+        break;
     default:
-        console.log("Commands: lookup <id>, register --id ... --name ..., list");
+        console.log("Commands: lookup <id>, search <name>, register --id ... --name ..., list");
 }
