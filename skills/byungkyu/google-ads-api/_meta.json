@@ -3,11 +3,16 @@
   "slug": "google-ads-api",
   "displayName": "Google Ads",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1770344217197,
-    "commit": "https://github.com/openclaw/skills/commit/870acd2104d90d4d913419a77b5bd8149ace1056"
+    "version": "1.0.5",
+    "publishedAt": 1770755771084,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1770344217197,
+      "commit": "https://github.com/openclaw/skills/commit/870acd2104d90d4d913419a77b5bd8149ace1056"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770255453028,
