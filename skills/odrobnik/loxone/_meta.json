@@ -1,11 +1,17 @@
 {
   "owner": "odrobnik",
   "slug": "loxone",
-  "displayName": "Loxone Smart Home",
+  "displayName": "Loxone",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1770821604087,
-    "commit": "https://github.com/openclaw/skills/commit/022855ef21fbedb49033df0cdbf7a7d7180850c9"
+    "version": "1.1.0",
+    "publishedAt": 1770874929723,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1770821604087,
+      "commit": "https://github.com/openclaw/skills/commit/022855ef21fbedb49033df0cdbf7a7d7180850c9"
+    }
+  ]
 }

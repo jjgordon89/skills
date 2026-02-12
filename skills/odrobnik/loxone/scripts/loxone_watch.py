@@ -51,23 +51,27 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.request import urlopen, Request
 import base64
+
+from loxone_client import LoxoneClient
 
 # Add scripts dir to path
 sys.path.insert(0, str(Path(__file__).parent))
 from loxone_ws import LoxoneWS
+from loxone_config import load_config_file
 
 
 def load_config():
-    """Load Loxone connection config."""
+    """Load Loxone connection config (supports Cloud DNS shorthand)."""
     config_path = Path(__file__).parent.parent / "config.json"
-    with open(config_path) as f:
-        return json.load(f)
+    return load_config_file(str(config_path))
 
 
-def download_structure(host: str, username: str, password: str) -> str:
-    """Download LoxAPP3.json from Miniserver, return path."""
+def download_structure(host: str, username: str, password: str, *, use_https: bool) -> str:
+    """Download LoxAPP3.json from Miniserver, return path.
+
+    Uses the same transport settings as the client (HTTPS by default).
+    """
     cache = Path(__file__).parent.parent / ".cache"
     cache.mkdir(exist_ok=True)
     out = cache / "LoxAPP3.json"
@@ -76,13 +80,8 @@ def download_structure(host: str, username: str, password: str) -> str:
     if out.exists() and (time.time() - out.stat().st_mtime) < 3600:
         return str(out)
 
-    auth = base64.b64encode(f"{username}:{password}".encode()).decode()
-    req = Request(
-        f"http://{host}/data/LoxAPP3.json",
-        headers={"Authorization": f"Basic {auth}"},
-    )
-    data = urlopen(req, timeout=10).read()
-    out.write_bytes(data)
+    client = LoxoneClient(host, username, password, use_https=use_https)
+    client.fetch_structure(cache_file=str(out))
     return str(out)
 
 
@@ -179,11 +178,13 @@ async def run(args):
     user = config["username"]
     passwd = config["password"]
 
+    use_https = bool(config.get("use_https", True))
+
     # Download/cache structure
-    structure_path = download_structure(host, user, passwd)
+    structure_path = download_structure(host, user, passwd, use_https=use_https)
 
     # Create WebSocket client
-    ws = LoxoneWS(host, user, passwd)
+    ws = LoxoneWS(host, user, passwd, use_https=use_https)
     ws.load_structure(structure_path)
 
     # Apply filters

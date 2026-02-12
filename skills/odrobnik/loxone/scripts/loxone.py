@@ -8,6 +8,7 @@ import json
 import argparse
 from pathlib import Path
 from loxone_client import LoxoneClient
+from loxone_config import load_config_file
 
 
 # Safe rooms for testing control commands
@@ -20,9 +21,16 @@ def is_safe_room(room_name: str) -> bool:
 
 
 def load_config():
-    """Load configuration from config.json"""
+    """Load configuration from config.json.
+
+    Supports Cloud DNS shorthand hosts like:
+      - dns.loxonecloud.com/<SERIAL>
+      - <SERIAL>
+
+    These are resolved at runtime to the certificate-matching dyndns hostname.
+    """
     config_path = Path(__file__).parent.parent / "config.json"
-    
+
     if not config_path.exists():
         print(f"Error: Configuration file not found: {config_path}")
         print("\nCreate a config.json file with the following structure:")
@@ -30,13 +38,19 @@ def load_config():
             "host": "192.168.0.222",
             "username": "your_username",
             "password": "your_password",
-            "use_https": False
+            "use_https": True
+        }, indent=2))
+        print("\nOr use the Cloud DNS tunnel without hard-coding an IP:")
+        print(json.dumps({
+            "host": "dns.loxonecloud.com/<SERIAL>",
+            "username": "your_username",
+            "password": "your_password",
+            "use_https": True
         }, indent=2))
         sys.exit(1)
-    
+
     try:
-        with open(config_path) as f:
-            return json.load(f)
+        return load_config_file(str(config_path))
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON in config file: {config_path}")
         sys.exit(1)

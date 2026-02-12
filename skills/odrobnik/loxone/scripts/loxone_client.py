@@ -7,6 +7,9 @@ Supports HTTP Basic Authentication and structure file parsing
 import requests
 import json
 import base64
+import os
+
+from loxone_config import resolve_config
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
@@ -14,7 +17,7 @@ from pathlib import Path
 class LoxoneClient:
     """Client for interacting with Loxone Miniserver"""
     
-    def __init__(self, host: str, username: str, password: str, use_https: bool = False):
+    def __init__(self, host: str, username: str, password: str, use_https: bool = True):
         """
         Initialize Loxone client
         
@@ -22,11 +25,12 @@ class LoxoneClient:
             host: IP address or hostname of Miniserver
             username: Loxone username
             password: Loxone password
-            use_https: Use HTTPS instead of HTTP (default: False)
+            use_https: Use HTTPS instead of HTTP (default: True)
         """
         self.host = host
         self.username = username
         self.password = password
+        self.use_https = use_https
         self.protocol = "https" if use_https else "http"
         self.base_url = f"{self.protocol}://{self.host}"
         self.structure = None
@@ -55,7 +59,7 @@ class LoxoneClient:
         }
         
         try:
-            response = requests.request(method, url, headers=headers, timeout=10, verify=False)
+            response = requests.request(method, url, headers=headers, timeout=10, verify=self.use_https)
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
@@ -376,13 +380,13 @@ class LoxoneClient:
         """
         try:
             with open(config_path, 'r') as f:
-                config = json.load(f)
+                config = resolve_config(json.load(f))
             
             return cls(
                 host=config['host'],
                 username=config['username'],
                 password=config['password'],
-                use_https=config.get('use_https', False)
+                use_https=config.get('use_https', True),
             )
         except FileNotFoundError:
             raise Exception(f"Config file not found: {config_path}")

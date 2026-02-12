@@ -8,6 +8,7 @@ import hmac
 import hashlib
 import json
 import urllib.parse
+import os
 from typing import Dict, Tuple
 import requests
 import uuid
@@ -16,7 +17,7 @@ import uuid
 class LoxoneAuth:
     """Handles Loxone token-based authentication"""
     
-    def __init__(self, host: str, username: str, password: str, use_https: bool = False):
+    def __init__(self, host: str, username: str, password: str, use_https: bool = True):
         """
         Initialize Loxone authentication
         
@@ -24,11 +25,12 @@ class LoxoneAuth:
             host: IP address or hostname of Miniserver
             username: Loxone username
             password: Loxone password
-            use_https: Use HTTPS instead of HTTP (default: False)
+            use_https: Use HTTPS instead of HTTP (default: True)
         """
         self.host = host
         self.username = username
         self.password = password
+        self.use_https = use_https
         self.protocol = "https" if use_https else "http"
         self.base_url = f"{self.protocol}://{self.host}"
         
@@ -51,7 +53,7 @@ class LoxoneAuth:
         url = f"{self.base_url}{endpoint}"
         
         try:
-            response = requests.get(url, timeout=10, verify=False)
+            response = requests.get(url, timeout=10, verify=self.use_https)
             response.raise_for_status()
             return response
         except Exception as e:
@@ -191,7 +193,8 @@ class LoxoneAuth:
         if not self.token:
             raise Exception("No token available. Run authenticate() first.")
         
-        return f"ws://{self.host}/ws/rfc6455?token={self.token}"
+        scheme = "wss" if self.protocol == "https" else "ws"
+        return f"{scheme}://{self.host}/ws/rfc6455?token={self.token}"
 
 
 def main():
@@ -200,15 +203,17 @@ def main():
     from pathlib import Path
     
     # Load config
+    from loxone_config import load_config_file
+
     config_path = Path(__file__).parent.parent / "config.json"
-    with open(config_path) as f:
-        config = json.load(f)
+    config = load_config_file(str(config_path))
     
     # Create auth client
     auth = LoxoneAuth(
         host=config['host'],
         username=config['username'],
-        password=config['password']
+        password=config['password'],
+        use_https=config.get('use_https', True),
     )
     
     # Authenticate
