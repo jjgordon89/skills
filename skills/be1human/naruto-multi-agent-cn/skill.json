@@ -1,6 +1,6 @@
 {
   "name": "naruto-multi-agent-cn",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "Multi-agent dispatcher: turns your main agent into a pure coordinator that delegates ALL tasks to 5 persistent sub-agents via sessions_spawn. Features round-robin scheduling, speak-before-spawn protocol, and fixed sessionKeys for session reuse. Themed as Naruto's Tsunade assigning S/A/B/C/D-ranked missions to shinobi (Chinese version).",
   "author": "cloudboy",
   "homepage": "https://clawhub.ai",

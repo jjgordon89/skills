@@ -3,11 +3,16 @@
   "slug": "naruto-multi-agent-cn",
   "displayName": "Naruto Multi-Agent CN",
   "latest": {
-    "version": "1.2.0",
-    "publishedAt": 1770725937970,
-    "commit": "https://github.com/openclaw/skills/commit/c7fc3c9f1b7f5cae39d6446d45e148160c9901d8"
+    "version": "1.5.0",
+    "publishedAt": 1770918519312,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.0",
+      "publishedAt": 1770725937970,
+      "commit": "https://github.com/openclaw/skills/commit/c7fc3c9f1b7f5cae39d6446d45e148160c9901d8"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1770724742643,
