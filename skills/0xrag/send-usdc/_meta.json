@@ -1,0 +1,11 @@
+{
+  "owner": "0xrag",
+  "slug": "send-usdc",
+  "displayName": "Send Usdc",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1770843431215,
+    "commit": null
+  },
+  "history": []
+}
