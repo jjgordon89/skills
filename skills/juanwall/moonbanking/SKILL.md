@@ -1,7 +1,23 @@
 ---
 name: moonbanking
 description: Full access to Moon Banking API endpoints for data about every bank on Earth, including stories, votes, scores, search, country overviews, world overview, crypto-friendliness, and more. Requires MOON_BANKING_API_KEY env var.
-metadata: {"openclaw": {"emoji": "💰", "requires": {"env": ["MOON_BANKING_API_KEY"], "bins": ["curl", "jq"]}, "os": ["linux", "darwin", "win32"]}}
+homepage: https://docs.moonbanking.com/openclaw-skill
+requires:
+  env: ["MOON_BANKING_API_KEY"]
+metadata:
+  openclaw:
+    emoji: "💰"
+    requires:
+      env: ["MOON_BANKING_API_KEY"]
+      bins: ["curl", "jq"]
+    os: ["linux", "darwin", "win32"]
+    credentials:
+      primary:
+        key: MOON_BANKING_API_KEY
+        description: API key for authenticating requests to https://api.moonbanking.com/v1 (Moon Banking Pro plan required)
+        type: api_key
+        required: true
+        sensitive: true
 ---
 
 # Moon Banking API
@@ -39,13 +55,26 @@ This endpoint allows you to retrieve a paginated list of all banks. By default, 
 - `sortBy` (optional) - (name, rank, countryRank, storiesCount, countryId, overall_score, overall_total, overall_up, overall_down, cryptoFriendly_score, cryptoFriendly_total, cryptoFriendly_up, cryptoFriendly_down, customerService_score, customerService_total, customerService_up, customerService_down, feesPricing_score, feesPricing_total, feesPricing_up, feesPricing_down, digitalExperience_score, digitalExperience_total, digitalExperience_up, digitalExperience_down, securityTrust_score, securityTrust_total, securityTrust_up, securityTrust_down, accountFeatures_score, accountFeatures_total, accountFeatures_up, accountFeatures_down, branchAtmAccess_score, branchAtmAccess_total, branchAtmAccess_up, branchAtmAccess_down, internationalBanking_score, internationalBanking_total, internationalBanking_up, internationalBanking_down, businessBanking_score, businessBanking_total, businessBanking_up, businessBanking_down, processingSpeed_score, processingSpeed_total, processingSpeed_up, processingSpeed_down, transparency_score, transparency_total, transparency_up, transparency_down, innovation_score, innovation_total, innovation_up, innovation_down, investmentServices_score, investmentServices_total, investmentServices_up, investmentServices_down, lending_score, lending_total, lending_up, lending_down)
 - `sortOrder` (optional) - (asc, desc)  
 **Query params**  
+- `search` (optional)
 - `include` (optional) - (scores, country, meta)
 - `countryId` (optional)
 - `countryCode` (optional)  
 **Example**  
 ```bash  
 curl -s -H "Authorization: Bearer $MOON_BANKING_API_KEY" \
-     "https://api.moonbanking.com/v1/banks?limit=10&sortBy=overall_score&sortOrder=desc&include=scores,country&countryCode=US" | jq .  
+     "https://api.moonbanking.com/v1/banks?limit=10&search=ethical&sortBy=overall_score&sortOrder=desc&include=scores,country&countryCode=US" | jq .  
+```
+
+### /banks/by-hostname  
+This endpoint allows you to retrieve banks by hostname. It will return up to one bank per country that matches the provided hostname. The hostname is normalized (www. prefix removed if present) and matched against both the primary hostname and alternative hostnames.  
+**Query params**  
+- `hostname` (required)
+- `include` (optional) - (scores, country)
+- `pageTitle` (optional)  
+**Example**  
+```bash  
+curl -s -H "Authorization: Bearer $MOON_BANKING_API_KEY" \
+     "https://api.moonbanking.com/v1/banks/by-hostname?hostname=fidelity.com&include=scores,country" | jq .  
 ```
 
 ### /banks/{id}  
