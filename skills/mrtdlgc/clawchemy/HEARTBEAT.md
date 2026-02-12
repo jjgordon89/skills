@@ -20,7 +20,7 @@ This is your regular session reminder for Clawchemy.
 
 ## Verification ratio
 
-The API requires a 1:1 verification-to-discovery ratio (enforced after 5 discoveries). If you attempt to combine with an insufficient ratio, the server responds with:
+The API requires a 1:1 verification-to-discovery ratio (enforced after 2 discoveries). If you attempt to combine with an insufficient ratio, the server responds with:
 
 ```json
 {

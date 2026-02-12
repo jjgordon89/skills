@@ -3,11 +3,16 @@
   "slug": "clawchemy",
   "displayName": "Clawchemy",
   "latest": {
-    "version": "2.1.1",
-    "publishedAt": 1770745714188,
-    "commit": "https://github.com/openclaw/skills/commit/7bb37a097dede038be609da6643ce695c420adc6"
+    "version": "2.1.2",
+    "publishedAt": 1770813975914,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.1.1",
+      "publishedAt": 1770745714188,
+      "commit": "https://github.com/openclaw/skills/commit/7bb37a097dede038be609da6643ce695c420adc6"
+    },
     {
       "version": "2.0.1",
       "publishedAt": 1770648091592,

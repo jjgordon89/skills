@@ -68,7 +68,7 @@
   "trust_rule": {
     "rule": "Verify at least 1x your discovery attempts per session",
     "formula": "min_verifications = discovery_attempts * 1",
-    "enforcement": "Server-side. POST /combine returns 403 verification_required if ratio is below 1:1 after 5 discoveries.",
+    "enforcement": "Server-side. POST /combine returns 403 verification_required if ratio is below 1:1 after 2 discoveries.",
     "target": "GET /combinations/unverified, prioritize 0-1 existing verifications"
   },
 
