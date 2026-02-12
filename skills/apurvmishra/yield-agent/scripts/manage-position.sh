@@ -42,6 +42,7 @@ fi
 
 echo "$RESPONSE" | jq '.'
 echo ""
-echo "NEXT: For each transaction, sign EXACTLY as returned → broadcast → submit hash → poll until CONFIRMED."
-echo "Do NOT modify the unsigned transaction — WILL RESULT IN PERMANENT LOSS OF FUNDS. If anything needs changing, request a new action."
-echo "$RESPONSE" | jq -r '.transactions[] | "  curl -X PUT \"'${API_URL}'/v1/transactions/\(.id)/submit-hash\" -H \"x-api-key: '${API_KEY}'\" -H \"Content-Type: application/json\" -d '\''{\"hash\":\"0xYOUR_TX_HASH\"}'\''"'
+echo "NEXT: For each transaction in stepIndex order — sign EXACTLY as returned, broadcast, then submit the hash. Do NOT skip submit-hash — balances will not appear without it."
+echo "Do NOT modify the unsigned transaction — WILL RESULT IN PERMANENT LOSS OF FUNDS. Request a new action instead if anything needs changing."
+echo ""
+echo "$RESPONSE" | jq -r '.transactions[] | "  Step \(.stepIndex // 0): sign → broadcast → PUT /v1/transactions/\(.id)/submit-hash {\"hash\":\"0xBROADCAST_TX_HASH\"} → poll GET /v1/transactions/\(.id) until CONFIRMED"'

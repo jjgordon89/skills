@@ -2,7 +2,7 @@
 name: yield-agent
 displayName: YieldAgent
 description: On-chain yield discovery, transaction building, and portfolio management via the Yield.xyz API. Use when the user wants to find yields, stake, lend, deposit into vaults, check balances, claim rewards, exit positions, compare APYs, or manage any on-chain yield across 80+ networks.
-version: 0.1.4
+version: 0.1.5
 author: yield-xyz
 homepage: https://yield.xyz
 metadata: {"openclaw":{"emoji":"📈","requires":{"bins":["curl","jq"]}}}
@@ -105,13 +105,13 @@ Access the complete on-chain yield landscape through Yield.xyz's unified API. Di
 
 > **DO NOT MODIFY `unsignedTransaction` returned by the API UNDER ANY CIRCUMSTANCES.**
 >
-> This includes changing: `value`, `data`, `to`, `gas`, `nonce`, or ANY field.
+> Do not change, reformat, or "fix" any part of it — not addresses, amounts, fees, encoding, or any other field, on any chain.
 >
 > **If the amount is wrong:** Request a NEW action from the API with the correct amount.
 > **If gas is insufficient:** Ask the user to add funds, then request a NEW action.
 > **If anything looks wrong:** STOP. Always request a new action with corrected arguments. Never attempt to "fix" an existing transaction.
 >
-> Modifying transaction calldata corrupts encoded parameters (addresses, amounts) and WILL RESULT IN PERMANENT LOSS OF FUNDS to unrecoverable addresses.
+> Modifying `unsignedTransaction` WILL RESULT IN PERMANENT LOSS OF FUNDS.
 
 ---
 

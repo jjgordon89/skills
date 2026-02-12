@@ -15,7 +15,7 @@ The agent inspects the yield schema, builds unsigned transactions, and hands the
 
 For each transaction in the action response:
 
-1. Pass `unsignedTransaction` to the wallet skill — do not modify it
+1. Pass `unsignedTransaction` to the wallet skill — do NOT modify any field. Modifying the transaction WILL RESULT IN PERMANENT LOSS OF FUNDS.
 2. Wallet signs and broadcasts
 3. Submit the hash: `PUT /v1/transactions/{txId}/submit-hash` with `{ "hash": "0x..." }`
 4. Poll `GET /v1/transactions/{txId}` until `CONFIRMED` or `FAILED`

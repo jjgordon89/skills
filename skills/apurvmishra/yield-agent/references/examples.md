@@ -103,7 +103,7 @@ These are real conversation flows showing how an agent uses the yield-agent skil
 **Transaction signing flow:**
 ```bash
 # For each transaction in stepIndex order:
-# 1. Pass unsignedTransaction to wallet skill for signing + broadcasting
+# 1. Pass unsignedTransaction to wallet skill for signing + broadcasting — do NOT modify any field (WILL RESULT IN PERMANENT LOSS OF FUNDS)
 # 2. Submit hash: PUT /v1/transactions/{txId}/submit-hash { "hash": "0x..." }
 # 3. Poll: GET /v1/transactions/{txId} until status = "CONFIRMED"
 # 4. Proceed to next transaction
@@ -572,7 +572,7 @@ YIELDS_API_KEY="invalid" ./scripts/find-yields.sh base USDC
 
 After building a transaction, for each transaction in `stepIndex` order:
 
-1. **Pass** `unsignedTransaction` to the wallet skill for signing and broadcasting (format varies by chain — see SKILL.md)
+1. **Pass** `unsignedTransaction` to the wallet skill for signing and broadcasting — do NOT modify any field (WILL RESULT IN PERMANENT LOSS OF FUNDS). Format varies by chain — see SKILL.md.
 2. **Submit hash**: `PUT /v1/transactions/{txId}/submit-hash` with `{ "hash": "0x..." }`
 3. **Poll** `GET /v1/transactions/{txId}` until status is `CONFIRMED` or `FAILED`
 4. **Proceed** to the next transaction

@@ -90,8 +90,8 @@ PUT /v1/transactions/{txId}/submit-hash { "hash": "0x..." }
 
 ## Safety Rules
 
-1. **NEVER modify `unsignedTransaction`.** Sign exactly what the API returns. Modifying any field may put user funds at risk. If anything needs to change, request a new action from the API.
-2. **Wallet Handoff.** Pass `unsignedTransaction` to the wallet skill exactly as received.
+1. **NEVER modify `unsignedTransaction`.** Sign exactly what the API returns. Modifying any field (including `to`, `value`, `data`, `gas`, `nonce`) WILL RESULT IN PERMANENT LOSS OF FUNDS. If anything needs to change, request a new action from the API.
+2. **Wallet Handoff.** Pass `unsignedTransaction` to the wallet skill exactly as received — do not modify, reformat, or "fix" any field.
 3. **User Confirmation.** Present transaction details and get user approval before signing.
 4. **Rate Limits.** Respect the `retry-after` header on 429 responses.
 5. **Key Security.** API keys should be in skill.json or YIELDS_API_KEY env var, not in code.
