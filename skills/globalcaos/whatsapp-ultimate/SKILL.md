@@ -1,6 +1,6 @@
 ---
 name: whatsapp-ultimate
-version: 1.1.2
+version: 1.2.1
 description: "The most comprehensive WhatsApp skill for AI agents. Full messaging (text, media, polls, stickers, voice), reactions, replies, edits, unsend, complete group management, AND persistent searchable message history with SQLite + FTS5. Native Baileys integration - no external services required."
 homepage: https://github.com/openclaw/openclaw
 repository: https://github.com/globalcaos/clawdbot-moltbot-openclaw
@@ -303,6 +303,8 @@ To react/edit/unsend, you need the message ID. Incoming messages include this in
 | Group management | ✅ (full) | ❌ | ❌ | ❌ |
 | Receive messages | ✅ | ✅ | ✅ | ❌ |
 | Two-way chat | ✅ | ❌ | ❌ | ❌ |
+| Message history (SQLite) | ✅ FTS5 | ❌ | ❌ | ❌ |
+| Import chat exports | ✅ | ❌ | ❌ | ❌ |
 | External deps | None | Go binary | Docker + WAHA | ffmpeg |
 
 ---
@@ -379,6 +381,24 @@ SQLite file with WAL mode for concurrent access.
 - *"When did John mention the quarterly report?"*
 
 The agent can now answer these questions by searching your complete WhatsApp history.
+
+### Automated Daily Summaries (Cron Pattern)
+
+Set up a daily cron job to summarize busy group chats:
+
+```json
+{
+  "name": "whatsapp-group-summary",
+  "schedule": { "kind": "cron", "expr": "30 5 * * *", "tz": "America/Los_Angeles" },
+  "sessionTarget": "isolated",
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Search yesterday's WhatsApp messages using whatsapp_history. For groups with 20+ messages, generate a summary with key topics and action items. Send via message tool to the target group."
+  }
+}
+```
+
+Your agent wakes up, reads yesterday's chats, and delivers a morning briefing. No manual effort.
 
 ---
 
