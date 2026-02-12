@@ -6,10 +6,32 @@
 
 此技能提供了查询 G/D/C 字头列车车票、查看列车时刻表、查询座位可用性以及规划城市间铁路旅行的工具。支持按日期、时间段、列车类型过滤以及结果排序。
 
+## 项目结构
+
+mcporter-railway-query/
+├── scripts/              # Shell helper scripts
+├── references/           # Station code reference
+├── README.md
+├── README_zh.md
+└── LICENSE
+
 ## 先决条件
 
 1. 安装 mcporter CLI: `npm install -g mcporter`
 2. 在 `~/.mcporter/mcporter.json` 中配置 12306 MCP 服务器
+    ```
+      {
+        "mcpServers": {
+           "12306": {
+              "type": "sse",
+               "url": "http://127.0.0.1:8080/sse",
+              "name": "12306 高铁动车查询",
+              "description": "查询高铁（G开头）和动车（D开头）余票，支持出发站、到达站、日期、时间段过滤。只返回G/D车次。",
+              "enabled": true
+            }
+        }
+     }
+    ```
 3. 确保 MCP 服务器正在运行
 
 ## 安装
@@ -74,3 +96,17 @@ mcporter call 12306.get-tickets \
 ## 许可证
 
 MIT
+
+## 安全声明
+
+本项目仅为只读查询工具：
+
+- 不收集用户数据
+- 不存储账号信息
+- 不进行抢票或自动购票
+- 不绕过 12306 身份验证
+- 不执行系统命令
+- 不写入本地文件
+- 不包含混淆或加密代码
+
+所有查询均通过用户自行配置的 12306 MCP 服务完成。

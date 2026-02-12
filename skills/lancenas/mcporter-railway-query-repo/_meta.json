@@ -1,11 +1,17 @@
 {
   "owner": "lancenas",
   "slug": "mcporter-railway-query-repo",
-  "displayName": "macporter-railway-query",
+  "displayName": "Mcporter Railway Query Repo",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1770788354738,
-    "commit": "https://github.com/openclaw/skills/commit/cf10dcb7ba79949f511e6f16ea32bd799430eba9"
+    "version": "1.0.2",
+    "publishedAt": 1770875293188,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1770788354738,
+      "commit": "https://github.com/openclaw/skills/commit/cf10dcb7ba79949f511e6f16ea32bd799430eba9"
+    }
+  ]
 }

@@ -6,10 +6,32 @@ An OpenClaw skill for querying Chinese railway tickets via 12306 using mcporter 
 
 This skill provides tools to search for G/D/C train tickets, check train schedules, query seat availability, and plan rail travel between Chinese cities. It supports filtering by date, time range, train type, and sorting results.
 
+## Project Structure
+
+mcporter-railway-query/
+├── scripts/              # Shell helper scripts
+├── references/           # Station code reference
+├── README.md
+├── README_zh.md
+└── LICENSE
+
 ## Prerequisites
 
 1. Install mcporter CLI: `npm install -g mcporter`
 2. Configure 12306 MCP server in `~/.mcporter/mcporter.json`
+    ```
+      {
+        "mcpServers": {
+           "12306": {
+              "type": "sse",
+               "url": "http://127.0.0.1:8080/sse",
+              "name": "12306 高铁动车查询",
+              "description": "查询高铁（G开头）和动车（D开头）余票，支持出发站、到达站、日期、时间段过滤。只返回G/D车次。",
+              "enabled": true
+            }
+        }
+     }
+    ```
 3. Ensure MCP server is running
 
 ## Installation
@@ -74,3 +96,20 @@ See `references/station-codes.md` for the complete list.
 ## License
 
 MIT
+
+## Security & Compliance
+
+This project is a read-only OpenClaw skill that:
+
+- Does NOT collect user data
+- Does NOT store credentials
+- Does NOT perform ticket booking
+- Does NOT bypass 12306 authentication
+- Does NOT execute arbitrary system commands
+- Does NOT write to local file system
+- Does NOT open network listeners
+- Does NOT include obfuscated or encrypted code
+
+All queries are executed through official 12306 MCP interfaces configured by the user.
+
+This repository contains only helper scripts and configuration examples.
