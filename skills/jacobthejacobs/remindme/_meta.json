@@ -3,11 +3,16 @@
   "slug": "remindme",
   "displayName": "Remind Me",
   "latest": {
-    "version": "2.0.1",
-    "publishedAt": 1770852706264,
-    "commit": "https://github.com/openclaw/skills/commit/45ebe38d794505921e246eb5a6c0df7a54c8320b"
+    "version": "2.0.2",
+    "publishedAt": 1770853231820,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.1",
+      "publishedAt": 1770852706264,
+      "commit": "https://github.com/openclaw/skills/commit/45ebe38d794505921e246eb5a6c0df7a54c8320b"
+    },
     {
       "version": "1.2.2",
       "publishedAt": 1770503173370,

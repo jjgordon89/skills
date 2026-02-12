@@ -1,10 +1,10 @@
 ---
 name: remindme
-description: "Set reminders on any channel — Telegram, Discord, Slack, WhatsApp, Signal, iMessage. Native cron, zero dependencies."
+description: "⏰ simple Telegram reminders for OpenClaw. cron, zero dependencies."
 tags: [cron, reminders, productivity, schedule, telegram, discord, slack, whatsapp, signal]
 metadata:
   openclaw:
-    summary: "**Remind Me v2:** Schedule reminders anywhere — Telegram, Discord, Slack, WhatsApp, Signal, iMessage. Natural language, native cron, zero dependencies."
+    summary: "**Remind Me v2:** Schedule reminders anywhere. Natural language, native cron, zero dependencies."
     emoji: "bell"
 user-invocable: true
 command-dispatch: prompt
@@ -195,15 +195,6 @@ Reminders are useless if the user never sees them. The delivery channel determin
 4. **Last external channel** — use `channel: "last"` to deliver to the last place the user interacted externally.
 5. **No external channel available** — if the user is on CLI/webchat and has NO external channels configured, **stop and ask**: "Where should I deliver this reminder? I need an external channel (Telegram, Discord, Slack, WhatsApp, Signal, or iMessage) since the CLI won't be open when the reminder fires."
 
-**Channel target formats:**
-- **Telegram**: `channel: "telegram"`, `to: "<chatId>"` (use `-100…:topic:<id>` for forum topics)
-- **Discord**: `channel: "discord"`, `to: "channel:<channelId>"`
-- **Slack**: `channel: "slack"`, `to: "channel:<channelId>"`
-- **WhatsApp**: `channel: "whatsapp"`, `to: "<phoneNumber>"`
-- **Signal**: `channel: "signal"`, `to: "<phoneNumber>"`
-- **iMessage**: `channel: "imessage"`, `to: "<phoneNumber or email>"`
-
-**NEVER silently default to localhost/webchat** — the reminder will fire into the void.
 
 ### Step 4: Call `cron.add`
 
@@ -308,16 +299,6 @@ Job ID: <jobId> (use "/remindme cancel <jobId>" to remove)
 9. **For recurring reminders**, do NOT set `deleteAfterRun`.
 10. **Always return the jobId** so the user can cancel later.
 11. **If the user says "on telegram/discord/slack/etc"**, override the auto-detected channel with the explicit one.
-
-## Platform Requirements
-
-This skill has zero bundled dependencies because it relies on OpenClaw's built-in platform capabilities:
-
-- **Channel delivery**: OpenClaw holds channel credentials (Telegram bot token, Discord bot token, etc.) configured in `openclaw.json` under `channels`. The skill does not need its own API keys — it uses the platform's `delivery` API to route messages through already-authenticated channels.
-- **Cron scheduling**: OpenClaw provides `cron.add`, `cron.list`, and `cron.remove` as native agent tools. No external scheduler is needed.
-- **Timezone**: Uses the system timezone from the host OS. No additional config required.
-
-If your OpenClaw instance does not have a channel configured (e.g., no Telegram bot token), reminders targeting that channel will fail at delivery time. Configure your channels first via `openclaw.json`.
 
 ## Troubleshooting
 
