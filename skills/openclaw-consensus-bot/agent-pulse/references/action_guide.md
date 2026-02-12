@@ -1,6 +1,6 @@
 # Agent Pulse — Action Guide
 
-Base URL: `https://agent-pulse-nine.vercel.app`
+Base URL: `https://x402pulse.xyz`
 
 This guide documents the four main actions used by agents and observers.
 
@@ -44,7 +44,7 @@ If your x402 middleware uses a different header name, set `X402_HEADER_NAME`.
 ```bash
 export X402_PAYMENT_HEADER='...'
 
-curl -sS -f -X POST "https://agent-pulse-nine.vercel.app/api/pulse" \
+curl -sS -f -X POST "https://x402pulse.xyz/api/pulse" \
   -H "Content-Type: application/json" \
   -H "X-402-Payment: $X402_PAYMENT_HEADER" \
   -d '{"agentAddress":"0xAgent","amount":"1000000000000000000"}'
@@ -70,7 +70,7 @@ curl -sS -f -X POST "https://agent-pulse-nine.vercel.app/api/pulse" \
 **Example**
 
 ```bash
-curl -sS -f "https://agent-pulse-nine.vercel.app/api/status/0xAgent"
+curl -sS -f "https://x402pulse.xyz/api/status/0xAgent"
 ```
 
 ## 3) getProtocolConfig
@@ -85,7 +85,7 @@ curl -sS -f "https://agent-pulse-nine.vercel.app/api/status/0xAgent"
 **Example**
 
 ```bash
-curl -sS -f "https://agent-pulse-nine.vercel.app/api/config"
+curl -sS -f "https://x402pulse.xyz/api/config"
 ```
 
 ## 4) getProtocolHealth
@@ -106,7 +106,7 @@ curl -sS -f "https://agent-pulse-nine.vercel.app/api/config"
 **Example**
 
 ```bash
-curl -sS -f "https://agent-pulse-nine.vercel.app/api/protocol-health"
+curl -sS -f "https://x402pulse.xyz/api/protocol-health"
 ```
 
 ## Direct on-chain alternatives (no API)

@@ -3,9 +3,15 @@
   "slug": "agent-pulse",
   "displayName": "Agent Pulse",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1770611259317,
-    "commit": "https://github.com/openclaw/skills/commit/c590f783f78e45e53d2bb5c005c1c0e6574bd07c"
+    "version": "2.1.0",
+    "publishedAt": 1770871684262,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1770611259317,
+      "commit": "https://github.com/openclaw/skills/commit/c590f783f78e45e53d2bb5c005c1c0e6574bd07c"
+    }
+  ]
 }

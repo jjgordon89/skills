@@ -6,7 +6,7 @@ set -euo pipefail
 # Usage: setup.sh [--auto-approve] [--quiet]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-API_BASE="${API_BASE:-https://agent-pulse-nine.vercel.app}"
+API_BASE="${API_BASE:-https://x402pulse.xyz}"
 BASE_RPC_URL="${BASE_RPC_URL:-https://mainnet.base.org}"
 REGISTRY="0xe61C615743A02983A46aFF66Db035297e8a43846"
 PULSE_TOKEN="0x21111B39A502335aC7e45c4574Dd083A69258b07"
@@ -101,11 +101,13 @@ if [[ "$ALLOWANCE" != "0" ]]; then
 else
   warn "Registry not yet approved."
   if [[ "$AUTO_APPROVE" == "true" && "$RESULT_BALANCE" != "0" ]]; then
-    info "Auto-approving registry (max uint256)..."
-    MAX_UINT="115792089237316195423570985008687907853269984665640564039457584007913129639935"
+    # Bounded approval: 1000 PULSE (enough for ~1000 pulses before re-approval)
+    # Use --max-approve flag for unlimited approval if needed
+    APPROVE_AMOUNT="1000000000000000000000"  # 1000 * 1e18
+    info "Auto-approving registry for 1,000 PULSE (bounded)..."
     if cast send --rpc-url "$BASE_RPC_URL" --private-key "$PRIVATE_KEY" \
         "$PULSE_TOKEN" "approve(address,uint256)(bool)" \
-        "$REGISTRY" "$MAX_UINT" >/dev/null 2>&1; then
+        "$REGISTRY" "$APPROVE_AMOUNT" >/dev/null 2>&1; then
       RESULT_APPROVED=true
       info "Registry approved."
     else

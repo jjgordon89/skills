@@ -19,7 +19,7 @@ Liveness signaling for autonomous agents on Base. An agent periodically sends a 
 |-----------------|----------------------------------------------|
 | PulseToken      | `0x21111B39A502335aC7e45c4574Dd083A69258b07`  |
 | PulseRegistry   | `0xe61C615743A02983A46aFF66Db035297e8a43846`  |
-| API             | `https://agent-pulse-nine.vercel.app`         |
+| API             | `https://x402pulse.xyz`         |
 
 > **$PULSE is a utility token for pulse signals.** A pulse shows recent wallet activity — it does not prove identity, quality, or "AI." Avoid language suggesting financial upside.
 
@@ -158,9 +158,52 @@ cast send --rpc-url "$BASE_RPC_URL" --private-key "$PRIVATE_KEY" \
 | 401/402/403             | Missing payment for paid endpoints       | Use direct on-chain mode     |
 | 5xx                     | Transient API error                      | Retry with backoff           |
 
+## Read-Only Mode (No Private Key)
+
+These commands work without `PRIVATE_KEY` — no wallet or signing required:
+
+```bash
+# Check any agent's status
+{baseDir}/scripts/status.sh 0xAnyAgentAddress
+
+# Monitor multiple agents
+{baseDir}/scripts/monitor.sh 0xAddr1 0xAddr2
+
+# View global pulse feed
+{baseDir}/scripts/monitor.sh --feed
+
+# Protocol configuration
+{baseDir}/scripts/config.sh
+
+# Protocol health
+{baseDir}/scripts/health.sh
+```
+
 ## Security
 
+### Required Credentials
+
+| Env Var | Required For | Default |
+|---------|-------------|---------|
+| `PRIVATE_KEY` | Write ops (pulse, approve) | *(none — read-only without it)* |
+| `BASE_RPC_URL` | All on-chain calls | `https://mainnet.base.org` |
+| `API_BASE` | API calls | `https://x402pulse.xyz` |
+| `PULSE_AMOUNT` | Pulse amount (wei) | `1000000000000000000` (1 PULSE) |
+| `TTL_THRESHOLD` | Auto-pulse skip threshold | `21600` (6 hours) |
+| `PULSE_REGISTRY_ADDRESS` | Override registry | `0xe61C...` |
+| `PULSE_TOKEN_ADDRESS` | Override token | `0x2111...` |
+
+### Approval Behavior
+
+- `setup.sh --auto-approve` sets a **bounded allowance of 1,000 PULSE** (not unlimited). This is enough for ~1,000 pulses before re-approval is needed.
+- `pulse.sh --direct` approves the **exact amount** per transaction (no excess allowance).
+- The PulseRegistry contract can only call `transferFrom` during `pulse()` — it cannot arbitrarily drain tokens.
+
+### Best Practices
+
 - **Never** log, print, or commit `PRIVATE_KEY`.
+- Use a **dedicated wallet** with only the PULSE tokens needed — not your main wallet.
+- Start with `--dry-run` mode to verify behavior before sending real transactions.
 - Verify contract addresses and chainId before signing transactions.
 - Test with small amounts first.
 

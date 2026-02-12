@@ -10,7 +10,7 @@ set -euo pipefail
 #        TTL_THRESHOLD (seconds, default 21600 = 6h)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-API_BASE="${API_BASE:-https://agent-pulse-nine.vercel.app}"
+API_BASE="${API_BASE:-https://x402pulse.xyz}"
 BASE_RPC_URL="${BASE_RPC_URL:-https://mainnet.base.org}"
 PULSE_AMOUNT="${PULSE_AMOUNT:-1000000000000000000}"
 TTL_THRESHOLD="${TTL_THRESHOLD:-21600}"  # pulse when TTL < this many seconds

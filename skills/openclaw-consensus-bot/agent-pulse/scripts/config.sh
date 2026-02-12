@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE_DEFAULT="https://agent-pulse-nine.vercel.app"
+API_BASE_DEFAULT="https://x402pulse.xyz"
 API_BASE="${API_BASE:-$API_BASE_DEFAULT}"
 
 curl -sS -f \

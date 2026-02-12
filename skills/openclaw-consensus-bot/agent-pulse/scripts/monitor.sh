@@ -10,7 +10,7 @@ set -euo pipefail
 #   monitor.sh --feed
 #   monitor.sh --json <addr1> ...
 
-API_BASE="${API_BASE:-https://agent-pulse-nine.vercel.app}"
+API_BASE="${API_BASE:-https://x402pulse.xyz}"
 
 usage() {
   cat >&2 <<EOF
