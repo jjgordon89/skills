@@ -1,0 +1,59 @@
+{
+  "name": "okx-trader",
+  "version": "1.1.0",
+  "description": "Professional OKX grid trading system with dual-layer strategy and automated trailing logic.",
+  "author": "alz",
+  "license": "MIT",
+  "keywords": ["crypto", "okx", "trading", "grid", "pnl", "automation"],
+  "homepage": "https://github.com/esojourn/okx-trader",
+  "engines": {
+    "openclaw": ">=2026.2.0"
+  },
+  "requires": {
+    "bins": ["node", "curl", "jq", "openssl"],
+    "env": [
+      "OKX_API_KEY",
+      "OKX_SECRET_KEY",
+      "OKX_PASSPHRASE",
+      "OKX_IS_SIMULATION"
+    ]
+  },
+  "tools": [
+    {
+      "name": "okx_report",
+      "command": "node scripts/report.js",
+      "description": "Generates a real-time trading report from OKX API."
+    },
+    {
+      "name": "okx_grid_maintain",
+      "command": "node scripts/grid-bot.js",
+      "description": "Maintains grid orders on OKX and performs auto-rescale.",
+      "params": {
+        "type": {
+          "type": "string",
+          "description": "The bot type: 'main' or 'micro'.",
+          "default": "main",
+          "enum": ["main", "micro"]
+        }
+      }
+    }
+  ],
+  "env": {
+    "OKX_API_KEY": { "description": "OKX API Access Key", "required": true },
+    "OKX_SECRET_KEY": { "description": "OKX API Secret Key", "required": true },
+    "OKX_PASSPHRASE": { "description": "OKX API Passphrase", "required": true },
+    "OKX_IS_SIMULATION": { "description": "Enable simulation mode (true/false)", "default": "false" }
+  },
+  "cronTemplates": [
+    {
+      "name": "OKX Hourly PnL Report",
+      "schedule": "0 * * * *",
+      "task": "okx_report"
+    },
+    {
+      "name": "OKX Grid Auto-Maintenance",
+      "schedule": "*/5 * * * *",
+      "task": "okx_grid_maintain"
+    }
+  ]
+}
