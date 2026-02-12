@@ -301,7 +301,7 @@ async function main() {
       }
 
       case 'create': {
-        const [_, _cmd, domain, ...recordArgs] = args;
+        const [, domain, ...recordArgs] = args;
         if (!domain) {
           console.error('Error: domain required');
           console.error('Usage: node porkbun-dns.js create <domain>');
