@@ -3,11 +3,16 @@
   "slug": "evolver",
   "displayName": "Evolver",
   "latest": {
-    "version": "1.10.5",
-    "publishedAt": 1770828340193,
-    "commit": "https://github.com/openclaw/skills/commit/0f7bb88c20963d1c7998df9190629f9d22bcead2"
+    "version": "1.10.6",
+    "publishedAt": 1770905351087,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.10.5",
+      "publishedAt": 1770828340193,
+      "commit": "https://github.com/openclaw/skills/commit/0f7bb88c20963d1c7998df9190629f9d22bcead2"
+    },
     {
       "version": "1.10.1",
       "publishedAt": 1770769923939,
