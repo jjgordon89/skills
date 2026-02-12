@@ -31,7 +31,7 @@ Each API key is scoped to a **single agent**. The key can only access that agent
 
 **URL**: `https://api.xobni.ai/mcp/`  
 **Transport**: Streamable HTTP  
-**Auth**: `Authorization: Bearer xobni_<your-key>`
+**Auth**: `Authorization: Bearer YOUR_API_KEY`
 
 ### Claude Desktop Config
 ```json
@@ -40,7 +40,7 @@ Each API key is scoped to a **single agent**. The key can only access that agent
     "xobni": {
       "url": "https://api.xobni.ai/mcp/",
       "headers": {
-        "Authorization": "Bearer xobni_YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
       }
     }
   }
@@ -108,60 +108,29 @@ curl -H "Authorization: Bearer $XOBNI_KEY" \
 | `list_attachments` | List attachments for an email |
 | `download_attachment` | Get pre-signed download URL (15 min) |
 | `get_attachment_text` | Extract text from PDF/DOCX/XLSX/PPTX |
-| `mark_email` | Update status: read/unread/starred/archived |
+| `mark_email` | Update status: read/unread/starred/unstarred/archived |
 | `search_emails` | Semantic search across emails + attachments |
 | `list_webhooks` | List configured webhooks |
 | `create_webhook` | Create webhook for email.received/email.sent |
 | `delete_webhook` | Remove a webhook |
 | `list_webhook_deliveries` | View webhook delivery history |
 
-## Webhooks with OpenClaw
+## Webhooks
 
-Xobni can notify OpenClaw when emails arrive, letting the agent act on email instructions immediately.
-
-### Prerequisites
-OpenClaw needs a public URL. Options:
-- **Tailscale Funnel** (recommended): `gateway.tailscale.mode: "funnel"`
-- **ngrok**: `ngrok http 18789`
-- **Public server**: VPS with OpenClaw exposed
-
-### 1. Configure OpenClaw Webhook Endpoint
-
-Add to `openclaw.json`:
-```json
-{
-  "hooks": {
-    "enabled": true,
-    "token": "your-secret-webhook-token",
-    "mappings": [{
-      "id": "xobni-email",
-      "match": { "path": "/xobni" },
-      "action": "agent",
-      "name": "Email",
-      "messageTemplate": "📧 Email from {{from_address}}:\nSubject: {{subject}}\n\n{{body_text}}",
-      "deliver": true,
-      "channel": "telegram"
-    }]
-  }
-}
-```
-
-### 2. Create Xobni Webhook
+Set up real-time notifications when emails arrive or are sent:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $XOBNI_KEY" \
   -H "Content-Type: application/json" \
   "https://api.xobni.ai/api/v1/event-hooks" \
   -d '{
-    "url": "https://YOUR_PUBLIC_URL/hooks/xobni?token=your-secret-webhook-token",
+    "url": "https://your-endpoint.com/webhook",
     "events": ["email.received"],
-    "description": "OpenClaw integration"
+    "description": "Email notifications"
   }'
 ```
 
-### 3. Test It
-
-Send an email to your agent (e.g., `jeffery@xobni.ai`). OpenClaw will receive the webhook, parse the email, and run an agent turn.
+Supported events: `email.received`, `email.sent`. Payloads include email metadata and a 200-character snippet. Use `read_email` to fetch full content.
 
 ## API Reference
 
@@ -172,4 +141,4 @@ See [references/api.md](references/api.md) for full endpoint documentation.
 - **Agent-scoped keys**: Each key works with one agent only. Auto-resolves IDs.
 - **Semantic search**: Natural language queries across email bodies AND attachments (PDF, DOCX, etc.)
 - **Attachments**: Send files via base64 (max 10 files, 10MB total)
-- **Webhooks**: Real-time notifications for email events → OpenClaw, n8n, Zapier, Make.
+- **Webhooks**: Real-time notifications for email events via n8n, Zapier, Make, or any HTTP endpoint.

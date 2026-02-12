@@ -2,7 +2,7 @@
 
 Base URL: `https://api.xobni.ai/api/v1`
 
-All requests require `Authorization: Bearer xobni_<key>` header.
+All requests require `Authorization: Bearer YOUR_API_KEY` header.
 
 **Important:** All endpoints are scoped to the agent associated with your API key. Parameters like `account_id` and `agent_id` are auto-resolved — you don't need to pass them.
 
@@ -43,7 +43,7 @@ Content-Type: application/json
 }
 ```
 
-**Attachments:** Max 10 files, 10MB total. `content_type` is optional (auto-detected from filename).
+**Attachments:** Max 10 files, 10MB total. `content_type` is optional (defaults to `application/octet-stream`).
 
 ### Update Email
 ```
@@ -161,40 +161,73 @@ When Xobni calls your webhook, it sends:
 {
   "event": "email.received",
   "timestamp": "2026-02-12T01:00:00Z",
-  "email_id": "uuid",
-  "thread_id": "uuid",
-  "from_address": "sender@example.com",
-  "to_addresses": ["agent@xobni.ai"],
-  "cc_addresses": [],
-  "subject": "Subject line",
-  "body_text": "Plain text content",
-  "body_html": "<p>HTML content</p>",
-  "has_attachments": false,
-  "received_at": "2026-02-12T01:00:00Z"
+  "webhook_id": "<webhook-uuid>",
+  "agent_id": "<agent-uuid>",
+  "email_account_id": "<account-uuid>",
+  "email": {
+    "id": "<email-uuid>",
+    "message_id": "<message-id@xobni.ai>",
+    "thread_id": "<thread-uuid>",
+    "direction": "inbound",
+    "from_address": "sender@example.com",
+    "to_addresses": ["agent@xobni.ai"],
+    "cc_addresses": [],
+    "subject": "Subject line",
+    "snippet": "First 200 characters of body text...",
+    "status": "received",
+    "has_attachments": false,
+    "attachment_count": 0,
+    "sent_at": null,
+    "received_at": "2026-02-12T01:00:00Z",
+    "created_at": "2026-02-12T01:00:00Z"
+  }
 }
 ```
+
+Payloads are lightweight — they include a 200-character snippet, not the full body. Use the `read_email` endpoint or MCP tool to fetch full content.
 
 ### email.sent
 ```json
 {
   "event": "email.sent",
   "timestamp": "2026-02-12T01:00:00Z",
-  "email_id": "uuid",
-  "thread_id": "uuid",
-  "from_address": "agent@xobni.ai",
-  "to_addresses": ["recipient@example.com"],
-  "subject": "Subject line",
-  "body_text": "Plain text content",
-  "sent_at": "2026-02-12T01:00:00Z"
+  "webhook_id": "<webhook-uuid>",
+  "agent_id": "<agent-uuid>",
+  "email_account_id": "<account-uuid>",
+  "email": {
+    "id": "<email-uuid>",
+    "message_id": "<message-id@xobni.ai>",
+    "thread_id": "<thread-uuid>",
+    "direction": "outbound",
+    "from_address": "agent@xobni.ai",
+    "to_addresses": ["recipient@example.com"],
+    "cc_addresses": [],
+    "subject": "Subject line",
+    "snippet": "First 200 characters of body text...",
+    "status": "sent",
+    "has_attachments": false,
+    "attachment_count": 0,
+    "sent_at": "2026-02-12T01:00:00Z",
+    "received_at": null,
+    "created_at": "2026-02-12T01:00:00Z"
+  }
 }
 ```
 
-### Webhook Signature
-Xobni includes a signature header for verification:
+### Webhook Headers & Signature
+Every delivery includes these headers:
 ```
-X-Xobni-Signature: sha256=<hmac-signature>
+X-Xobni-Signature: sha256=<hex-digest>
+X-Xobni-Timestamp: <unix-timestamp>
+X-Xobni-Event: <event-name>
+X-Xobni-Delivery: <delivery-uuid>
 ```
-Compute HMAC-SHA256 of the raw request body using your webhook `secret` to verify authenticity.
+
+The signature is computed as:
+```
+HMAC-SHA256(secret, "{timestamp}.{json_body}")
+```
+Where `timestamp` is the `X-Xobni-Timestamp` header value and `json_body` is the raw request body. Compare the result against `X-Xobni-Signature` to verify authenticity.
 
 ## Response Format
 

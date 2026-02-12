@@ -3,9 +3,15 @@
   "slug": "xobni",
   "displayName": "Xobni Email",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1770860315943,
-    "commit": "https://github.com/openclaw/skills/commit/c981ae8f937cf4b134f7dce927b40dceed17f8b6"
+    "version": "1.0.1",
+    "publishedAt": 1770873504493,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1770860315943,
+      "commit": "https://github.com/openclaw/skills/commit/c981ae8f937cf4b134f7dce927b40dceed17f8b6"
+    }
+  ]
 }
