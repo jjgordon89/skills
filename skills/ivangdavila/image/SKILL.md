@@ -1,39 +1,69 @@
 ---
-name: Image  
-description: Apply specific quality thresholds and compression rules to prevent performance penalties.
+name: Image
+version: 1.0.2
+description: Process, optimize, and manage images with web optimization, color management, platform specs, and e-commerce standards.
 ---
 
-## Performance Budget Ceilings
-- Hero images: 150KB maximum (LCP target), 85% JPEG quality ceiling
-- Above-fold thumbnails: 25KB limit, WebP 80% quality with JPEG fallback
-- Below-fold content: 400KB budget per viewport, lazy load 200px threshold
-- Mobile optimization: 10-15% quality reduction below desktop, 200KB absolute maximum
+## Quick Reference
 
-## Format Selection Thresholds
-- Photos >800px: AVIF 60% quality primary, WebP 75% fallback, JPEG 85% baseline
-- Transparency required: WebP with alpha 80% quality, PNG fallback mandatory
-- Animation limits: WebP animated under 3MB, GIF 16-color palette maximum
-- Vector graphics: SVG for scalable elements, PNG-8 for <256 color illustrations
+| Task | Load |
+|------|------|
+| Web optimization, formats, responsive | `web.md` |
+| Color profiles, metadata, RAW, print | `photography.md` |
+| Social media dimensions by platform | `social.md` |
+| E-commerce/marketplace standards | `ecommerce.md` |
+| ImageMagick/PIL commands | `commands.md` |
 
-## Quality Target Patterns
-- JPEG portraits: 88-92% quality range (skin tone preservation requirement)
-- JPEG landscapes: 80-85% quality acceptable (texture compression tolerance)
-- WebP compression: Start 10-15% lower than equivalent JPEG quality setting
-- E-commerce products: 95% minimum quality (cart abandonment prevention)
+---
 
-## Responsive Implementation Rules
-- Density descriptors: 1x, 1.5x, 2x maximum (3x wastes bandwidth unnecessarily)
-- Breakpoint set: 480w, 768w, 1200w, 1920w minimum coverage required
-- Art direction trigger: Use picture element when aspect ratio changes >20%
-- Critical image preloading: Largest variant only, others use loading="lazy"
+## Format Selection
 
-## Accessibility Standards
-- Text overlay contrast: 4.5:1 minimum ratio, drop shadows blur-radius: 3px, offset: 1px
-- Alt text limit: 125 characters maximum for screen reader compatibility
-- Decorative images: aria-hidden="true" mandatory, remove from tab order
+| Content | Format | Reason |
+|---------|--------|--------|
+| Photos | WebP (JPEG fallback) | 25-35% smaller |
+| Icons, logos | SVG | Scalable, tiny |
+| Screenshots with text | PNG | Sharp edges |
+| Transparency + photo | WebP or PNG-24 | Alpha support |
+| Animation | WebP or MP4 | NOT GIF (5-10x larger) |
 
-## Compression Optimization
-- Progressive JPEG: Mandatory for images >40KB file size
-- EXIF stripping: Automated removal saves 10-50KB, preserve orientation data only
-- ICC profile removal: 8-20% file size reduction for sRGB color space
-- Sharp resizing: Lanczos3 for >50% downscaling, bicubic for minor adjustments
+**Rule:** Never use BMP, TIFF, or uncompressed for web.
+
+---
+
+## File Size Budgets
+
+- **Hero images:** MAX 200KB (ideally <150KB)
+- **Content images:** MAX 100KB
+- **Thumbnails:** MAX 30KB
+- **Icons (raster):** MAX 5KB
+- **Total page load:** MAX 1.5MB images
+
+---
+
+## Quality Levels
+
+| Format | Hero | General | Thumbnails |
+|--------|------|---------|------------|
+| JPEG | 80-85% | 70-75% | 60-65% |
+| WebP | 80-82% | 72-78% | 60-70% |
+
+**Rule:** Below 60% = visible artifacts.
+
+---
+
+## Retina/HiDPI
+
+- **2x required** for standard Retina (phones, MacBooks)
+- **3x only** for iPhone Plus/Max
+- A 400px displayed image needs **800px source** minimum
+- 1920px hero on Retina needs **3840px source**
+
+---
+
+## Before Processing Checklist
+
+- [ ] Target format determined (web vs print)
+- [ ] Color profile appropriate (sRGB for web)
+- [ ] Dimensions/aspect ratio defined
+- [ ] Compression quality set
+- [ ] Metadata handling decided (strip GPS?)
