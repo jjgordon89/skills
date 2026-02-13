@@ -3,9 +3,15 @@
   "slug": "bring-rezepte",
   "displayName": "Bring Rezepte",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771014959186,
-    "commit": "https://github.com/openclaw/skills/commit/c890a3bb97cb3ddd13f00c28079919bb3bba4668"
+    "version": "1.2.0",
+    "publishedAt": 1771025257034,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771014959186,
+      "commit": "https://github.com/openclaw/skills/commit/c890a3bb97cb3ddd13f00c28079919bb3bba4668"
+    }
+  ]
 }

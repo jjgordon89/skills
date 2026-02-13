@@ -1,5 +1,6 @@
 ---
-name: bring-shopping
+name: bring-rezepte
+version: 1.2.0
 description: Use when running the OpenClaw/ClawHub Bring! skill to search recipes on the web, parse recipe URLs for ingredients, and add ingredients to a Bring shopping list. Covers recipe search via web_search, URL parsing, recipe batch-add, list management, and inspiration filters.
 ---
 
@@ -183,6 +184,76 @@ The Bring parser supports most major recipe websites including:
 - eatsmarter.de
 - kitchenstories.com
 - And many more (any site with structured recipe data / JSON-LD)
+
+## Recipe Images
+
+**CRITICAL: Never generate images for recipes.** Recipe websites always include photos. Extract and use those instead.
+
+### Extract recipe image from URL
+
+**Method 1: Use --parse-url (preferred)**
+
+If the parser supports the site, the image URL is included in the JSON response:
+
+```bash
+node scripts/bring_inspirations.js --parse-url "https://www.chefkoch.de/rezepte/123/lasagne.html"
+# Returns: { ..., "image": "https://img.chefkoch-cdn.de/rezepte/123/lasagne.jpg", ... }
+```
+
+**Method 2: Fallback (manual extraction with web_fetch)**
+
+If `--parse-url` fails or returns no image, use `web_fetch` to extract the Open Graph image tag:
+
+```javascript
+// Use web_fetch tool to get HTML (no exec approval needed)
+web_fetch("https://www.chefkoch.de/rezepte/123/lasagne.html")
+
+// Parse the returned markdown/text for og:image meta tag
+// Extract URL from: <meta property="og:image" content="https://...">
+```
+
+The image URL can then be used directly in markdown or Discord embeds — **no download required**:
+
+```markdown
+![Recipe Image](https://img.chefkoch-cdn.de/rezepte/123/lasagne.jpg)
+```
+
+### Workflow for recipe suggestions with images
+
+1. Search for recipe URLs (`web_search`)
+2. Parse recipe URL (`--parse-url` or `web_fetch` fallback)
+3. **Extract the recipe image URL** (no download needed)
+4. Present recipe with:
+   - Name
+   - Image (embed via URL: `![](image_url)`)
+   - Key ingredients
+   - Source URL
+5. On confirmation, add to shopping list
+
+### Example: Complete recipe workflow
+
+```bash
+# Step 1: Search
+web_search("Lachs Honig Senf Rezept")
+
+# Step 2: Parse via --parse-url (preferred)
+node scripts/bring_inspirations.js --parse-url "https://www.eatclub.de/rezept/honig-senf-lachs/"
+# → { ..., "image": "https://www.eatclub.de/wp-content/uploads/2023/09/shutterstock-416951386.jpg" }
+
+# Step 2 (Fallback): Use web_fetch if parser fails
+web_fetch("https://www.eatclub.de/rezept/honig-senf-lachs/")
+# Parse HTML response for: <meta property="og:image" content="...">
+
+# Step 3: Present to user with image URL embedded
+# ![Honig-Senf-Lachs](https://www.eatclub.de/wp-content/uploads/2023/09/shutterstock-416951386.jpg)
+
+# Step 4: Add to list on confirmation
+```
+
+**Remember:** 
+- Recipe images come from the source website, never from image generation tools
+- Use the image URL directly — no download needed (platforms load images themselves)
+- `web_fetch` avoids exec approvals and works seamlessly with OpenClaw
 
 ## Notes
 
