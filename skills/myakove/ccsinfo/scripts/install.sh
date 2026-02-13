@@ -9,9 +9,10 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-# Install ccsinfo from git
-echo "Installing ccsinfo from GitHub..."
-uv tool install git+https://github.com/myk-org/ccsinfo.git
+# Install ccsinfo from git (pinned to release tag for supply chain safety)
+CCSINFO_VERSION="v0.1.0"
+echo "Installing ccsinfo from GitHub (${CCSINFO_VERSION})..."
+uv tool install "git+https://github.com/myk-org/ccsinfo.git@${CCSINFO_VERSION}"
 
 echo "ccsinfo installed successfully!"
 echo "Server URL: $CCSINFO_SERVER_URL"
