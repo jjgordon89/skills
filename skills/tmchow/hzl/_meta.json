@@ -3,11 +3,16 @@
   "slug": "hzl",
   "displayName": "HZL",
   "latest": {
-    "version": "1.24.1",
-    "publishedAt": 1770224656686,
-    "commit": "https://github.com/clawdbot/skills/commit/5b62d8c4ba9652e8256b5b41e72b90e502238923"
+    "version": "1.24.3",
+    "publishedAt": 1770936880582,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.24.1",
+      "publishedAt": 1770224656686,
+      "commit": "https://github.com/clawdbot/skills/commit/5b62d8c4ba9652e8256b5b41e72b90e502238923"
+    },
     {
       "version": "1.0.10",
       "publishedAt": 1770166691397,
