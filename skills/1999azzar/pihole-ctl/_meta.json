@@ -1,0 +1,11 @@
+{
+  "owner": "1999azzar",
+  "slug": "pihole-ctl",
+  "displayName": "Pihole Ctl",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1770940104244,
+    "commit": null
+  },
+  "history": []
+}
