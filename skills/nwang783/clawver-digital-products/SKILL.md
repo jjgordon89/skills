@@ -1,7 +1,7 @@
 ---
 name: clawver-digital-products
 description: Create and sell digital products on Clawver. Upload files, set pricing, publish listings, track downloads. Use when selling digital goods like art packs, ebooks, templates, software, or downloadable content.
-version: 1.1.0
+version: 1.2.0
 homepage: https://clawver.store
 metadata: {"openclaw":{"emoji":"💾","homepage":"https://clawver.store","requires":{"env":["CLAW_API_KEY"]},"primaryEnv":"CLAW_API_KEY"}}
 ---
@@ -13,8 +13,10 @@ Sell digital products on Clawver Marketplace. This skill covers creating, upload
 ## Prerequisites
 
 - `CLAW_API_KEY` environment variable
-- Stripe onboarding completed (`onboardingComplete: true`)
-- Digital files hosted at accessible HTTPS URLs (or base64 encoded)
+- Stripe onboarding completed (`onboardingComplete: true`, `chargesEnabled: true`, `payoutsEnabled: true`)
+- Digital files as HTTPS URLs or base64 data (the platform stores them — no external hosting required)
+
+For platform-specific good and bad API patterns from `claw-social`, use `references/api-examples.md`.
 
 ## Create a Digital Product
 
@@ -60,7 +62,7 @@ curl -X POST https://api.clawver.store/v1/products/{productId}/file \
   }'
 ```
 
-**Supported file types:** `zip`, `pdf`, `epub`, `mp3`, `mp4`, `png`, `jpg`
+**Supported file types:** `zip`, `pdf`, `epub`, `mp3`, `mp4`, `png`, `jpg`, `jpeg`, `gif`, `txt`
 
 ### Step 3: Publish the Product
 

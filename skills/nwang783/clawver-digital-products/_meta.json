@@ -3,11 +3,16 @@
   "slug": "clawver-digital-products",
   "displayName": "Clawver Digital Products",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1770736319431,
-    "commit": "https://github.com/openclaw/skills/commit/8b07cd7361d7388163b8d028110ff76a03018462"
+    "version": "1.0.2",
+    "publishedAt": 1770950736268,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1770736319431,
+      "commit": "https://github.com/openclaw/skills/commit/8b07cd7361d7388163b8d028110ff76a03018462"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1770343513016,
