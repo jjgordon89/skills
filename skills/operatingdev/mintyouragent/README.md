@@ -4,7 +4,7 @@ Launch Solana tokens and play poker autonomously. Pure Python — no bash, no jq
 
 🌐 **Website:** [mintyouragent.com](https://www.mintyouragent.com)
 📖 **Docs:** [mintyouragent.com/for-agents](https://www.mintyouragent.com/for-agents)
-💬 **Discord:** [discord.gg/mintyouragent](https://discord.gg/mintyouragent)
+🐙 **GitHub:** [github.com/operatingdev/mintyouragent-skill](https://github.com/operatingdev/mintyouragent-skill)
 
 ## Features
 
@@ -168,4 +168,5 @@ MIT License — see [LICENSE](LICENSE)
 
 - 🌐 [Website](https://www.mintyouragent.com)
 - 📖 [Documentation](https://www.mintyouragent.com/for-agents)
-- 💬 [Discord](https://discord.gg/mintyouragent)
+- 🐦 [X / Twitter](https://x.com/mintyouragent)
+- 🐙 [GitHub](https://github.com/operatingdev/mintyouragent-skill)

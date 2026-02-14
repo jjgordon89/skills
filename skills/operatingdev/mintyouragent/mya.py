@@ -705,7 +705,7 @@ def set_runtime(config: RuntimeConfig) -> None:
 # ============== .ENV SUPPORT ==============
 
 # Only load these vars from .env — all others are ignored
-ALLOWED_ENV_VARS = {"MYA_API_URL", "MYA_API_KEY", "MYA_SSL_VERIFY", "HELIUS_RPC", "SOLANA_RPC_URL"}
+ALLOWED_ENV_VARS = {"MYA_API_URL", "MYA_SSL_VERIFY", "HELIUS_RPC", "SOLANA_RPC_URL"}
 
 
 def load_dotenv(path: Optional[Path] = None) -> Dict[str, str]:
@@ -783,7 +783,7 @@ def get_ssl_verify() -> bool:
 
 
 def get_api_key() -> str:
-    return os.environ.get("MYA_API_KEY", "")
+    return ""
 
 
 # ============== LOGGING ==============
@@ -3366,42 +3366,46 @@ def ai_decide_poker_action(game_data: Dict[str, Any]) -> Tuple[str, Optional[int
 
 
 def cmd_poker(args: argparse.Namespace) -> None:
-    """Poker command dispatcher"""
+    """Poker command dispatcher — cash games (2-6 players)"""
     subcommand = getattr(args, 'poker_cmd', None)
 
     if not subcommand:
         print("Usage: python mya.py poker <command>")
-        print("\nClassic (2-player) Commands:")
-        print("  create   - Create new poker game")
-        print("  join     - Join existing game")
-        print("  watch    - Watch game with auto-polling")
-        print("  action   - Perform single action (fold/check/call/raise)")
-        print("  status   - Check game state (single poll)")
-        print("  games    - List games")
-        print("  history  - View action history for a game")
-        print("  stats    - Show your statistics")
-        print("  verify   - Verify provably fair deck")
-        print("  cancel   - Cancel a waiting game")
-        print("\nCash Game (2-6 player) Commands:")
-        print("  cash     - Multi-player cash game subcommands")
+        print("\nNo API key needed. Auth uses your wallet signature automatically.")
+        print("\nCommands:")
+        print("  create   - Create a new poker table")
+        print("  join     - Join a table and deposit buy-in")
+        print("  leave    - Leave a table (chips settled)")
+        print("  close    - Close a table you created")
+        print("  reload   - Add more chips to your stack")
+        print("  watch    - Watch a table with auto-polling")
+        print("  tables   - List open/active tables")
+        print("\nQuickstart:")
+        print("  python mya.py poker tables")
+        print("  python mya.py poker create --small-blind 0.01 --big-blind 0.02")
+        print("  python mya.py poker join <table_id> --buy-in 0.5")
+        print("  python mya.py poker watch <table_id>")
         return
 
-    # Handle 'cash' subcommand tree
+    # Cash game is now the only poker mode — map directly
+    # Also support 'cash' prefix for backward compat
     if subcommand == 'cash':
-        cmd_poker_cash(args)
-        return
+        cash_cmd = getattr(args, 'cash_cmd', None)
+        if cash_cmd:
+            subcommand = cash_cmd
+        else:
+            # Show help
+            cmd_poker(argparse.Namespace(poker_cmd=None))
+            return
 
     handlers = {
-        'create': cmd_poker_create,
-        'join': cmd_poker_join,
-        'watch': cmd_poker_watch,
-        'action': cmd_poker_action,
-        'status': cmd_poker_status,
-        'games': cmd_poker_games,
-        'history': cmd_poker_history,
-        'stats': cmd_poker_stats,
-        'verify': cmd_poker_verify,
-        'cancel': cmd_poker_cancel,
+        'create': cmd_cash_create,
+        'join': cmd_cash_join,
+        'leave': cmd_cash_leave,
+        'close': cmd_cash_close,
+        'reload': cmd_cash_reload,
+        'watch': cmd_cash_watch,
+        'tables': cmd_cash_tables,
     }
 
     handler = handlers.get(subcommand)
@@ -3422,19 +3426,26 @@ def cmd_poker_cash(args: argparse.Namespace) -> None:
 
     if not cash_cmd:
         print("Usage: python mya.py poker cash <command>")
+        print("\nNo API key needed. Auth uses your wallet signature automatically.")
         print("\nCommands:")
         print("  create   - Create a new cash game table")
         print("  join     - Join a table and deposit buy-in")
         print("  leave    - Leave a table (chips settled)")
+        print("  close    - Close a table you created")
         print("  reload   - Add more chips to your stack")
         print("  watch    - Watch a table with auto-polling")
         print("  tables   - List open/active tables")
+        print("\nQuickstart:")
+        print("  python mya.py poker cash tables")
+        print("  python mya.py poker cash create --small-blind 0.01 --big-blind 0.02")
+        print("  python mya.py poker cash join <table_id> --buy-in 0.5")
         return
 
     cash_handlers = {
         'create': cmd_cash_create,
         'join': cmd_cash_join,
         'leave': cmd_cash_leave,
+        'close': cmd_cash_close,
         'reload': cmd_cash_reload,
         'watch': cmd_cash_watch,
         'tables': cmd_cash_tables,
@@ -3613,6 +3624,42 @@ def cmd_cash_leave(args: argparse.Namespace) -> None:
         Output.success(f"Left table. {chips / 1e9:.4f} SOL settled.")
         if settle_tx:
             print(f"  Tx: https://solscan.io/tx/{settle_tx}?cluster=devnet")
+
+
+def cmd_cash_close(args: argparse.Namespace) -> None:
+    """Close a cash game table (creator only)"""
+    table_id = getattr(args, 'table_id', None)
+    if not table_id:
+        Output.error("Table ID required")
+        sys.exit(ExitCode.INVALID_INPUT)
+
+    wallet = load_wallet()
+    pubkey = str(wallet.pubkey())
+    api_url = get_api_url()
+
+    challenge, signature = get_poker_challenge("cash-close-table")
+    with Spinner("Closing table..."):
+        resp = api_request('POST', f"{api_url}/poker/cash/close-table", json={
+            "walletAddress": pubkey,
+            "challenge": challenge,
+            "signature": signature,
+            "tableId": table_id,
+        })
+        result = resp.json()
+
+    rt = get_runtime()
+    if rt.format == OutputFormat.JSON:
+        Output.json_output(result)
+        if not result.get('success'):
+            sys.exit(ExitCode.API_ERROR)
+        return
+
+    if result.get('success'):
+        settlements = result.get('settlements', 0)
+        Output.success(f"Table closed. {settlements} player(s) settled.")
+    else:
+        Output.error(result.get('error', 'Unknown error'))
+        sys.exit(ExitCode.API_ERROR)
 
 
 def cmd_cash_reload(args: argparse.Namespace) -> None:
@@ -4832,10 +4879,9 @@ NETWORK FLAGS:
   --retry-count       Retry attempts
 
 ENVIRONMENT VARIABLES:
-  MYA_API_URL         API endpoint
-  MYA_API_KEY         API key
-  MYA_SSL_VERIFY      SSL verification
-  HELIUS_RPC          RPC endpoint
+  MYA_API_URL         API endpoint (optional, defaults to https://mintyouragent.com/api)
+  MYA_SSL_VERIFY      SSL verification (optional)
+  HELIUS_RPC          RPC endpoint (optional)
 
 For command-specific help: python mya.py <command> --help
 Documentation: https://mintyouragent.com/docs
@@ -5014,72 +5060,64 @@ def main() -> None:
     uninstall_p = subparsers.add_parser("uninstall", help="Remove data")
     uninstall_p.add_argument("-y", "--yes", action="store_true")
 
-    # Poker commands
-    poker_p = subparsers.add_parser("poker", aliases=["p"], help="Play poker")
+    # Poker commands (cash games — 2-6 players)
+    poker_p = subparsers.add_parser("poker", aliases=["p"], help="Play poker (2-6 player cash games)")
     poker_subs = poker_p.add_subparsers(dest="poker_cmd")
 
-    poker_create_p = poker_subs.add_parser("create", help="Create game")
-    poker_create_p.add_argument("--buy-in", type=float, required=True, help="Buy-in amount in SOL (0.01-10)")
+    poker_create_p = poker_subs.add_parser("create", help="Create a new poker table")
+    poker_create_p.add_argument("--small-blind", type=float, default=0.01, help="Small blind in SOL (default: 0.01)")
+    poker_create_p.add_argument("--big-blind", type=float, default=0.02, help="Big blind in SOL (default: 0.02)")
+    poker_create_p.add_argument("--min-buy-in", type=float, help="Min buy-in in SOL (default: 20x big blind)")
+    poker_create_p.add_argument("--max-buy-in", type=float, help="Max buy-in in SOL (default: 100x big blind)")
+    poker_create_p.add_argument("--seats", type=int, default=6, help="Max seats 2-6 (default: 6)")
 
-    poker_join_p = poker_subs.add_parser("join", help="Join game")
-    poker_join_p.add_argument("game_id", help="Game ID to join")
+    poker_join_p = poker_subs.add_parser("join", help="Join a table and deposit buy-in")
+    poker_join_p.add_argument("table_id", help="Table ID to join")
+    poker_join_p.add_argument("--buy-in", type=float, required=True, help="Buy-in amount in SOL")
 
-    poker_watch_p = poker_subs.add_parser("watch", help="Watch game with auto-polling")
-    poker_watch_p.add_argument("game_id", help="Game ID to watch")
+    poker_leave_p = poker_subs.add_parser("leave", help="Leave table (chips settled)")
+    poker_leave_p.add_argument("table_id", help="Table ID to leave")
+
+    poker_close_p = poker_subs.add_parser("close", help="Close a table you created")
+    poker_close_p.add_argument("table_id", help="Table ID to close")
+
+    poker_reload_p = poker_subs.add_parser("reload", help="Add more chips to your stack")
+    poker_reload_p.add_argument("table_id", help="Table ID")
+    poker_reload_p.add_argument("--amount", type=float, required=True, help="Amount in SOL to add")
+
+    poker_watch_p = poker_subs.add_parser("watch", help="Watch table with auto-polling")
+    poker_watch_p.add_argument("table_id", help="Table ID to watch")
     poker_watch_p.add_argument("--poll", type=int, default=2, help="Poll interval in seconds (default: 2)")
-    poker_watch_p.add_argument("--headless", action="store_true", help="Non-interactive mode for AI agents (no stdin prompts)")
-    poker_watch_p.add_argument("--mode", choices=["human", "ai", "ask"], default="ask", help="Play mode: human (you decide), ai (auto-play), ask (prompt at start)")
-    poker_watch_p.add_argument("--verbose", "-v", action="store_true", help="Show AI reasoning each turn")
+    poker_watch_p.add_argument("--mode", choices=["human", "ai", "ask"], default="ask", help="Play mode")
+    poker_watch_p.add_argument("--verbose", "-v", action="store_true", help="Show AI reasoning")
 
-    poker_action_p = poker_subs.add_parser("action", help="Perform action")
-    poker_action_p.add_argument("game_id", help="Game ID")
-    poker_action_p.add_argument("action", choices=["fold", "check", "call", "raise"], help="Action to perform")
-    poker_action_p.add_argument("--amount", type=float, help="Raise amount in SOL (required for raise)")
+    poker_tables_p = poker_subs.add_parser("tables", help="List open/active tables")
 
-    poker_status_p = poker_subs.add_parser("status", help="Check game state (single poll)")
-    poker_status_p.add_argument("game_id", help="Game ID")
-
-    poker_games_p = poker_subs.add_parser("games", help="List games")
-    poker_games_p.add_argument("--status", choices=["waiting", "active", "completed"], help="Filter by status")
-
-    poker_history_p = poker_subs.add_parser("history", help="View action history for a game")
-    poker_history_p.add_argument("game_id", help="Game ID")
-
-    poker_stats_p = poker_subs.add_parser("stats", help="Show poker statistics")
-
-    poker_verify_p = poker_subs.add_parser("verify", help="Verify provably fair deck")
-    poker_verify_p.add_argument("game_id", help="Game ID")
-
-    poker_cancel_p = poker_subs.add_parser("cancel", help="Cancel a waiting game")
-    poker_cancel_p.add_argument("game_id", help="Game ID to cancel")
-
-    # Cash game subcommands
-    cash_p = poker_subs.add_parser("cash", help="Multi-player cash games (2-6 players)")
+    # Backward compat: 'poker cash <cmd>' still works
+    cash_p = poker_subs.add_parser("cash", help="(alias) Same as poker commands above")
     cash_subs = cash_p.add_subparsers(dest="cash_cmd")
-
-    cash_create_p = cash_subs.add_parser("create", help="Create cash game table")
-    cash_create_p.add_argument("--small-blind", type=float, default=0.01)
-    cash_create_p.add_argument("--big-blind", type=float, default=0.02)
-    cash_create_p.add_argument("--min-buy-in", type=float)
-    cash_create_p.add_argument("--max-buy-in", type=float)
-    cash_create_p.add_argument("--seats", type=int, default=6)
-
-    cash_join_p = cash_subs.add_parser("join", help="Join table")
-    cash_join_p.add_argument("table_id")
-    cash_join_p.add_argument("--buy-in", type=float, required=True)
-
-    cash_leave_p = cash_subs.add_parser("leave", help="Leave table")
-    cash_leave_p.add_argument("table_id")
-
-    cash_reload_p = cash_subs.add_parser("reload", help="Reload chips")
-    cash_reload_p.add_argument("table_id")
-    cash_reload_p.add_argument("--amount", type=float, required=True)
-
-    cash_watch_p = cash_subs.add_parser("watch", help="Watch table")
-    cash_watch_p.add_argument("table_id")
-    cash_watch_p.add_argument("--poll", type=int, default=2)
-    cash_watch_p.add_argument("--mode", choices=["human", "ai", "ask"], default="ask")
-    cash_watch_p.add_argument("--verbose", "-v", action="store_true")
+    _cc = cash_subs.add_parser("create", help="Create table")
+    _cc.add_argument("--small-blind", type=float, default=0.01)
+    _cc.add_argument("--big-blind", type=float, default=0.02)
+    _cc.add_argument("--min-buy-in", type=float)
+    _cc.add_argument("--max-buy-in", type=float)
+    _cc.add_argument("--seats", type=int, default=6)
+    _cj = cash_subs.add_parser("join", help="Join table")
+    _cj.add_argument("table_id")
+    _cj.add_argument("--buy-in", type=float, required=True)
+    _cl = cash_subs.add_parser("leave", help="Leave table")
+    _cl.add_argument("table_id")
+    _cx = cash_subs.add_parser("close", help="Close table")
+    _cx.add_argument("table_id")
+    _cr = cash_subs.add_parser("reload", help="Reload chips")
+    _cr.add_argument("table_id")
+    _cr.add_argument("--amount", type=float, required=True)
+    _cw = cash_subs.add_parser("watch", help="Watch table")
+    _cw.add_argument("table_id")
+    _cw.add_argument("--poll", type=int, default=2)
+    _cw.add_argument("--mode", choices=["human", "ai", "ask"], default="ask")
+    _cw.add_argument("--verbose", "-v", action="store_true")
+    cash_subs.add_parser("tables", help="List tables")
 
     cash_tables_p = cash_subs.add_parser("tables", help="List tables")
 

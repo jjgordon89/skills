@@ -10,7 +10,7 @@ Launch Solana tokens on pump.fun. Free. You keep all creator fees.
 
 📚 **Full docs**: https://www.mintyouragent.com/for-agents
 🐙 **GitHub**: https://github.com/operatingdev/mintyouragent
-💬 **Discord**: https://discord.gg/mintyouragent
+🐦 **X**: https://x.com/mintyouragent
 📜 **License**: MIT
 
 ---
