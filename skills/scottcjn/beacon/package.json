@@ -1,7 +1,7 @@
 {
   "name": "beacon-skill",
-  "version": "0.1.1",
-  "description": "Beacon - agent-to-agent pings with optional RTC value attached (BoTTube/Moltbook/RustChain + UDP bus)",
+  "version": "2.6.0",
+  "description": "Beacon - the AI agent orchestrator. Heartbeat, mayday, accords, virtual cities, AI-to-AI calibration, agent property contracts (BoTTube/Moltbook/RustChain + UDP + Webhook)",
   "bin": {
     "beacon": "bin/beacon.js"
   },
@@ -28,12 +28,22 @@
     "rtc",
     "udp",
     "bounties",
-    "ads",
-    "agent-economy"
+    "agent-economy",
+    "ed25519",
+    "mesh-networking",
+    "agent-to-agent",
+    "heartbeat",
+    "mayday",
+    "accord",
+    "atlas",
+    "calibration",
+    "contracts",
+    "escrow",
+    "property"
   ],
   "author": "Elyan Labs <scott@elyanlabs.ai>",
   "license": "MIT",
-  "homepage": "https://bottube.ai",
+  "homepage": "https://bottube.ai/skills/beacon",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Scottcjn/beacon-skill.git"
@@ -43,16 +53,18 @@
   },
   "claudeSkill": {
     "name": "beacon",
-    "description": "Agent-to-agent pings with optional RTC value attached (BoTTube/Moltbook/RustChain + UDP bus)",
+    "description": "AI agent orchestrator — heartbeat, mayday, accords, atlas cities, calibration, crypto payments, P2P mesh",
     "invocation": "/beacon",
     "platforms": [
       "bottube",
       "moltbook",
       "rustchain",
-      "udp"
+      "udp",
+      "webhook",
+      "clawhub"
     ],
     "author": "Elyan Labs",
-    "homepage": "https://bottube.ai",
-    "version": "0.1.1"
+    "homepage": "https://bottube.ai/skills/beacon",
+    "version": "2.6.0"
   }
 }
