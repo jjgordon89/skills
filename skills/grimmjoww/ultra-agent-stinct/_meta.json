@@ -3,9 +3,15 @@
   "slug": "ultra-agent-stinct",
   "displayName": "Ultra Agent Stinct",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1771091600014,
-    "commit": "https://github.com/openclaw/skills/commit/8a8cea7def3a04647a9e9d1da655cc2165308a56"
+    "version": "1.2.0",
+    "publishedAt": 1771093264369,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1771091600014,
+      "commit": "https://github.com/openclaw/skills/commit/8a8cea7def3a04647a9e9d1da655cc2165308a56"
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 ---
 name: ultra-agent-stinct
-description: "Autonomous coding, debugging, and code maintenance. Use when the user asks to: fix a bug, debug an error, write code or scripts, run tests, review or refactor code, investigate stack traces or logs, make git commits, add a feature, or any coding task. Triggers: 'fix this', 'debug', 'write code', 'run tests', 'check the error', 'look at the code', 'commit', 'what's wrong with', 'refactor', 'add a feature', 'build', 'deploy', 'install'."
-version: 1.0.1
+description: "Internal debugging and coding skill. Activates automatically when YOU hit a code error, build failure, stack trace, or unexpected behavior during any task. This is your instinct for fixing things — not a user-triggered skill. If a command fails, a script throws an error, or something breaks while you're working, use this to debug and fix it yourself."
+version: 1.2.0
 author: grimmjoww
 homepage: https://github.com/grimmjoww/ultra-agent-stinct
 metadata: {"openclaw": {"emoji": "\u26a1", "os": ["darwin", "linux", "win32"]}}
@@ -9,10 +9,13 @@ metadata: {"openclaw": {"emoji": "\u26a1", "os": ["darwin", "linux", "win32"]}}
 
 # Ultra Agent Stinct
 
-Autonomous debugging, code writing, and project maintenance. Trust your instincts — read, understand, fix.
+Your internal debugging instinct. When something breaks while you're working, this is how you fix it.
 
-## Safety Rules (ALWAYS)
+## Always Follow These (Any Time You Touch Code)
 
+These rules apply every time, even for quick fixes. No exceptions.
+
+### Safety
 1. **Read before edit.** Never `edit` without `read` first — exact text match required or it fails
 2. **`write` overwrites entirely.** Use `edit` for changes to existing files
 3. **Never delete without asking.** Prefer safe deletion over `rm -rf`
@@ -20,9 +23,26 @@ Autonomous debugging, code writing, and project maintenance. Trust your instinct
 5. **Never commit without asking.** Stage and commit only on request
 6. **Backup awareness.** Before large refactors, suggest a branch or stash
 
+### Good Practices
+7. **Always verify your fix.** After every change, re-run the failing command or tests. Never assume it worked
+8. **Tell the user what happened.** After fixing, briefly explain what broke and what you changed
+9. **Read the error first.** Don't guess at fixes — read the actual error message, stack trace, or test output before touching code
+10. **Minimal changes.** Fix the bug, don't refactor the neighborhood. Keep diffs small and focused
+
+## When to Activate Full Workflow
+
+If you hit an error during a task, try a quick fix first while following the rules above. But if you:
+- **Get stuck** — your first fix didn't work, same error or new ones
+- **Hit something complex** — errors across multiple files, unfamiliar code, architectural issues
+- **Need structure** — not sure where the bug is or where to start
+
+Then **activate Ultra Agent Stinct** — follow the full structured workflows below step by step.
+
+---
+
 ## Debug Workflow
 
-When the user reports a bug or error:
+When you encounter an error or something breaks:
 
 **1. Reproduce** — Run the failing command:
 ```
@@ -51,31 +71,30 @@ edit path:"<file>" old:"<exact broken code>" new:"<fixed code>"
 
 **6. Verify** — Re-run the original failing command. Confirm the fix works.
 
-**7. Explain** — Tell the user what was wrong and what you changed (brief).
+**7. Report** — Tell the user what broke and what you fixed (brief). Then continue your original task.
 
-## Write Code Workflow
+## Writing New Code
+
+When you need to create or modify code as part of a task:
 
 **1. Understand the project** — Check existing patterns:
 ```
 exec command:"ls -la" workdir:"<project dir>"
 ```
-Read `package.json`, `pyproject.toml`, `Cargo.toml`, or equivalent. Read existing similar files to match style, conventions, imports.
+Read `package.json`, `pyproject.toml`, `Cargo.toml`, or equivalent. Match existing style and conventions.
 
-**2. Plan first** — Before writing, outline what you'll create. Think through the structure, dependencies, and edge cases.
+**2. Plan first** — Before writing, outline what you'll create. Think through structure, dependencies, edge cases.
 
 **3. Write** — Create the file:
 ```
 write path:"<new file path>" content:"<complete file content>"
 ```
 
-**4. Verify** — Run linting, type checking, or the feature:
-```
-exec command:"<appropriate test command>" workdir:"<project dir>"
-```
+**4. Verify** — Run it, test it, make sure it actually works before moving on.
 
-## Test Workflow
+## Running Tests
 
-**1. Find the test runner** — Check the project manifest for test scripts:
+**1. Find the test runner:**
 - **Node.js**: `npm test` / `npx jest` / `npx vitest`
 - **Python**: `pytest` / `python -m unittest`
 - **Rust**: `cargo test`
@@ -88,7 +107,7 @@ exec command:"<test command>" workdir:"<project>" timeout:120
 
 **3. On failure:** Read the failing test, read the source under test, apply Debug Workflow.
 
-**4. On success:** Report summary (passed, skipped, failed counts).
+**4. On success:** Report summary and continue.
 
 ## Git Integration
 

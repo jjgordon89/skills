@@ -1,8 +1,8 @@
 # Ultra Agent Stinct
 
-Autonomous coding, debugging, and code maintenance skill for [OpenClaw](https://openclaw.ai) agents. Structured debug workflows, code writing, test running, git integration, and coding agent escalation. Cross-platform.
+Internal debugging instinct for [OpenClaw](https://openclaw.ai) agents. When your agent hits a bug, build failure, or unexpected error during any task, this skill kicks in to help it debug and fix the problem autonomously.
 
-Like Goku's Ultra Instinct, but for code — trust your instincts, read, understand, fix.
+Like Goku's Ultra Instinct — your agent handles things normally, but when things go wrong, the instinct activates and it knows exactly what to do.
 
 ## Install
 
@@ -29,19 +29,18 @@ Then enable in your `clawdbot.json`:
 }
 ```
 
-## What It Does
+## How It Works
 
-Gives your OpenClaw agent structured workflows for:
+**Always-on rules** apply to every coding task — safety checks, verify fixes, read errors before guessing, minimal changes. These work even when the agent is freestyling quick fixes.
 
-- **Debugging** — 7-step workflow: reproduce, read error, read code, trace cause, fix, verify, explain
-- **Code Writing** — Plan-first approach: understand project, plan, write, verify
-- **Test Running** — Auto-detect test runner (Node.js, Python, Rust, Go), run tests, handle failures
-- **Git Integration** — Status, diff, stage, commit (only when the user asks)
-- **Escalation** — Knows when to handle it directly vs spawn a background coding agent for heavy tasks
+**Full workflow activation** kicks in when the agent gets stuck, hits multi-file bugs, or needs structure. Step-by-step debug, write, and test workflows guide it through complex problems.
+
+**Escalation** — if the problem is too big, the agent knows to spawn a dedicated coding agent (Claude Code, Codex, Aider) for heavy lifting.
 
 ## Safety Built In
 
 - Always reads before editing (exact text match required)
+- Always verifies fixes — never assumes it worked
 - Never deletes, pushes, or commits without explicit permission
 - Suggests branches/stashes before large refactors
 
