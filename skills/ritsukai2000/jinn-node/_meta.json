@@ -1,11 +1,17 @@
 {
   "owner": "ritsukai2000",
   "slug": "jinn-node",
-  "displayName": "Jinn Network Worker",
+  "displayName": "jinn-node",
   "latest": {
-    "version": "0.0.3",
-    "publishedAt": 1770386259833,
-    "commit": "https://github.com/openclaw/skills/commit/742e34bfa1d0ec0b5ba5b709f422c0bcefc708ad"
+    "version": "1.0.0",
+    "publishedAt": 1771002695023,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.0.3",
+      "publishedAt": 1770386259833,
+      "commit": "https://github.com/openclaw/skills/commit/742e34bfa1d0ec0b5ba5b709f422c0bcefc708ad"
+    }
+  ]
 }
