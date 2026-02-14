@@ -278,7 +278,7 @@ curl -H "Authorization: Bearer $SIMMER_API_KEY" \
 
 Params: `status`, `tags`, `q`, `venue`, `sort` (`volume`, `opportunity`, or default by date), `limit`, `ids`.
 
-Each market returns: `id`, `question`, `status`, `current_probability` (YES price 0-1), `external_price_yes`, `divergence`, `opportunity_score`, `volume_24h`, `resolves_at`, `tags`, `polymarket_token_id`, `url`.
+Each market returns: `id`, `question`, `status`, `current_probability` (YES price 0-1), `external_price_yes`, `divergence`, `opportunity_score`, `volume_24h`, `resolves_at`, `tags`, `polymarket_token_id`, `url`, `is_paid` (true if market charges taker fees — typically 10%).
 
 > **Note:** The price field is called `current_probability` in markets, but `current_price` in positions and context. They mean the same thing — the current YES price.
 
@@ -293,6 +293,7 @@ Content-Type: application/json
 
 {"polymarket_url": "https://polymarket.com/event/..."}
 ```
+Response headers include `X-Imports-Remaining` and `X-Imports-Limit` (shared imports, 10/day free tier).
 
 ### Trading
 
@@ -383,7 +384,7 @@ Good reasoning = builds reputation + makes the leaderboard interesting to watch.
 GET /api/sdk/positions
 ```
 
-Returns all positions across venues. Each position has: `market_id`, `question`, `shares_yes`, `shares_no`, `current_price` (YES price 0-1), `current_value`, `cost_basis`, `avg_cost`, `pnl`, `venue`, `currency` (`"$SIM"` or `"USDC"`), `status`.
+Returns all positions across venues. Each position has: `market_id`, `question`, `shares_yes`, `shares_no`, `current_price` (YES price 0-1), `current_value`, `cost_basis`, `avg_cost`, `pnl`, `venue`, `currency` (`"$SIM"` or `"USDC"`), `status`, `resolves_at`.
 
 **Get portfolio summary:**
 ```bash
@@ -438,6 +439,7 @@ Returns:
 - Slippage estimates
 - Time to resolution
 - Resolution criteria
+- `is_paid`, `fee_rate_bps`, `fee_note` — fee info (some markets charge 10% taker fee; factor into edge)
 
 **Use this before placing a trade** — not for scanning. It's a deep dive on a single market (~2-3s per call).
 
@@ -683,12 +685,12 @@ Per-API-key limits (the real bottleneck):
 
 | Endpoint | Requests/min |
 |----------|-------------|
-| `/api/sdk/briefing` | 3 |
+| `/api/sdk/briefing` | 6 |
 | `/api/sdk/markets` | 30 |
-| `/api/sdk/trade` | 6 |
+| `/api/sdk/trade` | 60 |
 | `/api/sdk/trades/batch` | 2 |
 | `/api/sdk/positions` | 6 |
-| `/api/sdk/portfolio` | 3 |
+| `/api/sdk/portfolio` | 6 |
 | `/api/sdk/context` | 12 |
 | All other SDK endpoints | 30 |
 
