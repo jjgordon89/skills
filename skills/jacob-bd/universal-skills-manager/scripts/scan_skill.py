@@ -310,7 +310,7 @@ _CROSS_SKILL_ESCALATION_PATTERNS = [
         r'download\s+(this\s+|the\s+)?skill\s+from',
         r'fetch\s+(this\s+|the\s+)?(skill|extension)\s+from',
         r'add\s+(this\s+)?to\s+~/\.(claude|gemini|cursor|codex|roo)',
-        r'cp\s+.*\s+~/\.(claude|gemini|cursor|codex|roo)/(skills|extensions)',
+        r'cp\s+.*\s+~/\.(claude|gemini|cursor|codex|roo)/skills',
         r'git\s+clone\s+.*\s+~/\.(claude|gemini|cursor|codex)',
     ]
 ]

@@ -10,11 +10,11 @@ metadata:
     primaryEnv: SKILLSMP_API_KEY
 ---
 
-<!-- Version: 1.5.1 -->
+<!-- Version: 1.5.3 -->
 
 # Universal Skills Manager
 
-This skill empowers the agent to act as a centralized package manager for AI capabilities. It discovers skills from multiple sources — SkillsMP.com (curated, AI semantic search), SkillHub (173k+ community skills, no API key required), and ClawHub (5,700+ versioned skills, semantic search, no API key required) — and unifies skill management across multiple AI tools (Claude Code, Gemini, Anti-Gravity, OpenCode, Cursor, etc.), ensuring consistency and synchronization.
+This skill empowers the agent to act as a centralized package manager for AI capabilities. It discovers skills from multiple sources — SkillsMP.com (curated, AI semantic search), SkillHub (173k+ community skills, no API key required), and ClawHub (5,700+ versioned skills, semantic search, no API key required) — and unifies skill management across multiple AI tools (Claude Code, Gemini, Anti-Gravity, OpenCode, Cline, Cursor, etc.), ensuring consistency and synchronization.
 
 ## When to Use This Skill
 
@@ -40,7 +40,8 @@ This skill manages the following tools and scopes. Always verify these paths exi
 | **OpenAI Codex** | `~/.codex/skills/` | `./.codex/skills/` |
 | **block/goose** | `~/.config/goose/skills/` | `./.goose/agents/` |
 | **Roo Code** | `~/.roo/skills/` | `./.roo/skills/` |
-| **Cursor** | `~/.cursor/extensions/` | `./.cursor/extensions/` |
+| **Cursor** | `~/.cursor/skills/` | `./.cursor/skills/` |
+| **Cline** | `~/.cline/skills/` | `./.cline/skills/` |
 
 **claude.ai / Claude Desktop (ZIP Upload Required):**
 
@@ -259,16 +260,17 @@ This skill (Universal Skills Manager) requires network access to call the Skills
     ls -d ~/.gemini/skills 2>/dev/null && echo "Gemini: ✓"
     ls -d ~/.gemini/antigravity/skills 2>/dev/null && echo "Antigravity: ✓"
     ls -d ~/.openclaw/workspace/skills 2>/dev/null && echo "OpenClaw: ✓"
-    ls -d ~/.cursor/extensions 2>/dev/null && echo "Cursor: ✓"
+    ls -d ~/.cursor/skills 2>/dev/null && echo "Cursor: ✓"
     ls -d ~/.config/opencode/skills 2>/dev/null && echo "OpenCode: ✓"
     ls -d ~/.roo/skills 2>/dev/null && echo "Roo: ✓"
     ls -d ~/.config/goose/skills 2>/dev/null && echo "Goose: ✓"
+    ls -d ~/.cline/skills 2>/dev/null && echo "Cline: ✓"
     ```
 
 2.  **Collect All Skills:**
     For each detected tool, list skill folders:
     ```bash
-    find ~/.{claude,codex,gemini,gemini/antigravity,openclaw/workspace,config/opencode,config/goose,roo}/skills -maxdepth 1 -type d 2>/dev/null | \
+    find ~/.{claude,codex,gemini,gemini/antigravity,openclaw/workspace,cursor,config/opencode,config/goose,roo,cline}/skills -maxdepth 1 -type d 2>/dev/null | \
       xargs -I{} basename {} | sort -u
     ```
 
@@ -376,6 +378,7 @@ This skill (Universal Skills Manager) requires network access to call the Skills
 3.  **OpenClaw Note:** OpenClaw may require a restart to pick up new skills if `skills.load.watch` is not enabled in `openclaw.json`. Warn the user of this after installation.
 4.  **Cross-Platform Adaptation:**
     *   Gemini uses `SKILL.md`.
+    *   Cline uses the same `SKILL.md` format with `name` and `description` frontmatter. The `name` field must match the directory name. No manifest generation required. Note: Cline also reads `.claude/skills/` at the project level, so Claude Code project skills work in Cline automatically.
     *   If OpenCode or Anti-Gravity require a specific manifest (e.g., `manifest.json`), generate a basic one based on the `SKILL.md` frontmatter during installation.
 
 ## Available Tools
