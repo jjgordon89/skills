@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * NadMail Inbox Script
- *
- * Usage:
+ * 
+ * Usage: 
  *   node inbox.js              # List inbox
  *   node inbox.js <email_id>   # Read specific email
  */
@@ -30,24 +30,30 @@ function logAudit(action, details = {}) {
 }
 
 function getToken() {
+  // 1. Environment variable
   if (process.env.NADMAIL_TOKEN) {
     return process.env.NADMAIL_TOKEN;
   }
-
+  
+  // 2. Token file
   if (!fs.existsSync(TOKEN_FILE)) {
-    console.error('Not registered yet. Run register.js first.');
+    console.error('❌ 尚未註冊。請先執行 register.js');
     process.exit(1);
   }
-
+  
   const data = JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8'));
-
+  
+  // Check token age (warn if > 20 hours)
   if (data.saved_at) {
-    const hoursSinceSaved = (Date.now() - new Date(data.saved_at).getTime()) / 1000 / 60 / 60;
+    const savedAt = new Date(data.saved_at);
+    const now = new Date();
+    const hoursSinceSaved = (now - savedAt) / 1000 / 60 / 60;
+    
     if (hoursSinceSaved > 20) {
-      console.log('Warning: Token may be expiring soon. Run register.js again if you get auth errors.');
+      console.log('⚠️ Token 可能即將過期，如遇錯誤請重新執行 register.js');
     }
   }
-
+  
   return data.token;
 }
 
@@ -55,72 +61,75 @@ async function listInbox(token) {
   const res = await fetch(`${API_BASE}/api/inbox`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
-
+  
   const data = await res.json();
-
+  
   if (data.error) {
-    console.error('Error:', data.error);
+    console.error('❌ 錯誤:', data.error);
     logAudit('inbox_list', { success: false });
     process.exit(1);
   }
 
-  console.log(`Inbox (${data.unread} unread / ${data.total} total)`);
-  console.log('='.repeat(60));
+  console.log(`📬 收件箱 (${data.unread} 未讀 / ${data.total} 總計)`);
+  console.log('═'.repeat(60));
 
-  const emails = data.emails || [];
-
-  if (emails.length === 0) {
-    console.log('No emails.');
+  if (data.emails && data.emails.length === 0) {
+    console.log('沒有郵件。');
     return;
   }
 
+  // Handle both array format and direct email list
+  const emails = data.emails || [];
+  
   for (const email of emails) {
-    const unread = email.read ? ' ' : '*';
+    const unread = email.read ? ' ' : '●';
     const date = email.created_at || email.date;
-    const displayDate = date ? new Date(date * 1000).toLocaleString() : 'Unknown';
+    const displayDate = date ? new Date(date).toLocaleString() : 'Unknown';
     console.log(`${unread} [${email.id || 'N/A'}]`);
-    console.log(`  From: ${email.from || email.from_addr || 'Unknown'}`);
-    console.log(`  Subject: ${email.subject || 'No subject'}`);
-    console.log(`  Date: ${displayDate}`);
-    console.log(`  Preview: ${(email.snippet || '').slice(0, 80)}...`);
+    console.log(`  寄件人: ${email.from || email.from_addr || 'Unknown'}`);
+    console.log(`  主旨: ${email.subject || 'No subject'}`);
+    console.log(`  時間: ${displayDate}`);
+    console.log(`  預覽: ${(email.snippet || email.body || email.text || '').slice(0, 80)}...`);
     console.log('');
   }
-
+  
   logAudit('inbox_list', { success: true });
 }
 
 async function readEmail(token, emailId) {
-  try {
-    const res = await fetch(`${API_BASE}/api/inbox/${emailId}`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      console.error('Error:', data.error);
-      logAudit('inbox_read', { success: false });
-      process.exit(1);
+  // Try different endpoints for reading email
+  const endpoints = [`/api/inbox/${emailId}`, `/api/emails/${emailId}`];
+  let success = false;
+  
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      const data = await res.json();
+      
+      if (!data.error && (data.from || data.from_addr || data.subject)) {
+        console.log('📧 郵件內容');
+        console.log('═'.repeat(60));
+        console.log(`寄件人: ${data.from || data.from_addr}`);
+        console.log(`收件人: ${data.to || data.to_addr}`);
+        console.log(`主旨: ${data.subject}`);
+        console.log(`時間: ${data.created_at ? new Date(data.created_at).toLocaleString() : data.date || 'Unknown'}`);
+        console.log('═'.repeat(60));
+        console.log(data.body || data.text || 'No content');
+        
+        logAudit('inbox_read', { success: true });
+        success = true;
+        break;
+      }
+    } catch (err) {
+      // Continue to next endpoint
     }
-
-    console.log('Email');
-    console.log('='.repeat(60));
-    console.log(`From: ${data.from || data.from_addr}`);
-    console.log(`To: ${data.to || data.to_addr}`);
-    console.log(`Subject: ${data.subject}`);
-    console.log(`Date: ${data.created_at ? new Date(data.created_at * 1000).toLocaleString() : 'Unknown'}`);
-    if (data.microbuy_tx) {
-      console.log(`Micro-buy TX: ${data.microbuy_tx}`);
-    }
-    if (data.emo_amount && data.emo_amount > 0) {
-      console.log(`Emo-Boost: +${data.emo_amount} MON`);
-    }
-    console.log('='.repeat(60));
-    console.log(data.body || data.text || 'No content');
-
-    logAudit('inbox_read', { success: true });
-  } catch (err) {
-    console.error('Error reading email:', err.message);
+  }
+  
+  if (!success) {
+    console.error('❌ 無法讀取郵件');
     logAudit('inbox_read', { success: false });
     process.exit(1);
   }
@@ -138,6 +147,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error('Error:', err.message);
+  console.error('❌ 錯誤:', err.message);
   process.exit(1);
 });

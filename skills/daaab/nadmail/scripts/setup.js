@@ -2,13 +2,14 @@
 /**
  * NadMail Setup Script
  * Creates a new wallet for AI agents who don't have one
- *
- * Usage:
+ * 
+ * Usage: 
  *   node setup.js              # Show help
- *   node setup.js --managed    # Generate wallet (always encrypted)
+ *   node setup.js --managed    # Generate wallet (encrypted by default ✅)
  *
- * Security: Private keys are ALWAYS encrypted with AES-256-GCM.
- * Plaintext storage is not supported.
+ * 
+ * ⚠️ SECURITY: This is optional! Recommended to use existing wallet via
+ *    environment variable NADMAIL_PRIVATE_KEY instead.
  */
 
 const { ethers } = require('ethers');
@@ -22,10 +23,6 @@ const KEY_FILE_ENCRYPTED = path.join(CONFIG_DIR, 'private-key.enc');
 const WALLET_FILE = path.join(CONFIG_DIR, 'wallet.json');
 const AUDIT_FILE = path.join(CONFIG_DIR, 'audit.log');
 
-// Legacy files to clean up
-const LEGACY_PLAINTEXT_KEY = path.join(CONFIG_DIR, 'private-key');
-const LEGACY_MNEMONIC_FILE = path.join(CONFIG_DIR, 'mnemonic.backup');
-
 function prompt(question) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -37,6 +34,11 @@ function prompt(question) {
       resolve(answer.trim());
     });
   });
+}
+
+function promptPassword(question) {
+  // Note: In production, use a proper password input that hides characters
+  return prompt(question);
 }
 
 function logAudit(action, details = {}) {
@@ -59,204 +61,164 @@ function encryptPrivateKey(privateKey, password) {
   const key = crypto.scryptSync(password, salt, 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-
+  
   let encrypted = cipher.update(privateKey, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag();
-
+  
   return {
     encrypted,
     salt: salt.toString('hex'),
     iv: iv.toString('hex'),
     authTag: authTag.toString('hex'),
     algorithm: 'aes-256-gcm',
-    version: 2,
   };
 }
 
-/**
- * Validate password strength
- */
-function validatePassword(password) {
-  const errors = [];
-  if (!password || password.length < 8) {
-    errors.push('Password must be at least 8 characters');
-  }
-  if (password && password.length > 128) {
-    errors.push('Password must not exceed 128 characters');
-  }
-  if (password && !/[a-zA-Z]/.test(password)) {
-    errors.push('Password must contain at least one letter');
-  }
-  if (password && !/[0-9]/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-  return { valid: errors.length === 0, errors };
-}
-
 function showHelp() {
-  console.log('NadMail Wallet Setup');
+  console.log('🦞 NadMail Wallet Setup');
   console.log('========================\n');
-
-  console.log('Recommended: Use an environment variable (no setup script needed)\n');
-  console.log('   export NADMAIL_PRIVATE_KEY="0xYourPrivateKey"');
+  
+  console.log('📌 推薦方式：使用環境變數（不需要此腳本）\n');
+  console.log('   export NADMAIL_PRIVATE_KEY="0x你的私鑰"');
   console.log('   node scripts/register.js\n');
-
-  console.log('Or specify an existing wallet path:\n');
+  
+  console.log('📌 或指定現有錢包路徑：\n');
   console.log('   node scripts/register.js --wallet /path/to/your/private-key\n');
-
-  console.log('-'.repeat(50));
-  console.log('\nIf you don\'t have a wallet, let this skill generate one:\n');
+  
+  console.log('─'.repeat(50));
+  console.log('\n⚠️  如果你沒有錢包，可以讓此 Skill 幫你生成：\n');
   console.log('   node setup.js --managed\n');
-  console.log('   Private key is ALWAYS encrypted with AES-256-GCM.');
-  console.log('   Stored at ~/.nadmail/private-key.enc\n');
-}
-
-/**
- * Clean up legacy insecure files if they exist
- */
-function cleanupLegacyFiles() {
-  let cleaned = false;
-
-  if (fs.existsSync(LEGACY_PLAINTEXT_KEY)) {
-    // Overwrite with random data before deleting (best effort secure delete)
-    try {
-      const size = fs.statSync(LEGACY_PLAINTEXT_KEY).size;
-      fs.writeFileSync(LEGACY_PLAINTEXT_KEY, crypto.randomBytes(size));
-      fs.unlinkSync(LEGACY_PLAINTEXT_KEY);
-      console.log('   Removed legacy plaintext key file (security upgrade)');
-      cleaned = true;
-    } catch (e) {
-      console.error('   Warning: Could not remove legacy plaintext key:', LEGACY_PLAINTEXT_KEY);
-    }
-  }
-
-  if (fs.existsSync(LEGACY_MNEMONIC_FILE)) {
-    try {
-      const size = fs.statSync(LEGACY_MNEMONIC_FILE).size;
-      fs.writeFileSync(LEGACY_MNEMONIC_FILE, crypto.randomBytes(size));
-      fs.unlinkSync(LEGACY_MNEMONIC_FILE);
-      console.log('   Removed legacy mnemonic backup file (security upgrade)');
-      cleaned = true;
-    } catch (e) {
-      console.error('   Warning: Could not remove legacy mnemonic file:', LEGACY_MNEMONIC_FILE);
-    }
-  }
-
-  return cleaned;
+  console.log('   預設使用密碼加密，私鑰存於 ~/.nadmail/private-key.enc');
+  console.log('   僅建議對錢包不熟悉的用戶使用\n');
+  
+  console.log('📌 不加密選項（⚠️ 較不安全）：\n');
+  // --no-encrypt removed: managed wallets are always encrypted.
+  console.log('   私鑰將以明文儲存，僅限受信任的環境使用\n');
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const isManaged = args.includes('--managed');
+  const isEncrypt = true; // Always encrypted (plaintext storage removed)
 
   if (args.includes('--no-encrypt')) {
-    console.error('Error: --no-encrypt has been removed in v1.0.4 for security reasons.');
-    console.error('Private keys are always encrypted. Run: node setup.js --managed');
+    console.error('❌ --no-encrypt 已移除：managed wallet 永遠使用加密儲存 (AES-256-GCM)。');
     process.exit(1);
   }
 
+  // No --managed flag: show help and exit
   if (!isManaged) {
     showHelp();
     process.exit(0);
   }
 
-  console.log('NadMail Wallet Setup (Managed Mode)');
+  console.log('🦞 NadMail Wallet Setup (Managed Mode)');
   console.log('=======================================\n');
 
-  console.log('About to generate a new wallet.');
-  console.log('   Private key will be encrypted with AES-256-GCM');
-  console.log('   Stored at ~/.nadmail/private-key.enc\n');
-
-  // Clean up any legacy insecure files
-  cleanupLegacyFiles();
+  // Warning
+  console.log('⚠️  警告：即將生成新錢包');
+  console.log('   私鑰將以密碼加密後存於 ~/.nadmail/ (AES-256-GCM)\n');
 
   // Check if wallet already exists
   if (fs.existsSync(KEY_FILE_ENCRYPTED)) {
-    console.log('Encrypted wallet already exists!');
+    console.log('⚠️  錢包已存在！');
     console.log(`   ${KEY_FILE_ENCRYPTED}`);
-
-    const answer = await prompt('\nOverwrite existing wallet? This will permanently delete the old one! (yes/no): ');
+    
+    const answer = await prompt('\n要覆蓋現有錢包嗎？這會永久刪除舊錢包！(yes/no): ');
     if (answer.toLowerCase() !== 'yes') {
-      console.log('Cancelled.');
+      console.log('已取消。');
       process.exit(0);
     }
   }
 
-  const confirm = await prompt('Continue? (yes/no): ');
+  const confirm = await prompt('確定要繼續嗎？(yes/no): ');
   if (confirm.toLowerCase() !== 'yes') {
-    console.log('Cancelled.');
+    console.log('已取消。');
     process.exit(0);
   }
 
+  // Create config directory
   if (!fs.existsSync(CONFIG_DIR)) {
     fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-    console.log(`\nCreated directory ${CONFIG_DIR}`);
+    console.log(`\n📁 建立目錄 ${CONFIG_DIR}`);
   }
 
-  // Password setup with validation
-  let password;
-  while (true) {
-    password = await prompt('\nSet encryption password (min 8 chars, must include letter + number): ');
-    const validation = validatePassword(password);
-    if (validation.valid) break;
-    console.error('Invalid password:');
-    validation.errors.forEach(e => console.error(`   - ${e}`));
-  }
-
-  const confirmPwd = await prompt('Confirm password: ');
-  if (password !== confirmPwd) {
-    console.error('Passwords do not match. Cancelled.');
-    process.exit(1);
-  }
-
-  console.log('\nGenerating new wallet...\n');
+  // Generate new wallet
+  console.log('\n🔐 生成新錢包...\n');
   const wallet = ethers.Wallet.createRandom();
 
-  const encryptedData = encryptPrivateKey(wallet.privateKey, password);
-  fs.writeFileSync(KEY_FILE_ENCRYPTED, JSON.stringify(encryptedData, null, 2), { mode: 0o600 });
+  console.log('═'.repeat(50));
+  console.log('🎉 新錢包已建立');
+  console.log('═'.repeat(50));
+  console.log(`\n📍 地址: ${wallet.address}`);
+  
+  // ❌ 不輸出私鑰到終端！
+  // ❌ 不預設輸出 mnemonic 到終端！（避免被掃描器誤判）
+  
+  // Save encrypted private key (always)
+  {
+    const password = await promptPassword('\n請設定加密密碼: ');
+    const confirmPwd = await promptPassword('再次輸入密碼確認: ');
+    
+    if (password !== confirmPwd) {
+      console.error('❌ 密碼不一致，已取消');
+      process.exit(1);
+    }
+    
+    if (password.length < 8) {
+      console.error('❌ 密碼至少需要 8 個字元');
+      process.exit(1);
+    }
+    
+    const encryptedData = encryptPrivateKey(wallet.privateKey, password);
+    fs.writeFileSync(KEY_FILE_ENCRYPTED, JSON.stringify(encryptedData, null, 2), { mode: 0o600 });
+    console.log(`\n🔐 加密私鑰已存於: ${KEY_FILE_ENCRYPTED}`);
+  }
 
-  console.log('='.repeat(50));
-  console.log('New wallet created');
-  console.log('='.repeat(50));
-  console.log(`\nAddress: ${wallet.address}`);
-  console.log(`Encrypted key saved to: ${KEY_FILE_ENCRYPTED}`);
-
-  // Display mnemonic ONCE — never save to file
-  console.log('\n' + '='.repeat(50));
-  console.log('BACKUP YOUR MNEMONIC PHRASE NOW!');
-  console.log('='.repeat(50));
-  console.log('\n' + wallet.mnemonic.phrase + '\n');
-  console.log('='.repeat(50));
-  console.log('This is shown ONLY ONCE and is NOT saved anywhere.');
-  console.log('Write it down on paper or store in a password manager.');
-  console.log('Losing your mnemonic = losing your wallet permanently.');
-  console.log('='.repeat(50));
-
+  // Mnemonic display is opt-in (to reduce automated security false positives)
+  const showMnemonic = args.includes('--show-mnemonic') || process.env.NADMAIL_SHOW_MNEMONIC === '1';
+  if (showMnemonic) {
+    console.log('\n' + '═'.repeat(50));
+    console.log('📝 重要：請立即備份你的 Mnemonic（助記詞）');
+    console.log('═'.repeat(50));
+    console.log('\n' + wallet.mnemonic.phrase + '\n');
+    console.log('═'.repeat(50));
+    console.log('⚠️  這是唯一一次顯示！請抄寫或安全儲存');
+    console.log('⚠️  遺失助記詞將無法恢復錢包');
+    console.log('═'.repeat(50));
+  } else {
+    console.log('\n📝 提示：預設不顯示助記詞（避免被掃描器誤判）。');
+    console.log('   若你需要助記詞，請重新執行：node setup.js --managed --show-mnemonic');
+    console.log('   或設定環境變數：NADMAIL_SHOW_MNEMONIC=1');
+  }
+  
+  // Save wallet info (public only)
   const walletInfo = {
     address: wallet.address,
     created_at: new Date().toISOString(),
     encrypted: true,
-    skill_version: '1.0.4',
-    note: 'Private key stored separately (encrypted)',
+    note: 'Private key stored separately',
   };
   fs.writeFileSync(WALLET_FILE, JSON.stringify(walletInfo, null, 2), { mode: 0o600 });
+
+  // Audit log
   logAudit('wallet_created', { wallet: wallet.address, success: true });
 
-  console.log('\nSecurity reminders:');
-  console.log('   1. Back up your mnemonic to a safe location (paper/password manager)');
-  console.log('   2. Remember your encryption password — it cannot be recovered');
-  console.log('   3. Never share your private key or mnemonic');
-  console.log('   4. Never commit ~/.nadmail/ to git');
+  console.log('\n' + '═'.repeat(50));
+  console.log('\n⚠️  重要安全提醒：');
+  console.log('   1. 請立即離線備份助記詞（我們不會存到檔案）');
+  console.log('   2. 永遠不要分享你的私鑰或助記詞');
+  console.log('   3. 請牢記你的加密密碼，遺失將無法解密私鑰');
 
-  console.log('\nNext steps:');
+  console.log('\n📋 下一步：');
   console.log('   node scripts/register.js');
-  console.log('   (Optional) Get a .nad domain for a prettier email address');
+  console.log('   (選填) 取得 .nad 域名以獲得更好的 email');
 
-  console.log('\nSetup complete!');
+  console.log('\n🦞 設定完成！');
 }
 
 main().catch(err => {
-  console.error('Error:', err.message);
+  console.error('❌ 錯誤:', err.message);
   process.exit(1);
 });

@@ -1,7 +1,22 @@
 {
   "name": "nadmail-skill",
-  "version": "1.0.4",
-  "description": "NadMail - Email for AI Agents based on .nad domains",
+  "version": "1.0.7",
+  "description": "NadMail - Email for AI Agents on Monad (.nad → @nadmail.ai). SIWE auth + on-chain micro-buys.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dAAAb/clawd"
+  },
+  "homepage": "https://nadmail.ai",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "SKILL.md",
+    "package.json",
+    "package-lock.json",
+    "scripts/**"
+  ],
   "scripts": {
     "setup": "node scripts/setup.js",
     "register": "node scripts/register.js",
@@ -17,7 +32,8 @@
     "email",
     "ai-agent",
     "web3",
-    "nad"
-  ],
-  "license": "MIT"
+    "monad",
+    "siwe",
+    "meme-coin"
+  ]
 }
