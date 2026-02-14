@@ -3,11 +3,16 @@
   "slug": "intelligence-suite",
   "displayName": "Intelligence Suite",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1770776300307,
-    "commit": "https://github.com/openclaw/skills/commit/aa7b21e78b4bef655a8224c8918b3dd8399f77c8"
+    "version": "1.0.3",
+    "publishedAt": 1771004120229,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1770776300307,
+      "commit": "https://github.com/openclaw/skills/commit/aa7b21e78b4bef655a8224c8918b3dd8399f77c8"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1770354444780,

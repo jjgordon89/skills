@@ -1,6 +1,6 @@
 {
   "name": "intelligence-suite",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Comprehensive intelligence suite for AI and global news.",
   "main": "SKILL.md",
   "scripts": {
