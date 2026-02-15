@@ -1,7 +1,7 @@
 ---
 name: edinet-mcp
-description: "Analyze Japanese public company financial statements (BS/PL/CF/財務諸表) from EDINET — search by company name or stock code, compare across J-GAAP/IFRS/US-GAAP."
-metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["edinet-mcp"],"env":["EDINET_API_KEY"]},"install":[{"id":"uv","kind":"uv","package":"edinet-mcp","bins":["edinet-mcp"],"label":"Install edinet-mcp (uv)"}]}}
+description: "Analyze Japanese public company financial statements (BS/PL/CF/財務諸表) from EDINET (FSA/金融庁) — search by company name or stock code, screen companies, compare periods (xbrl-diff). XBRL data, J-GAAP/IFRS/US-GAAP. Japan securities filings."
+metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["edinet-mcp"],"env":["EDINET_API_KEY"]},"install":[{"id":"uv","kind":"uv","package":"edinet-mcp","bins":["edinet-mcp"],"label":"Install edinet-mcp (uv)"}],"tags":["japan","finance","edinet","xbrl","financial-statements","mcp","securities","disclosure"]}}
 ---
 
 # EDINET: Japanese Financial Statement Analysis
@@ -15,6 +15,7 @@ Search Japanese public companies and analyze their financial statements via EDIN
 - Analyze balance sheet composition and trends
 - Review cash flow patterns (operating, investing, financing)
 - Compare financials across different accounting standards (J-GAAP/IFRS/US-GAAP)
+- Screen multiple companies by ROE, profit margins, and other metrics
 
 ## Commands
 
@@ -43,6 +44,23 @@ edinet-mcp statements -c E02144 -p 2024 -s cash_flow_statement --format json
 edinet-mcp statements -c E02144 -p 2024 --format csv
 ```
 
+### Screen companies (compare metrics)
+```bash
+# Compare Toyota, Sony, Honda by financial metrics
+edinet-mcp screen E02144 E01777 E02529
+
+# Sort by ROE
+edinet-mcp screen E02144 E01777 E02529 --sort-by ROE
+
+# JSON output
+edinet-mcp screen E02144 E01777 --format json
+```
+
+### Test connectivity
+```bash
+edinet-mcp test
+```
+
 ### Statement types
 
 | Type | Japanese | Key items |
@@ -51,12 +69,19 @@ edinet-mcp statements -c E02144 -p 2024 --format csv
 | `balance_sheet` | 貸借対照表 (BS) | 総資産, 純資産, 負債 |
 | `cash_flow_statement` | CF計算書 | 営業CF, 投資CF, 財務CF |
 
+## Workflow
+
+1. `edinet-mcp search <company>` → find EDINET code
+2. `edinet-mcp statements -c <code> -p <year>` → view financial data
+3. `edinet-mcp screen <code1> <code2> ...` → compare multiple companies
+
 ## Important
 
 - The `-p` (period) parameter is the **filing year**, not the fiscal year. March-end companies file in June of the next year: FY2023 data → `-p 2024`.
 - 161 normalized labels across J-GAAP / IFRS / US-GAAP.
 - Results include 当期 (current) and 前期 (prior) periods.
-- Rate-limited to 0.5 req/sec by default.
+- Rate-limited to 0.5 req/sec by default. Screening 10 companies takes ~1-2 minutes.
+- Maximum 20 companies per screen request.
 
 ## Setup
 
