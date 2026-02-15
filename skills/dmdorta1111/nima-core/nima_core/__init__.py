@@ -1,34 +1,35 @@
-"""NIMA Core — Biologically-inspired cognitive memory for AI agents."""
+"""NIMA Core — Dynamic Affect System for AI agents."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.3"
 
-from .core import NimaCore
-from .config.nima_config import NimaConfig, get_config
-
-# Convenience re-exports for common components
-from .layers.affective_core import SubcorticalAffectiveCore, AffectState
-from .layers.binding_layer import VSABindingLayer, BoundEpisode, BindingOperation
-from .bridge import NimaV2Bridge, ProcessedExperience
-from .services.heartbeat import NimaHeartbeat
-from .services.markdown_bridge import MarkdownBridge
-from .cognition.dream_engine import DreamEngine, DreamSession, Insight, Pattern
+from .cognition.dynamic_affect import DynamicAffectSystem, AffectVector, get_affect_system
+from .cognition.personality_profiles import PersonalityManager, get_profile, list_profiles
+from .cognition.emotion_detection import map_emotions_to_affects, detect_affect_from_text
+from .cognition.response_modulator_v2 import GenericResponseModulator, ResponseGuidance, modulate_response
+from .cognition.archetypes import (
+    ARCHETYPES,
+    get_archetype,
+    list_archetypes,
+    baseline_from_archetype,
+    baseline_from_description
+)
 
 __all__ = [
-    "NimaCore",
-    "NimaConfig",
-    "get_config",
-    "SubcorticalAffectiveCore",
-    "AffectState",
-    "VSABindingLayer",
-    "BoundEpisode",
-    "BindingOperation",
-    "NimaV2Bridge",
-    "ProcessedExperience",
-    "NimaHeartbeat",
-    "MarkdownBridge",
-    "DreamEngine",
-    "DreamSession",
-    "Insight",
-    "Pattern",
+    "DynamicAffectSystem",
+    "AffectVector",
+    "get_affect_system",
+    "PersonalityManager",
+    "get_profile",
+    "list_profiles",
+    "map_emotions_to_affects",
+    "detect_affect_from_text",
+    "GenericResponseModulator",
+    "ResponseGuidance",
+    "modulate_response",
+    "ARCHETYPES",
+    "get_archetype",
+    "list_archetypes",
+    "baseline_from_archetype",
+    "baseline_from_description",
     "__version__",
 ]

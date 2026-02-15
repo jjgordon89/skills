@@ -1,1 +1,0 @@
-"""NIMA Core Tests"""

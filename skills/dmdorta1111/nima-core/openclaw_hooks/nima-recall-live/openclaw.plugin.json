@@ -1,0 +1,16 @@
+{
+  "id": "nima-recall-live",
+  "name": "NIMA Live Recall",
+  "description": "Queries experiential memory on every message via before_agent_start",
+  "version": "2.0.3",
+  "kind": "hook",
+  "events": ["before_agent_start", "before_compaction"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "identity_name": { "type": "string" }
+    }
+  }
+}
