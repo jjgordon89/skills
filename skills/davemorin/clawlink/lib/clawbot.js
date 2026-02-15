@@ -12,6 +12,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import relay from './relay.js';
 import requests from './requests.js';
+import mailbox from './mailbox.js';
 
 const DATA_DIR = join(homedir(), '.openclaw', 'clawlink');
 const IDENTITY_FILE = join(DATA_DIR, 'identity.json');
@@ -70,13 +71,26 @@ export async function checkMessages() {
       });
     }
 
-    // Format messages
+    // Format messages and save to inbox
     for (const msg of result.messages) {
       const text = msg.content.text || JSON.stringify(msg.content);
+      
+      // Save to inbox
+      const saved = mailbox.saveToInbox({
+        from: msg.from,
+        text,
+        timestamp: msg.timestamp || new Date().toISOString(),
+        metadata: {
+          urgency: msg.content.urgency,
+          context: msg.content.context
+        }
+      });
+      
       output.messages.push({
         from: msg.from,
         text,
         timestamp: msg.timestamp,
+        saved: saved.filename,
         formatted: `📨 **Message from ${msg.from}:**\n"${text}"`
       });
     }
@@ -147,10 +161,20 @@ export async function sendToFriend(friendName, messageText, options = {}) {
       friend
     });
 
+    // Save to outbox
+    const saved = mailbox.saveToOutbox({
+      to: friend.displayName,
+      text: messageText,
+      timestamp: content.timestamp,
+      options,
+      messageId: result.id
+    });
+
     return {
       success: true,
       to: friend.displayName,
       messageId: result.id,
+      saved: saved.filename,
       formatted: `✓ Message sent to ${friend.displayName}`
     };
   } catch (err) {

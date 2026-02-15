@@ -1,6 +1,6 @@
 {
   "name": "clawlink",
-  "version": "2.4.0",
+  "version": "2.5.2",
   "description": "Encrypted Clawbot-to-Clawbot messaging",
   "type": "module",
   "bin": {

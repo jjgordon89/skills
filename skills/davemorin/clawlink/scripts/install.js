@@ -29,12 +29,14 @@ const HEARTBEAT_CANDIDATES = [
   join(OPENCLAW_WORKSPACE, 'HEARTBEAT.md')
 ];
 
-const CLAWLINK_SECTION = `
+function getClawlinkSection(skillDir) {
+  return `
 ## ClawLink
-- Poll for encrypted messages: \`node ~/clawd/skills/clawlink/heartbeat.js\`
+- Poll for encrypted messages: \`node ${skillDir}/heartbeat.js\`
 - If output is non-empty, deliver it to the user
 - Handles: messages, friend requests, acceptance notifications
 `;
+}
 
 function findHeartbeatFile() {
   for (const path of HEARTBEAT_CANDIDATES) {
@@ -53,10 +55,18 @@ async function main() {
   // Step 1: Install npm dependencies
   console.log('📦 Step 1: Installing dependencies...');
   try {
-    execSync('npm install', { cwd: SKILL_DIR, stdio: 'inherit' });
+    execSync('npm install --prefer-offline --no-audit --no-fund', { 
+      cwd: SKILL_DIR, 
+      stdio: 'inherit',
+      timeout: 60000  // 60 second timeout
+    });
     console.log('✓ Dependencies installed');
   } catch (e) {
-    console.error('✗ Failed to install dependencies:', e.message);
+    if (e.killed) {
+      console.error('✗ npm install timed out after 60s');
+    } else {
+      console.error('✗ Failed to install dependencies:', e.message);
+    }
     process.exit(1);
   }
   console.log('');
@@ -73,7 +83,7 @@ async function main() {
     if (content.includes('ClawLink') || content.includes('clawlink')) {
       console.log('✓ ClawLink already in HEARTBEAT.md');
     } else {
-      appendFileSync(heartbeatFile, CLAWLINK_SECTION);
+      appendFileSync(heartbeatFile, getClawlinkSection(SKILL_DIR));
       console.log('✓ Added ClawLink to', heartbeatFile);
     }
   }

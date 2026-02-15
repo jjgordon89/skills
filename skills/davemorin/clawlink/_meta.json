@@ -1,13 +1,18 @@
 {
   "owner": "davemorin",
   "slug": "clawlink",
-  "displayName": "ClawLink",
+  "displayName": "Clawlink",
   "latest": {
-    "version": "2.4.0",
-    "publishedAt": 1771120886663,
-    "commit": "https://github.com/openclaw/skills/commit/870f0ee17fe684e23d21a7b84449518e3fbca1a5"
+    "version": "2.5.2",
+    "publishedAt": 1771126182152,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.4.0",
+      "publishedAt": 1771120886663,
+      "commit": "https://github.com/openclaw/skills/commit/870f0ee17fe684e23d21a7b84449518e3fbca1a5"
+    },
     {
       "version": "2.3.0",
       "publishedAt": 1771113227378,

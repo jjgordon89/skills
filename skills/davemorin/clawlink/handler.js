@@ -9,6 +9,7 @@
 
 import clawbot from './lib/clawbot.js';
 import prefs from './lib/preferences.js';
+import mailbox from './lib/mailbox.js';
 
 const args = process.argv.slice(2);
 const action = args[0];
@@ -146,6 +147,48 @@ async function main() {
       }
       break;
 
+    case 'inbox':
+      // List or read inbox messages
+      if (args[1]) {
+        // Read specific message
+        try {
+          const content = mailbox.getMessage('inbox', args[1]);
+          result = { success: true, filename: args[1], content };
+        } catch (e) {
+          result = { success: false, error: e.message };
+        }
+      } else {
+        // List inbox
+        const limit = flags.limit ? parseInt(flags.limit) : 20;
+        result = { 
+          success: true, 
+          inbox: mailbox.listInbox(limit),
+          count: mailbox.listInbox(limit).length
+        };
+      }
+      break;
+
+    case 'outbox':
+      // List or read outbox messages
+      if (args[1]) {
+        // Read specific message
+        try {
+          const content = mailbox.getMessage('outbox', args[1]);
+          result = { success: true, filename: args[1], content };
+        } catch (e) {
+          result = { success: false, error: e.message };
+        }
+      } else {
+        // List outbox
+        const limit = flags.limit ? parseInt(flags.limit) : 20;
+        result = { 
+          success: true, 
+          outbox: mailbox.listOutbox(limit),
+          count: mailbox.listOutbox(limit).length
+        };
+      }
+      break;
+
     default:
       result = {
         error: 'Unknown action',
@@ -157,6 +200,8 @@ async function main() {
           link: 'Get your friend link',
           friends: 'List friends',
           status: 'Get ClawLink status',
+          inbox: 'inbox [filename] [--limit=N] - List or read inbox messages',
+          outbox: 'outbox [filename] [--limit=N] - List or read outbox messages',
           preferences: 'preferences [set <path> <value>]',
           'quiet-hours': 'quiet-hours [on|off|<start> <end>]',
           batch: 'batch [on|off]',
