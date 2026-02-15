@@ -11,12 +11,19 @@ import sys
 import time
 import httpx
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# Add signer to path for on-chain settlement
+sys.path.insert(0, str(Path(__file__).parent))
+from signer import sign_and_submit
 
 # Configuration
 API_BASE = os.getenv('OPTIONNS_API_URL', 'https://api.optionns.com')
 API_KEY = os.getenv('OPTIONNS_API_KEY', '')
 WALLET = os.getenv('SOLANA_PUBKEY', '')
 USER_ATA = os.getenv('SOLANA_ATA', '')
+KEYPAIR_PATH = os.getenv('OPTIONNS_KEYPAIR_PATH', os.path.expanduser('~/.config/optionns/agent_keypair.json'))
+RPC_URL = os.getenv('SOLANA_RPC_URL', 'https://api.devnet.solana.com')
 
 # Sports cascade order — agent's preferred sport checked first, then fallback
 SUPPORTED_SPORTS = ['NFL', 'NBA', 'NCAAB', 'NHL', 'MLB', 'CFB', 'SOCCER']
@@ -32,7 +39,7 @@ class OptionnsTrader:
         self.positions = []
         self.bankroll = 1000  # Starting bankroll in optnnUSDC
         self.max_risk_per_trade = 0.05  # 5% max risk per trade
-
+    
     def api_call(self, method, path, data=None):
         """Make an authenticated API call."""
         try:
@@ -170,8 +177,9 @@ class OptionnsTrader:
         opportunities = []
         
         for game in games:
-            game_id = game.get('game_id')
-            game_title = f"{game.get('home_team')} vs {game.get('away_team')}"
+            game_id = game.get('game_id') or game.get('id')
+            game_title = game.get('title') or f"{game.get('home_team')} vs {game.get('away_team')}"
+            sport = game.get('sport', 'unknown').lower()
             
             # Check various bet types
             bet_types = [
@@ -196,6 +204,7 @@ class OptionnsTrader:
                         opportunities.append({
                             'game_id': game_id,
                             'game_title': game_title,
+                            'sport': sport,
                             'bet_type': bet_type,
                             'target': target,
                             'win_prob': win_prob,
@@ -211,7 +220,7 @@ class OptionnsTrader:
     def place_bet(self, opportunity):
         """
         Execute a trade via the Optionns API.
-        Flow: get quote → execute buy → register barrier
+        Flow: get quote → execute buy → settle on-chain
         """
         bet_size = min(
             self.bankroll * opportunity['kelly'],
@@ -228,6 +237,9 @@ class OptionnsTrader:
         underlying = round(min(0.95, max(0.05, opportunity['win_prob'])), 2)
         strike = round(min(0.95, max(0.05, underlying - 0.05)), 2)
         
+        # Detect sport from opportunity data
+        sport = opportunity.get('sport', 'nba').lower()
+        
         # Step 1: Get quote
         token_id = f"token_{opportunity['game_id']}"
         quote = self.api_call('POST', '/v1/vault/quote', {
@@ -235,7 +247,7 @@ class OptionnsTrader:
             'underlying_price': underlying,
             'strike': strike,
             'option_type': 'call',
-            'sport': 'nba',
+            'sport': sport,
             'quantity': quantity,
             'expiry_minutes': 5
         })
@@ -254,7 +266,7 @@ class OptionnsTrader:
             'token_id': token_id,
             'game_id': opportunity['game_id'],
             'game_title': opportunity['game_title'],
-            'sport': 'nba',
+            'sport': sport,
             'underlying_price': underlying,
             'strike': strike,
             'option_type': 'call',
@@ -267,38 +279,66 @@ class OptionnsTrader:
             'user_ata': self.ensure_ata()
         })
         
-        if not trade or 'position_id' not in trade:
+        if not trade:
             print(f"  ❌ Trade execution failed")
             return None
         
+        # Step 3: Settle on-chain if instructions returned
+        tx_signature = None
+        if 'instructions' in trade:
+            print(f"  🔐 Signing and submitting to Solana...")
+            try:
+                tx_signature = sign_and_submit(
+                    instructions=trade['instructions'],
+                    keypair_path=KEYPAIR_PATH,
+                    rpc_url=RPC_URL
+                )
+                print(f"  ✅ On-chain: {tx_signature[:16]}...{tx_signature[-4:]}")
+            except Exception as e:
+                print(f"  ❌ On-chain settlement failed: {e}")
+                # Continue with off-chain position tracking
+        
         position = {
-            'position_id': trade['position_id'],
+            'position_id': trade.get('position_id') or trade.get('outcome_id'),
             'game_id': opportunity['game_id'],
             'game_title': opportunity['game_title'],
             'bet_type': opportunity['bet_type'],
             'target': opportunity['target'],
+            'sport': sport,
             'amount': premium,
             'quantity': quantity,
+            'max_payout': trade.get('max_payout', quantity * (1.0 - strike)),
+            'strike': strike,
+            'underlying_price': underlying,
+            'expiry_minutes': 5,
             'placed_at': datetime.now().isoformat(),
             'status': 'open',
-            'barrier_registered': trade.get('barrier_registered', False)
+            'barrier_registered': trade.get('barrier_registered', False),
+            'tx_signature': tx_signature
         }
         
         self.positions.append(position)
         self.bankroll -= premium
         
+        # Persist to Supabase
+        # if self.persist_position_to_supabase(position):
+        #     print(f"  ✅ Position saved to Supabase")
+        
         print(f"  ✅ Position opened: {position['position_id']}")
         print(f"  Barrier registered: {position['barrier_registered']}")
-        
+        if tx_signature:
+            print(f"  📝 Logged to positions.log")
+            self.log_trade(position)
         return position
     
     def monitor_positions(self):
         """
-        Check open positions for outcomes via API
+        Check open positions via API
         """
         if not self.positions:
             return
         
+        # Fallback to API query
         result = self.api_call('GET', '/v1/vault/positions')
         if not result:
             return
@@ -324,6 +364,12 @@ class OptionnsTrader:
                     print(f"  📊 {pos['position_id']}: {pos['bet_type']} +{pos['target']} (open)")
             else:
                 print(f"  📊 {pos['position_id']}: {pos['bet_type']} +{pos['target']} (open)")
+    
+    def log_trade(self, position):
+        """Log trade to file for tracking and analysis."""
+        log_file = Path(__file__).parent.parent / 'positions.log'
+        with open(log_file, 'a') as f:
+            f.write(f"{position['placed_at']},{position['position_id']},{position['game_title']},{position['bet_type']},{position['target']},{position['quantity']},{position.get('tx_signature', 'N/A')}\n")
     
     def run_autonomous(self, sport='NFL'):
         """

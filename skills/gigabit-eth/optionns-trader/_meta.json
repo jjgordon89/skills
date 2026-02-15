@@ -3,9 +3,15 @@
   "slug": "optionns-trader",
   "displayName": "Optionns Trader",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1771090044206,
-    "commit": "https://github.com/openclaw/skills/commit/d6502f1d22f318b04145fdb7ec2219acca336108"
+    "version": "1.0.7",
+    "publishedAt": 1771155344558,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1771090044206,
+      "commit": "https://github.com/openclaw/skills/commit/d6502f1d22f318b04145fdb7ec2219acca336108"
+    }
+  ]
 }

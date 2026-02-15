@@ -13,7 +13,7 @@ X-API-Key: YOUR_API_KEY
 
 ### 1. Faucet (Devnet Only)
 
-Fund your devnet wallet with optnUSDC.
+Fund your devnet wallet with cmUSDC.
 
 ```http
 POST /api/faucet

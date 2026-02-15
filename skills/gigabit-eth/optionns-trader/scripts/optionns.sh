@@ -497,12 +497,11 @@ cmd_trade() {
         \"user_ata\": \"${ata:-$wallet}\"
     }")
     
-    # Check if we got an unsigned transaction to sign
-    if echo "$trade_result" | grep -q '"unsigned_tx"'; then
-        unsigned_tx=$(echo "$trade_result" | jq -r '.unsigned_tx')
-        blockhash=$(echo "$trade_result" | jq -r '.blockhash')
-        position_id=$(echo "$trade_result" | jq -r '.position_id')
-        position_pda=$(echo "$trade_result" | jq -r '.position_pda // "N/A"')
+    # Check if we got instructions to sign (new format)
+    if echo "$trade_result" | grep -q '"instructions"'; then
+        instructions_json=$(echo "$trade_result" | jq -c '.instructions')
+        position_id=$(echo "$trade_result" | jq -r '.position_id // .outcome_id')
+        position_pda=$(echo "$trade_result" | jq -r '.position_pda // .outcome_position_pda // "N/A"')
         
         echo -e "${GREEN}✅ Trade prepared!${NC}"
         echo "Position ID: $position_id"
@@ -520,8 +519,39 @@ cmd_trade() {
             exit 1
         fi
         
-        # Use signer.py agent signing helper
-        tx_sig=$(python3 "$SCRIPT_DIR/signer.py" "$KEYPAIR_FILE" "$unsigned_tx" "$blockhash" "$RPC_URL" 2>&1)
+        # Use new signer.py with instructions format
+        tx_sig=$(python3 -c "
+import sys
+sys.path.insert(0, \"$SCRIPT_DIR\")
+from signer import sign_and_submit
+import json
+
+# Parse and normalize keys (snake_case → camelCase, accounts → keys)
+instructions_raw = json.loads('$instructions_json')
+instructions = []
+for ix in instructions_raw:
+    normalized = {
+        'programId': ix.get('programId') or ix.get('program_id'),
+        'data': ix.get('data'),
+        'keys': []
+    }
+    # Normalize accounts -> keys
+    accounts = ix.get('accounts', ix.get('keys', []))
+    for acc in accounts:
+        normalized['keys'].append({
+            'pubkey': acc.get('pubkey'),
+            'isSigner': acc.get('is_signer') if acc.get('is_signer') is not None else acc.get('isSigner'),
+            'isWritable': acc.get('is_writable') if acc.get('is_writable') is not None else acc.get('isWritable')
+        })
+    instructions.append(normalized)
+
+tx_sig = sign_and_submit(
+    instructions=instructions,
+    keypair_path=\"$KEYPAIR_FILE\",
+    rpc_url=\"$RPC_URL\"
+)
+print(tx_sig)
+" 2>&1)
         sign_exit_code=$?
         
         if [[ $sign_exit_code -eq 0 ]]; then
@@ -531,10 +561,10 @@ cmd_trade() {
             
             # Show trade details
             echo "$trade_result" | jq -r '
-"Premium Paid: \(.premium_paid // .premium_collected) USDC
-Max Payout: \(.max_payout) USDC
-Expires: \(.expires_at)
-Barrier Registered: \(.barrier_registered)"
+"Premium Paid: \(.premium_paid // .premium_collected // .premium) cmUSDC
+Max Payout: \(.max_payout) cmUSDC
+Expires: \(.expires_at // .expiry_time)
+Barrier Registered: \(.barrier_registered // true)"
             ' 2>/dev/null
             
             # Log to file for tracking
@@ -547,7 +577,7 @@ Barrier Registered: \(.barrier_registered)"
         fi
         
     elif echo "$trade_result" | grep -q "position_id"; then
-        # Fallback: off-chain only (deprecated flow)
+        # Fallback: off-chain only (shouldn't happen with current API)
         position_id=$(echo "$trade_result" | jq -r '.position_id')
         echo -e "${YELLOW}⚠️  Trade recorded off-chain only (no Solana tx)${NC}"
         echo "Position ID: $position_id"
@@ -583,7 +613,7 @@ cmd_positions() {
     if [[ -f "$SCRIPT_DIR/../positions.log" ]]; then
         echo "Local trade log (recent):"
         tail -10 "$SCRIPT_DIR/../positions.log"
-        total=$(wc -l < "$SCRIPT_DIR/../positions.log")
+        total=$(wc -l <"$SCRIPT_DIR/../positions.log")
         echo ""
         echo "Total logged trades: $total"
     else
@@ -593,12 +623,29 @@ cmd_positions() {
 
 # Autonomous trading mode
 cmd_autonomous() {
+    local sport="${1:-ANY}"
+    
     echo -e "${BLUE}Starting autonomous trading mode...${NC}"
-    echo "This will monitor games and place trades based on strategy"
+    echo "Sport preference: $sport (will scan all sports for live games)"
     echo "Press Ctrl+C to stop"
     echo ""
     
-    python3 "$SCRIPT_DIR/strategy.py" --mode autonomous
+    # Ensure required environment variables are set
+    if [[ -z "$API_KEY" ]]; then
+        echo -e "${RED}❌ OPTIONNS_API_KEY not set${NC}"
+        echo "Export it or it will be read from ~/.config/optionns/config.json"
+    fi
+    
+    if [[ -z "$SOLANA_PUBKEY" ]]; then
+        echo -e "${YELLOW}⚠️  SOLANA_PUBKEY not set - will use registered agent wallet${NC}"
+    fi
+    
+    # Run strategy engine in autonomous mode
+    if [[ "$sport" == "ANY" ]]; then
+        python3 "$SCRIPT_DIR/strategy.py" --mode autonomous
+    else
+        python3 "$SCRIPT_DIR/strategy.py" --mode autonomous --sport "$sport"
+    fi
 }
 
 # Main
@@ -630,8 +677,9 @@ main() {
         positions)
             cmd_positions
             ;;
-        auto|autonomous)
-            cmd_autonomous
+        autonomous|auto)
+            shift
+            cmd_autonomous "${1:-ANY}"
             ;;
         *)
             echo "Optionns Trader - Autonomous sports betting for AI agents"

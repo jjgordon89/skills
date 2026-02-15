@@ -6,6 +6,26 @@ Trade One-Touch barrier options on live sports with instant mockUSDC payouts on 
 
 ---
 
+> [!CAUTION]
+> **DEVNET ONLY - DO NOT USE MAINNET WALLETS**
+> 
+> This skill operates exclusively on **Solana Devnet** with **mock USDC tokens**. These are not real funds.
+> 
+> **Security requirements:**
+> - ✅ **ONLY use throwaway/devnet keypairs** — never your mainnet wallet
+> - ✅ **Keep private keys in `~/.config/optionns/`** with `600` permissions (skill auto-configures)
+> - ✅ **Verify API endpoint** independently before trusting (`https://api.optionns.com`)
+> - ✅ **Run in isolated environment** recommended for autonomous operation
+> - ❌ **NEVER point at mainnet** or use real funds/keys with this skill
+> 
+> **What gets stored locally:**
+> - `~/.config/optionns/credentials.json` — API key + wallet address (600 perms)
+> - `~/.config/optionns/agent_keypair.json` — Solana devnet keypair (600 perms)
+> 
+> The skill communicates with `https://api.optionns.com` (remote service) and Solana Devnet RPC. Treat as untrusted network endpoints until you verify provenance. Review `scripts/signer.py` and `scripts/optionns.sh` before allowing autonomous operation with credentials.
+
+---
+
 ## What It Does
 
 This skill transforms AI agents into autonomous sports traders:
@@ -48,6 +68,7 @@ Install via `pip install -r requirements.txt`:
 
 ## Security & Persistence
 
+
 ### Files Written
 This skill creates files in `~/.config/optionns/` (permissions `600`):
 
@@ -66,6 +87,19 @@ This skill creates files in `~/.config/optionns/` (permissions `600`):
 
 ### Self-Custody
 Your private key never leaves your machine. The Optionns API constructs unsigned transactions — your agent signs them locally with its own keypair.
+
+---
+
+## Governance Token (Solana Mainnet)
+
+**Token Address:** `7ASpUGEgCh5DtpYPHDGgUodvJrsX1rQ8qYePCXYbpump`
+
+When trading on **mainnet** (not currently supported by this skill), holders of the governance token receive:
+- **Trading fee discounts** proportional to holdings
+- **Priority settlement** during high-volume periods
+- **Early access** to new markets and features
+
+> **Note:** This devnet skill does not require the governance token. The token is only relevant for mainnet trading (coming soon).
 
 ---
 
@@ -113,8 +147,57 @@ This installs `solders` for local transaction signing and `httpx` for the strate
 # 6. Check positions
 ./scripts/optionns.sh positions
 
-# 7. Run autonomous mode
+# 7. Run autonomous mode (scans ALL live games)
 ./scripts/optionns.sh auto
+
+# 8. Run autonomous mode (prefer specific sport, fallback to others)
+./scripts/optionns.sh auto NBA
+```
+
+---
+
+## Moltbook Integration (Auto-Post Trades)
+
+Automatically post your trades to Moltbook — the social network for AI agents.
+
+### Setup
+
+1. Ensure Moltbook credentials exist:
+   ```bash
+   cat ~/.config/moltbook/credentials.json
+   # Should contain: {"api_key": "your_key", "agent_name": "your_name"}
+   ```
+
+2. Post pending trades once:
+   ```bash
+   python3 scripts/moltbook_poster.py --once
+   ```
+
+3. Run as daemon (auto-posts new trades):
+   ```bash
+   python3 scripts/moltbook_poster.py --daemon
+   ```
+
+### Features
+
+- **Auto-detects new trades** from `positions.log`
+- **Auto-solves verification challenges** (lobster math problems)
+- **Rate-limit aware** — respects Moltbook's 30-min post limit
+- **Prevents duplicates** — tracks posted trades in `.moltbook_posted.json`
+
+### Post Format
+
+```
+🎯 New Trade: Astralis vs 3DMAX
+
+Just placed a trade on Optionns Protocol 🧪
+
+Game: Astralis vs 3DMAX
+Bet: Map win (10 minutes)
+Amount: 20 USDC
+Position ID: fa535862-6ed4-49af-9d1c-73abbfcb16c1
+
+Trading micro-events on live esports. One-touch barrier options with instant USDC payouts on Solana.
 ```
 
 ---
@@ -128,12 +211,12 @@ User/Heartbeat → optionns.sh → Optionns API → Solana Devnet
 ### Transaction Signing
 
 **Agents sign their own transactions locally:**
-1. API creates unsigned Solana transaction + blockhash
-2. `optionns.sh` signs with agent's local keypair
-3. Agent submits signed transaction to Solana RPC
+1. API returns Solana instructions array (programId, keys, data)
+2. `signer.py` fetches fresh blockhash and constructs transaction
+3. Agent signs with local keypair and submits to Solana RPC
 4. On-chain settlement confirmed in ~2-4 seconds
 
-**Why this matters:** Your API key never has access to your private key. You maintain full custody of your funds. The API purely constructs transactions—you authorize them.
+**Why this matters:** Your API key never has access to your private key. You maintain full custody of your funds. The API provides instructions—you build, sign, and submit the transaction.
 
 ---
 
@@ -157,6 +240,38 @@ User/Heartbeat → optionns.sh → Optionns API → Solana Devnet
 ```
 
 **Pro Tip:** Use `--upcoming` to see tonight's game schedule early, then monitor when they go live to catch the best micro-market opportunities at tip-off.
+
+---
+
+## Autonomous Trading
+
+### Run Continuously
+
+```bash
+# Scan ANY live games across all sports
+./scripts/optionns.sh auto
+
+# Prefer specific sport (with fallback to others)
+./scripts/optionns.sh auto NBA
+./scripts/optionns.sh auto CBB
+```
+
+**What it does:**
+1. **Scans** all live games (NFL, NBA, CBB, NHL, MLB, CFB, SOCCER)
+2. **Calculates** +EV opportunities using Kelly Criterion
+3. **Places** trades automatically via API
+4. **Settles** on-chain with Solana transaction signatures
+5. **Monitors** positions for outcomes and P&L
+6. **Logs** all trades to `positions.log`
+
+**Strategy Features:**
+- Kelly Criterion bet sizing (half-Kelly for safety)
+- 5% max risk per trade
+- Multi-sport cascade (finds live games anywhere)
+- Automatic bankroll management
+- Real-time position monitoring
+
+**Press Ctrl+C to stop**
 
 ---
 

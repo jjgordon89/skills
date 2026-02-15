@@ -2,13 +2,14 @@
 """
 signer.py — Helper for OpenClaw agents to sign and submit Solana transactions.
 
+The Optionns API returns instructions array format. This module constructs, signs,
+and submits transactions from those instructions.
+
 Usage in agent code:
-    from signer import sign_and_submit_transaction
+    from signer import sign_and_submit
     
-    # After receiving unsigned_tx from API
-    tx_sig = sign_and_submit_transaction(
-        unsigned_tx=response['unsigned_tx'],
-        blockhash=response['blockhash'],
+    tx_sig = sign_and_submit(
+        instructions=response['instructions'],
         keypair_path='~/.config/optionns/agent_keypair.json',
         rpc_url='https://api.devnet.solana.com'
     )
@@ -16,25 +17,22 @@ Usage in agent code:
 import json
 import base64
 import time
-from typing import Optional
 from pathlib import Path
 import urllib.request
 import urllib.error
 
 
-def sign_and_submit_transaction(
-    unsigned_tx: str,
-    blockhash: str,
+def sign_and_submit(
+    instructions: list,
     keypair_path: str,
     rpc_url: str = "https://api.devnet.solana.com",
     timeout: int = 30
 ) -> str:
     """
-    Sign an unsigned Solana transaction and submit to RPC.
+    Construct, sign, and submit a Solana transaction from instructions array.
     
     Args:
-        unsigned_tx: Base64-encoded unsigned transaction message
-        blockhash: Recent blockhash
+        instructions: List of instruction dicts with programId, keys, data
         keypair_path: Path to Solana keypair JSON file
         rpc_url: Solana RPC endpoint
         timeout: Max seconds to wait for confirmation
@@ -43,12 +41,15 @@ def sign_and_submit_transaction(
         Transaction signature on success
         
     Raises:
-        Exception: If signing or submission fails
+        Exception: If construction, signing, or submission fails
     """
     try:
         from solders.keypair import Keypair
         from solders.transaction import Transaction
         from solders.message import Message
+        from solders.instruction import Instruction, AccountMeta
+        from solders.pubkey import Pubkey
+        from solders.hash import Hash
     except ImportError:
         raise ImportError(
             "solders library required. Install with: pip install solders"
@@ -64,11 +65,61 @@ def sign_and_submit_transaction(
     
     kp = Keypair.from_bytes(bytes(secret))
     
-    # Deserialize the unsigned message
-    msg_bytes = base64.b64decode(unsigned_tx)
-    msg = Message.from_bytes(msg_bytes)
+    # Fetch fresh blockhash
+    blockhash_payload = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getLatestBlockhash",
+        "params": [{"commitment": "confirmed"}]
+    }).encode("utf-8")
     
-    # Sign message and assemble Transaction
+    req = urllib.request.Request(
+        rpc_url,
+        data=blockhash_payload,
+        headers={"Content-Type": "application/json"}
+    )
+    
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            blockhash_result = json.loads(resp.read().decode())
+    except urllib.error.URLError as e:
+        raise Exception(f"Failed to fetch blockhash: {e}")
+    
+    if "error" in blockhash_result:
+        raise Exception(f"Blockhash RPC error: {blockhash_result['error']}")
+    
+    blockhash_str = blockhash_result["result"]["value"]["blockhash"]
+    blockhash = Hash.from_string(blockhash_str)
+    
+    # Construct instructions from API response
+    solana_instructions = []
+    for ix in instructions:
+        program_id = Pubkey.from_string(ix["programId"])
+        
+        accounts = []
+        for acc in ix["keys"]:
+            accounts.append(AccountMeta(
+                pubkey=Pubkey.from_string(acc["pubkey"]),
+                is_signer=acc["isSigner"],
+                is_writable=acc["isWritable"]
+            ))
+        
+        data = base64.b64decode(ix["data"])
+        
+        solana_instructions.append(Instruction(
+            program_id=program_id,
+            accounts=accounts,
+            data=data
+        ))
+    
+    # Create message with payer = agent keypair
+    msg = Message.new_with_blockhash(
+        solana_instructions,
+        kp.pubkey(),
+        blockhash
+    )
+    
+    # Sign and create transaction
     sig = kp.sign_message(bytes(msg))
     tx = Transaction.populate(msg, [sig])
     
@@ -104,7 +155,7 @@ def sign_and_submit_transaction(
     
     tx_sig = result.get("result", "")
     
-    # Confirm the tx landed (poll for up to timeout seconds)
+    # Confirm the tx landed
     for _ in range(timeout // 2):
         time.sleep(2)
         confirm_payload = json.dumps({
@@ -128,31 +179,28 @@ def sign_and_submit_transaction(
             if statuses and statuses[0] is not None:
                 if statuses[0].get("err"):
                     raise Exception(f"Transaction failed on-chain: {statuses[0]['err']}")
-                # Confirmed!
                 return tx_sig
         except Exception:
             continue
     
-    # Timed out waiting for confirmation
     raise Exception(f"Transaction submitted but not confirmed after {timeout}s: {tx_sig}")
 
 
 if __name__ == "__main__":
     import sys
     
-    if len(sys.argv) < 4:
-        print(f"Usage: {sys.argv[0]} <keypair_file> <unsigned_tx_b64> <blockhash> [rpc_url]", file=sys.stderr)
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <keypair_file> <instructions_json> [rpc_url]", file=sys.stderr)
         sys.exit(1)
     
     keypair_file = sys.argv[1]
-    unsigned_b64 = sys.argv[2]
-    blockhash_str = sys.argv[3]
-    rpc_url = sys.argv[4] if len(sys.argv) > 4 else "https://api.devnet.solana.com"
+    instructions_json = sys.argv[2]
+    rpc_url = sys.argv[3] if len(sys.argv) > 3 else "https://api.devnet.solana.com"
     
     try:
-        tx_sig = sign_and_submit_transaction(
-            unsigned_tx=unsigned_b64,
-            blockhash=blockhash_str,
+        instructions = json.loads(instructions_json)
+        tx_sig = sign_and_submit(
+            instructions=instructions,
             keypair_path=keypair_file,
             rpc_url=rpc_url
         )

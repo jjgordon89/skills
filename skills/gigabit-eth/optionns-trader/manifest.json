@@ -63,24 +63,24 @@
                     "path": "scripts/optionns.sh",
                     "type": "file",
                     "language": "bash",
-                    "size": "16.9 KB",
-                    "description": "Main CLI for trading — register, trade, positions, autonomous mode"
+                    "size": "25.7 KB",
+                    "description": "Main CLI for trading — register, trade, positions, autonomous mode with multi-sport support"
                 },
                 {
                     "name": "strategy.py",
                     "path": "scripts/strategy.py",
                     "type": "file",
                     "language": "python",
-                    "size": "14.6 KB",
-                    "description": "Edge calculation engine with Kelly Criterion sizing"
+                    "size": "15.4 KB",
+                    "description": "Autonomous trading engine with Kelly Criterion sizing, on-chain settlement, and multi-sport cascade"
                 },
                 {
                     "name": "signer.py",
                     "path": "scripts/signer.py",
                     "type": "file",
                     "language": "python",
-                    "size": "4.8 KB",
-                    "description": "Sign and submit Solana transactions (importable library + CLI)"
+                    "size": "5.2 KB",
+                    "description": "Sign and submit Solana transactions using instructions format (importable library + CLI)"
                 }
             ]
         },

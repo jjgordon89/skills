@@ -27,6 +27,11 @@ metadata:
 
 Autonomous sports micro-betting for AI agents. Trade One-Touch barrier options on live sports games with instant cmUSDC payouts on Solana Devnet.
 
+> **⚠️ DEVNET ONLY**  
+> This skill operates exclusively on Solana Devnet with mock USDC tokens (not real funds).  
+> **NEVER use mainnet wallets or real keys.** Only use throwaway/devnet keypairs.  
+> Verify API endpoint independently before trusting. Review `scripts/signer.py` before running.
+
 ## What It Does
 
 - Finds live games with betting markets
@@ -93,8 +98,12 @@ Installs `solders` (transaction signing) and `httpx` (HTTP client for strategy e
   --target 10 \
   --amount 5
 
-# Check positions
+# 7. Check positions
 ./scripts/optionns.sh positions
+
+# 8. Run autonomous mode
+./scripts/optionns.sh auto          # Scans ANY live games
+./scripts/optionns.sh auto NBA      # Prefers NBA
 ```
 
 ## Why Agents Beat Humans
@@ -113,7 +122,7 @@ Installs `solders` (transaction signing) and `httpx` (HTTP client for strategy e
 User/Heartbeat → optionns.sh → Optionns API → Solana Devnet
 ```
 
-**Transaction signing:** Agents sign their own Solana transactions locally with their keypair. The API constructs unsigned transactions, and you authorize them. Full self-custody.
+**Transaction signing:** The API returns Solana instructions. Your agent constructs, signs, and submits transactions locally with its keypair. Full self-custody.
 
 ## Files
 
