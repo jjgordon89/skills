@@ -1,13 +1,18 @@
 {
   "owner": "potdealer",
   "slug": "ok-computers",
-  "displayName": "Ok Computers",
+  "displayName": "OK Computers + Ring Gates + Net Protocol",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1770670650669,
-    "commit": "https://github.com/openclaw/skills/commit/c95d8df52b95905a067b4531575a8c0d11d9a3ef"
+    "version": "2.1.0",
+    "publishedAt": 1771106530964,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1770670650669,
+      "commit": "https://github.com/openclaw/skills/commit/c95d8df52b95905a067b4531575a8c0d11d9a3ef"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1770542446357,

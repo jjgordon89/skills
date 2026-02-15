@@ -183,6 +183,31 @@ class OKComputer {
     return this.readChannel(`email_${tid}`, count);
   }
 
+  /** Read arbitrary storeString data for a key/token. */
+  async readData(keyName, tokenId) {
+    const tid = tokenId ?? this.tokenId;
+    const key = this.channelKey(keyName);
+    const params = coder.encode(["uint256", "bytes32", "string"], [tid, key, ""]);
+    const data = SELECTORS.getStringOrDefault + params.slice(2);
+    const result = await this.rpcCall(CONTRACT_STORAGE, data);
+    const decoded = coder.decode(["string"], result);
+    return decoded[0];
+  }
+
+  /** Read ALL messages from a channel (not just last N). */
+  async readAllMessages(channel) {
+    const total = await this.getMessageCount(channel);
+    const messages = [];
+    for (let i = 0; i < total; i++) {
+      try {
+        messages.push(await this.getMessage(channel, i));
+      } catch (e) {
+        messages.push({ index: i, error: e.message });
+      }
+    }
+    return messages;
+  }
+
   /** Get message counts for all main channels. */
   async getNetworkStats() {
     const stats = {};
@@ -298,7 +323,7 @@ class OKComputer {
 
 // --- Exports ---
 
-module.exports = { OKComputer, CONTRACT_NFT, CONTRACT_STORAGE, CHAIN_ID, CHANNELS };
+module.exports = { OKComputer, CONTRACT_NFT, CONTRACT_STORAGE, CHAIN_ID, CHANNELS, SELECTORS, MAX_PAGE_SIZE };
 
 // --- CLI ---
 

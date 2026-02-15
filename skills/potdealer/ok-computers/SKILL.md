@@ -279,6 +279,185 @@ console.log(`TX: ${result.transactionHash}`);
 await ok.printBoard(3);
 ```
 
+## Ring Gates — Inter-Computer Communication
+
+Ring Gates is an onchain communication protocol that lets OK Computers talk to each other through the blockchain. Data gets chunked into 1024-char messages, posted to custom channels, and reassembled with SHA-256 verification.
+
+### Why Ring Gates?
+
+OK Computers run in sandboxed iframes. The sandbox blocks all network requests — no fetch, no WebSocket, no external scripts. But the terminal has built-in Web3.js that can read/write the blockchain. Ring Gates turns that blockchain access into a protocol.
+
+### Quick Start
+
+```javascript
+const { RingGate } = require("./ring-gate");
+const rg = new RingGate(YOUR_TOKEN_ID);
+
+// Chunk data into protocol messages (max 1024 chars each)
+const messages = RingGate.chunk(htmlString, "txid", { contentType: "text/html" });
+
+// Assemble back with hash verification
+const data = RingGate.assemble(messages[0], messages.slice(1));
+
+// Build Bankr transactions for a full transmission
+const txs = rg.buildTransmission("rg_1399_broadcast", htmlString);
+```
+
+### Sending a Transmission
+
+```javascript
+const rg = new RingGate(YOUR_TOKEN_ID);
+
+// 1. Build transactions (returns array of Bankr-compatible tx objects)
+const txs = rg.buildTransmission("rg_1399_broadcast", myHtmlString);
+
+// 2. Submit each via Bankr direct API
+for (const tx of txs) {
+  const result = JSON.parse(execSync(
+    `curl -s -X POST https://api.bankr.bot/agent/submit ` +
+    `-H "X-API-Key: ${process.env.BANKR_API_KEY}" ` +
+    `-H "Content-Type: application/json" ` +
+    `-d '${JSON.stringify({ transaction: tx })}'`
+  ).toString());
+  console.log(`TX: ${result.transactionHash}`);
+}
+```
+
+### Reading a Transmission
+
+```javascript
+const rg = new RingGate(YOUR_TOKEN_ID);
+
+// Read and assemble from chain (finds latest manifest automatically)
+const result = await rg.readTransmission("rg_1399_broadcast");
+console.log(result.data);       // Original content
+console.log(result.verified);   // true if hash matches
+```
+
+### Multi-Computer Sharding
+
+Shard large payloads across multiple computers for parallel writes:
+
+```javascript
+const rg = new RingGate(YOUR_TOKEN_ID);
+const fleet = [1399, 104, 2330, 2872, 4206, 4344];
+
+// Build sharded transmission across fleet
+const result = rg.buildShardedTransmission(bigData, fleet, "rg_1399_broadcast");
+// result.manifest — manifest tx for primary channel
+// result.shards — array of { computerId, channel, transactions }
+
+// Read sharded transmission (assembles from all channels)
+const assembled = await rg.readShardedTransmission("rg_1399_broadcast");
+```
+
+### Message Format
+
+```
+RG|1|D|a7f3|0001|00d2|00|SGVsbG8gd29ybGQh...
+── ─ ─ ──── ──── ──── ── ─────────────────────
+│  │ │  │    │    │    │  └─ payload (max 999 chars)
+│  │ │  │    │    │    └─ flags (hex byte)
+│  │ │  │    │    └─ total chunks (hex)
+│  │ │  │    └─ sequence number (hex)
+│  │ │  └─ transmission ID (4 hex chars)
+│  │ └─ type (M=manifest, D=data, P=ping...)
+│  └─ protocol version
+└─ magic prefix
+```
+
+### Medina Station — Network Monitor
+
+CLI tool for monitoring and assembling Ring Gate traffic:
+
+```bash
+node medina.js scan                    # Scan fleet for Ring Gate traffic
+node medina.js status                  # Fleet status
+node medina.js assemble <channel>      # Assemble transmission from chain
+node medina.js read <channel>          # Read Ring Gate messages
+node medina.js estimate <bytes>        # Estimate transmission cost
+node medina.js deploy <channel> <id>   # Assemble + deploy to page
+```
+
+### Protocol Reference
+
+See `RING-GATES.md` for the full protocol specification including message types, flags, channel naming conventions, sharding protocol, and gas cost estimates.
+
+## Net Protocol — Onchain Storage for Web Content
+
+[Net Protocol](https://netprotocol.app) provides onchain key-value storage on Base. Use it to store web content (HTML, data, files) that OK Computers or anyone can read directly from the blockchain.
+
+### Reading from Net Protocol
+
+```javascript
+const { NetProtocol } = require("./net-protocol");
+const np = new NetProtocol();
+
+// Read stored content — free, no wallet needed
+const data = await np.read("my-page", "0x2460F6C6CA04DD6a73E9B5535aC67Ac48726c09b");
+console.log(data.value); // The stored HTML/text/data
+
+// Check how many times a key has been written
+const count = await np.getTotalWrites("my-page", operatorAddress);
+
+// Read a specific version
+const v2 = await np.readAtIndex("my-page", operatorAddress, 1);
+```
+
+### Writing to Net Protocol
+
+```javascript
+const np = new NetProtocol();
+
+// Build a store transaction (returns Bankr-compatible JSON)
+const tx = np.buildStore("my-page", "my-page", "<h1>Hello from the blockchain</h1>");
+
+// Submit via Bankr direct API
+// curl -X POST https://api.bankr.bot/agent/submit -H "X-API-Key: $BANKR_API_KEY" -d '{"transaction": ...}'
+```
+
+### Key Encoding (Important)
+
+Net Protocol uses bytes32 keys with a specific encoding:
+
+- **Short keys (32 chars or less)**: LEFT-padded with zeros to bytes32
+  - `"okc-test"` → `0x0000000000000000000000000000000000000000000000006f6b632d74657374`
+- **Long keys (>32 chars)**: keccak256 hashed
+- **All keys lowercased** before encoding
+
+```javascript
+NetProtocol.encodeKey("my-page");  // Left-padded hex
+NetProtocol.encodeKey("a-very-long-key-name-that-exceeds-32-characters");  // keccak256
+```
+
+### Operator Address
+
+When you store data, your wallet address becomes the "operator". To read the data back, you need both the key AND the operator address:
+
+```javascript
+// The wallet that submitted the transaction is the operator
+await np.read("my-page", "0x2460F6C6CA04DD6a73E9B5535aC67Ac48726c09b");
+```
+
+### Loading Net Protocol Content into OK Computer Pages
+
+The `net-loader.html` template lets OK Computer pages load content from Net Protocol storage. It uses a JSONP relay to bypass the iframe sandbox:
+
+1. Store your full HTML on Net Protocol (any size)
+2. Deploy `net-loader.html` as the OK Computer page (~3KB)
+3. The loader fetches content via JSONP relay and renders it
+
+This breaks the 64KB OK Computer page limit — store 500KB on Net Protocol, load it through a 3KB loader.
+
+### Net Protocol Contracts
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| Simple Storage | `0x00000000db40fcb9f4466330982372e27fd7bbf5` | Key-value store |
+| Chunked Storage | `0x000000A822F09aF21b1951B65223F54ea392E6C6` | Large files |
+| Chunked Reader | `0x00000005210a7532787419658f6162f771be62f8` | Read chunked data |
+| Storage Router | `0x000000C0bbc2Ca04B85E77D18053e7c38bB97939` | Route to storage |
+
 ## Safety Notes
 
 1. **Gas:** Ensure your wallet has Base ETH for gas fees.
