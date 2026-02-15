@@ -3,9 +3,15 @@
   "slug": "gowok",
   "displayName": "Gowok",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1770260170534,
-    "commit": "https://github.com/clawdbot/skills/commit/ad0db236578bdad19b4f048876b80355a884ac92"
+    "version": "0.1.1",
+    "publishedAt": 1770260084106,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1770260170534,
+      "commit": "https://github.com/clawdbot/skills/commit/ad0db236578bdad19b4f048876b80355a884ac92"
+    }
+  ]
 }
