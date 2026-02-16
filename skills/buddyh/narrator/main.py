@@ -3,32 +3,51 @@
 Narrator CLI - Send screenshots to socket server for analysis.
 """
 
-import socket
-import struct
 import argparse
 import os
+import socket
+import struct
+import subprocess
+import sys
 import time
 from pathlib import Path
 
 SOCKET_PATH = '/tmp/narrator_socket.sock'
+SCREENSHOT_PATH = Path('/tmp/narrator_screenshot.png')
+
 
 def capture_screenshot():
-    """Capture screenshot using ImageMagick import."""
-    import subprocess
-    temp_path = '/tmp/narrator_screenshot.png'
-    # Try screencapture first (macOS), fall back to import (ImageMagick)
-    try:
-        subprocess.run(['screencapture', '-x', temp_path], check=True, capture_output=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        subprocess.run(['import', '-window', 'root', temp_path], check=True, capture_output=True)
-    with open(temp_path, 'rb') as f:
+    """Capture a screenshot using available macOS tools."""
+    # Try screencapture first (macOS), fall back to ImageMagick import.
+    methods = [
+        ['screencapture', '-x', str(SCREENSHOT_PATH)],
+        ['import', '-window', 'root', str(SCREENSHOT_PATH)],
+    ]
+
+    for cmd in methods:
+        try:
+            subprocess.run(cmd, check=True, capture_output=True)
+            break
+        except FileNotFoundError:
+            continue
+        except subprocess.CalledProcessError:
+            if SCREENSHOT_PATH.exists():
+                SCREENSHOT_PATH.unlink()
+            continue
+    else:
+        raise RuntimeError(
+            "No supported screenshot utility found (screencapture/import). "
+            "Install ImageMagick or run in a full macOS GUI session."
+        )
+
+    with open(SCREENSHOT_PATH, 'rb') as f:
         data = f.read()
-    os.unlink(temp_path)
+    SCREENSHOT_PATH.unlink()
     return data
+
 
 def get_active_app():
     """Get currently active app and window title."""
-    import subprocess
     try:
         result = subprocess.run(
             ['osascript', '-e', '''
@@ -41,45 +60,47 @@ def get_active_app():
                 end tell
             '''],
             capture_output=True,
-            text=True
+            text=True,
+            check=True,
         )
         lines = result.stdout.strip().split('\n')
         return lines[0], lines[1] if len(lines) > 1 else ''
-    except:
+    except Exception:
         return 'Unknown', ''
 
+
 def send_for_narration(png_bytes, app_name, window_title):
-    """Send screenshot to socket server."""
+    """Send screenshot to socket server and read narration."""
     if not os.path.exists(SOCKET_PATH):
         print(f"❌ Socket not found: {SOCKET_PATH}", file=sys.stderr)
-        print("   Start the server first: python server.py", file=sys.stderr)
+        print("   Start the server first: python3 server.py", file=sys.stderr)
         return None
-    
+
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(SOCKET_PATH)
-        
+
         # Send size then bytes
         sock.sendall(struct.pack('>I', len(png_bytes)))
         sock.sendall(png_bytes)
         sock.sendall((app_name + '\n').encode('utf-8'))
         sock.sendall((window_title + '\n').encode('utf-8'))
-        
+
         # Get narration
-        narration = sock.recv(1024).decode('utf-8')
+        narration = sock.recv(4096).decode('utf-8')
         sock.close()
-        
         return narration
     except Exception as e:
         print(f"❌ Socket error: {e}", file=sys.stderr)
         return None
+
 
 def clawtto_mode(mode='normal'):
     """Continuous Clawtto mode - narrate screen activity."""
     mode_name = '🎙️ NORMAL' if mode == 'normal' else '🎃 HORROR'
     print(f"{mode_name} mode activated!")
     print("   (Press Ctrl+C to stop)\n")
-    
+
     horror_phrases = [
         "the cursor moves toward the dark abyss of the terminal...",
         "oh no, a DELETE button! Will it survive?!",
@@ -93,75 +114,77 @@ def clawtto_mode(mode='normal'):
         "the ghost of processes past haunts this terminal...",
         "Ctrl+C won't save them now...",
         "sudo... the forbidden word is spoken!",
-        "the cursor lingers on rm -rf... the horror...",
     ]
-    
+
     normal_phrases = [
         "and they're coding like a boss!",
         "magic happening right before our eyes!",
         "absolutely crushing it in VS Code!",
         "look at that syntax highlighting GO!",
-        "they're in the zone! Pure productivity!",
-        "and BOOM - another line of code done!",
-        "the git commit flies in like an eagle!",
-        "syntax error? No problem! They're on it!",
+        "they're in the zone. Pure productivity!",
+        "another line of code drops in cleanly!",
     ]
-    
+
     phrases = horror_phrases if mode == 'horror' else normal_phrases
     phrase_idx = 0
-    
+
     while True:
         try:
             png_bytes = capture_screenshot()
             app, window = get_active_app()
-            
+
             narration = send_for_narration(png_bytes, app, window)
-            
+
             if narration:
-                # Use local phrase if server not running
+                # Fallback line from client side for deterministic behavior
                 if narration.startswith("And they're looking at"):
                     phrase = phrases[phrase_idx % len(phrases)]
                     phrase_idx += 1
-                    if mode == 'horror':
-                        print(f"   🎃 \"{phrase}\"")
-                    else:
-                        print(f"   🎙️ \"{phrase}\"")
+                    print(f"   {'🎃' if mode == 'horror' else '🎙️'} \"{phrase}\"")
                 else:
                     print(f"   🎙️ {narration}")
-            
+
             time.sleep(3)  # Narrate every 3 seconds
-            
+
         except KeyboardInterrupt:
             print("\n👋 Narrator signing off!")
             break
+        except RuntimeError as e:
+            print(f"⚠️ {e}", file=sys.stderr)
+            return
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             time.sleep(5)
 
+
 def single_shot():
     """Single screenshot narration."""
     print("📸 Capturing screenshot...")
-    
-    png_bytes = capture_screenshot()
+
+    try:
+        png_bytes = capture_screenshot()
+    except RuntimeError as e:
+        print(f"⚠️ {e}", file=sys.stderr)
+        return
+
     app, window = get_active_app()
-    
+
     print(f"   App: {app}")
     print(f"   Window: {window}")
-    
+
     narration = send_for_narration(png_bytes, app, window)
-    
+
     if narration:
         print(f"\n🎙️ {narration}")
 
-if __name__ == '__main__':
-    import sys
 
-    parser = argparse.ArgumentParser(description='Narrator - Sports announcer for your screen')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Narrator - screen commentary CLI')
     parser.add_argument('--clawtto', action='store_true', help='Continuous Clawtto mode')
     parser.add_argument('--horror', action='store_true', help='Horror announcer mode')
-    
+
     args = parser.parse_args()
-    
+
     if args.clawtto or args.horror:
         mode = 'horror' if args.horror else 'normal'
         clawtto_mode(mode)
