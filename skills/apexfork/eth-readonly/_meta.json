@@ -1,0 +1,11 @@
+{
+  "owner": "apexfork",
+  "slug": "eth-readonly",
+  "displayName": "Ethereum Readonly",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771219229389,
+    "commit": null
+  },
+  "history": []
+}
