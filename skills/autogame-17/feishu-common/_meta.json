@@ -1,17 +1,17 @@
 {
   "owner": "autogame-17",
   "slug": "feishu-common",
-  "displayName": "feishu-common",
+  "displayName": "Feishu Common",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771040100926,
-    "commit": "https://github.com/openclaw/skills/commit/6fc6febf98ac047fb214fcb91269c31bb1bfef0b"
+    "version": "1.0.1",
+    "publishedAt": 1771169173214,
+    "commit": null
   },
   "history": [
     {
       "version": "1.0.0",
-      "publishedAt": 1770892359246,
-      "commit": "https://github.com/openclaw/skills/commit/fa422fd158e15d6dda9241b1e77c7989d6155e8d"
+      "publishedAt": 1771040100926,
+      "commit": "https://github.com/openclaw/skills/commit/6fc6febf98ac047fb214fcb91269c31bb1bfef0b"
     }
   ]
 }
