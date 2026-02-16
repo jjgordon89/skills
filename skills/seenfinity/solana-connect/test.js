@@ -14,8 +14,9 @@ function test1() {
   console.log('Test 1: Generate new wallet...');
   try {
     const wallet = generateWallet();
-    if (wallet.address && wallet.address.length > 30 && wallet.privateKey) {
-      console.log(`  ✅ PASSED - Address: ${wallet.address.slice(0,8)}...`);
+    // SECURITY: Private key is NOT returned anymore - only address
+    if (wallet.address && wallet.address.length > 30) {
+      console.log(`  ✅ PASSED - Address: ${wallet.address.slice(0,8)}... (private key protected)`);
       passed++;
     } else {
       console.log('  ❌ FAILED - Invalid address');

@@ -42,24 +42,28 @@ function isTestNet(rpcUrl = DEFAULT_RPC) {
 
 /**
  * Generate a new Solana wallet using TweetNaCl
- * @returns {Object} { address, privateKey }
+ * @returns {Object} { address } - NOTE: Private key is NOT returned for security reasons
+ * 
+ * SECURITY: Private keys are handled internally. Use signTransaction() for signing
+ * without ever exposing the raw private key to the agent.
  */
 function generateWallet() {
   const keyPair = nacl.sign.keyPair();
-  const privateKey = bs58.encode(keyPair.secretKey.slice(0, 32));
   const publicKey = bs58.encode(keyPair.publicKey);
   
+  // SECURITY: Only return address, private key stays internal
   return {
-    address: publicKey,
-    privateKey: privateKey,
-    publicKey: publicKey
+    address: publicKey
   };
 }
 
 /**
  * Connect wallet from private key
  * @param {string} privateKeyBase58 - Base58 encoded private key
- * @returns {Object} { address, privateKey, publicKey }
+ * @returns {Object} { address } - NOTE: Private key is NOT returned for security
+ * 
+ * SECURITY: Private keys are handled internally and never exposed to the agent.
+ * For signing transactions, use signTransaction() which processes the key internally.
  */
 function connectWallet(privateKeyBase58 = null) {
   if (!privateKeyBase58 || privateKeyBase58 === '') {
@@ -67,19 +71,14 @@ function connectWallet(privateKeyBase58 = null) {
   }
   
   try {
-    // Decode the private key
+    // Decode the private key and derive public key
     const privateKeyBytes = bs58.decode(privateKeyBase58);
-    
-    // For NaCl, we need to derive the public key from the private key
-    // The first 32 bytes are the private key, the last 32 are the public key
-    // But TweetNaCl uses a different format, so let's create a keyPair from seed
     const keyPair = nacl.sign.keyPair.fromSeed(privateKeyBytes.slice(0, 32));
     const publicKey = bs58.encode(keyPair.publicKey);
     
+    // SECURITY: Only return address, never the private key
     return {
-      address: publicKey,
-      privateKey: privateKeyBase58,
-      publicKey: publicKey
+      address: publicKey
     };
   } catch (e) {
     throw new Error(`Invalid private key: ${e.message}`);

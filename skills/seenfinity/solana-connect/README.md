@@ -5,9 +5,17 @@
 
 A purpose-built toolkit that enables autonomous AI agents running on OpenClaw to interact seamlessly with the Solana blockchain.
 
-## ⚠️ Security Warning
+## 🛡️ Security First
 
-This toolkit handles private keys and can send real cryptocurrency transactions. Please read these security guidelines carefully.
+### Private Key Protection
+
+**IMPORTANT:** This toolkit **NEVER returns private keys** to the agent. Private keys are handled internally for signing only.
+
+- `connectWallet()` returns only the address
+- `generateWallet()` returns only the address  
+- Transactions are signed internally without exposing the raw private key
+
+This prevents prompt injection attacks where a compromised agent could exfiltrate private keys.
 
 ### Always Use Testnet First
 
