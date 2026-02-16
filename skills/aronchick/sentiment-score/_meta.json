@@ -3,9 +3,15 @@
   "slug": "sentiment-score",
   "displayName": "Sentiment Score",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771188201560,
-    "commit": "https://github.com/openclaw/skills/commit/7b388c8983c3d8742349d1f79c9797b1e65a54de"
+    "version": "1.0.1",
+    "publishedAt": 1771188227689,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771188201560,
+      "commit": "https://github.com/openclaw/skills/commit/7b388c8983c3d8742349d1f79c9797b1e65a54de"
+    }
+  ]
 }

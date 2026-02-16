@@ -1,6 +1,5 @@
-# Skill: sentiment-score
 name: "expanso-sentiment-score"
-version: "1.0.0"
+version: "1.0.1"
 description: "Score text sentiment from -1 (negative) to +1 (positive)"
 
 author:
