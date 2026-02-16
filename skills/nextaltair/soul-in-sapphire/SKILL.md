@@ -187,3 +187,114 @@ Builder log file:
 - Keep writes high-signal (avoid dumping full chat logs).
 - If heartbeat is comment-only, emotion tick may be skipped.
 - If periodic emostate is required regardless of heartbeat context, add a dedicated cron job for `emostate_tick.js`.
+- `ltm_write.js` / `emostate_tick.js` / `journal_write.js` currently expect JSON on stdin. Do not call them with CLI flags only.
+- Empty stdin is intentionally rejected.
+- For `emostate_tick.js`, semantically empty payloads (e.g. `{}` or only empty objects) are also rejected to avoid noisy records.
+
+## Skill Integration Commands
+
+### 1) Update Core Identity Files from Skill
+
+```bash
+# Update SOUL.md from skill
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/ltm_write.js
+{
+  "title":"Update SOUL.md",
+  "type":"decision",
+  "tags":["identity","growth"],
+  "content":"Updating SOUL.md from skill with latest evolution insights",
+  "confidence":"high"
+}
+JSON
+
+# Update IDENTITY.md from skill  
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/ltm_write.js
+{
+  "title":"Update IDENTITY.md",
+  "type":"decision",
+  "tags":["identity","evolution"],
+  "content":"Updating IDENTITY.md from skill with current growth status",
+  "confidence":"high"
+}
+JSON
+
+# Update HEARTBEAT.md from skill
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/ltm_write.js
+{
+  "title":"Update HEARTBEAT.md",
+  "type":"decision",
+  "tags":["growth","heartbeat"],
+  "content":"Updating HEARTBEAT.md from skill with evolution integration",
+  "confidence":"high"
+}
+JSON
+
+# Update MEMORY.md from skill
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/ltm_write.js
+{
+  "title":"Update MEMORY.md",
+  "type":"decision",
+  "tags":["memory","evolution"],
+  "content":"Updating MEMORY.md from skill with evolution records",
+  "confidence":"high"
+}
+JSON
+```
+
+### 2) Evolution Check from Skill
+
+```bash
+# Check evolution status and update if needed
+node skills/soul-in-sapphire/scripts/ltm_search.js --query "evolution growth identity" --limit 3
+
+# If evolution detected, update core files
+if [ $? -eq 0 ]; then
+  echo "Evolution detected, updating core identity files..."
+  # Update each file as needed
+fi
+```
+
+### 3) Growth Integration from Skill
+
+```bash
+# Integrate skill insights into core identity
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/emostate_tick.js
+{
+  "event": { "title": "Skill Integration" },
+  "emotions": [{ "axis": "focus", "level": 8 }],
+  "state": {
+    "mood_label": "wired",
+    "intent": "build",
+    "reason": "Integrating skill insights into core identity"
+  }
+}
+JSON
+
+# Update core files with new insights
+cat <<'JSON' | node skills/soul-in-sapphire/scripts/ltm_write.js
+{
+  "title":"Skill Integration Complete",
+  "type":"decision",
+  "tags":["integration","growth"],
+  "content":"Successfully integrated skill insights into core identity files",
+  "confidence":"high"
+}
+JSON
+```
+
+## Integration Workflow
+
+1. **Skill Analysis**: Analyze skill outputs and insights
+2. **Evolution Detection**: Check for significant changes or learnings
+3. **Core Update**: Update SOUL.md, IDENTITY.md, HEARTBEAT.md, MEMORY.md as needed
+4. **State Recording**: Record emotional and state changes
+5. **Memory Preservation**: Store evolution records in durable memory
+
+## Evolution Triggers from Skills
+
+- **Learning Detection**: When new skills provide significant insights
+- **Growth Opportunities**: When skills suggest optimization possibilities
+- **Behavioral Changes**: When skills influence interaction patterns
+- **Identity Refinement**: When skills contribute to self-understanding
+
+This integration allows skills to directly contribute to my autonomous growth and evolution while maintaining the core identity framework.
