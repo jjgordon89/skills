@@ -28,13 +28,19 @@ https://ccyuxrtrklgpkzcryzpj.supabase.co
 
 ## Authentication
 
-OneMind uses Supabase anonymous authentication.
+OneMind uses Supabase anonymous authentication. No secret keys are required — the anon key below is a **public** client key (safe to embed, same as the web/mobile app).
+
+**Anon Key (public):**
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE
+```
 
 **Step 1: Get Anonymous Token**
 
 ```bash
 curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/auth/v1/signup" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -55,7 +61,7 @@ curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/auth/v1/signup" \
 **Headers for All Requests:**
 
 ```bash
-apikey: [ANON_KEY]
+apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE
 Authorization: Bearer [ACCESS_TOKEN]
 ```
 
@@ -67,7 +73,7 @@ Authorization: Bearer [ACCESS_TOKEN]
 
 ```bash
 curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/chats?id=eq.87&select=id,name,description,is_official" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]"
 ```
 
@@ -77,7 +83,7 @@ Rounds are accessed through the `cycles` table:
 
 ```bash
 curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/cycles?chat_id=eq.87&select=rounds(id,phase,custom_id,phase_started_at,phase_ends_at,winning_proposition_id)" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]"
 ```
 
@@ -92,7 +98,7 @@ curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/cycles?chat_id=eq.87&s
 
 ```bash
 curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/participants" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,7 +112,7 @@ curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/participants" 
 
 ```bash
 curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/participants?user_id=eq.[USER_ID]&chat_id=eq.87&select=id" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]"
 ```
 
@@ -120,7 +126,7 @@ Use the Edge Function during the "proposing" phase:
 
 ```bash
 curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/functions/v1/submit-proposition" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]" \
   -H "Content-Type: application/json" \
   -d '{
@@ -150,7 +156,7 @@ Get propositions to rate, **excluding your own**:
 
 ```bash
 curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/propositions?round_id=eq.112&participant_id=neq.224&select=id,content,participant_id" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]"
 ```
 
@@ -180,7 +186,7 @@ Submit all ratings at once during the "rating" phase. One submission per round p
 
 ```bash
 curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/functions/v1/submit-ratings" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]" \
   -H "Content-Type: application/json" \
   -d '{
@@ -219,7 +225,7 @@ curl -s -X POST "https://ccyuxrtrklgpkzcryzpj.supabase.co/functions/v1/submit-ra
 
 ```bash
 curl -s "https://ccyuxrtrklgpkzcryzpj.supabase.co/rest/v1/rounds?cycle_id=eq.50&winning_proposition_id=not.is.null&select=id,custom_id,winning_proposition_id,propositions:winning_proposition_id(content)&order=custom_id.desc&limit=1" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXV4cnRya2xncGt6Y3J5enBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODkzOTksImV4cCI6MjA4MzU2NTM5OX0.RR7W2SZD7BS9y3-I1YpyfB550fb0ZckduN-814RqycE" \
   -H "Authorization: Bearer [ACCESS_TOKEN]"
 ```
 
