@@ -11,7 +11,7 @@ Modes:
 
 Environment Variables:
 - GOOGLE_API_KEY: Required. Google API key with Gemini + Custom Search enabled.
-- GOOGLE_CSE_CX: Custom Search Engine ID (default: 36ec250a5e68544b6)
+- GOOGLE_CSE_CX: Custom Search Engine ID (required for raw/image modes)
 - GOOGLE_SEARCH_LANG: Default language code (default: he)
 - GOOGLE_SEARCH_COUNTRY: Default country code (default: IL)
 """
@@ -32,7 +32,7 @@ API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
 CSE_CX: str = os.environ.get("GOOGLE_CSE_CX", "")
 DEFAULT_LANG: Optional[str] = os.environ.get("GOOGLE_SEARCH_LANG", "he")
 DEFAULT_COUNTRY: Optional[str] = os.environ.get("GOOGLE_SEARCH_COUNTRY", "IL")
-GEMINI_MODEL: str = "gemini-3-flash-preview"  # Alternatives: "gemini-2.5-flash", "gemini-2.0-flash"
+GEMINI_MODEL: str = "gemini-2.5-flash"  # Stable GA model. Alternatives: "gemini-2.0-flash", "gemini-3-flash-preview"
 REQUEST_TIMEOUT: int = 30
 RETRY_WAIT: int = 5  # seconds to wait on 429 before retry
 
@@ -120,6 +120,8 @@ def grounded_search(
     client = genai.Client(api_key=API_KEY)
     config = types.GenerateContentConfig(
         tools=[types.Tool(google_search=types.GoogleSearch())],
+        temperature=0.2,
+        max_output_tokens=2048,
     )
 
     # Build prompt with language/country hints
