@@ -1,0 +1,11 @@
+{
+  "owner": "jrojas537",
+  "slug": "discogs-cli",
+  "displayName": "Discogs Cli",
+  "latest": {
+    "version": "1.2.0",
+    "publishedAt": 1771207606442,
+    "commit": null
+  },
+  "history": []
+}

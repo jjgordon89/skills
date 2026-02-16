@@ -1,0 +1,7 @@
+{
+  "name": "@jrojas537/discogs-cli",
+  "version": "1.2.0",
+  "description": "A CLI tool to manage your Discogs collection.",
+  "author": "jrojas537@gmail.com",
+  "license": "MIT"
+}
