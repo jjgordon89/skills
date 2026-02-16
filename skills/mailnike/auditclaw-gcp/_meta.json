@@ -1,0 +1,11 @@
+{
+  "owner": "mailnike",
+  "slug": "auditclaw-gcp",
+  "displayName": "AuditClaw Gcp",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1771212549399,
+    "commit": null
+  },
+  "history": []
+}
