@@ -193,67 +193,46 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Sign and submit Solana transactions')
-    parser.add_argument('--stdin', action='store_true', help='Read instructions from stdin (secure mode)')
+    parser.add_argument('--stdin', action='store_true', required=True,
+                        help='Read instructions JSON from stdin')
     parser.add_argument('--keypair', required=True, help='Path to keypair file')
     parser.add_argument('--rpc', default='https://api.devnet.solana.com', help='RPC URL')
-    
-    # Legacy positional args support (deprecated)
-    parser.add_argument('legacy_keypair', nargs='?', help='Legacy: keypair path')
-    parser.add_argument('legacy_instructions', nargs='?', help='Legacy: instructions JSON')
-    parser.add_argument('legacy_rpc', nargs='?', help='Legacy: RPC URL')
     
     args = parser.parse_args()
     
     try:
-        # Stdin mode (secure)
-        if args.stdin:
-            instructions_json = sys.stdin.read().strip()
-            if not instructions_json:
-                print("Error: No instructions provided via stdin", file=sys.stderr)
-                sys.exit(1)
-            
-            # Normalize instructions
-            instructions_raw = json.loads(instructions_json)
-            instructions = []
-            for ix in instructions_raw:
-                normalized = {
-                    'programId': ix.get('programId') or ix.get('program_id'),
-                    'data': ix.get('data'),
-                    'keys': []
-                }
-                # Normalize accounts -> keys
-                accounts = ix.get('accounts', ix.get('keys', []))
-                for acc in accounts:
-                    normalized['keys'].append({
-                        'pubkey': acc.get('pubkey'),
-                        'isSigner': acc.get('is_signer') if acc.get('is_signer') is not None else acc.get('isSigner'),
-                        'isWritable': acc.get('is_writable') if acc.get('is_writable') is not None else acc.get('isWritable')
-                    })
-                instructions.append(normalized)
-            
-            tx_sig = sign_and_submit(
-                instructions=instructions,
-                keypair_path=args.keypair,
-                rpc_url=args.rpc
-            )
-            print(tx_sig)
-        
-        # Legacy mode (deprecated - insecure)
-        elif args.legacy_keypair and args.legacy_instructions:
-            print("Warning: Using legacy argument mode (deprecated)", file=sys.stderr)
-            instructions = json.loads(args.legacy_instructions)
-            rpc = args.legacy_rpc or 'https://api.devnet.solana.com'
-            
-            tx_sig = sign_and_submit(
-                instructions=instructions,
-                keypair_path=args.legacy_keypair,
-                rpc_url=rpc
-            )
-            print(tx_sig)
-        else:
-            print("Error: Either use --stdin or provide legacy positional args", file=sys.stderr)
+        instructions_json = sys.stdin.read().strip()
+        if not instructions_json:
+            print("Error: No instructions provided via stdin", file=sys.stderr)
             sys.exit(1)
+        
+        # Normalize instructions
+        instructions_raw = json.loads(instructions_json)
+        instructions = []
+        for ix in instructions_raw:
+            normalized = {
+                'programId': ix.get('programId') or ix.get('program_id'),
+                'data': ix.get('data'),
+                'keys': []
+            }
+            # Normalize accounts -> keys
+            accounts = ix.get('accounts', ix.get('keys', []))
+            for acc in accounts:
+                normalized['keys'].append({
+                    'pubkey': acc.get('pubkey'),
+                    'isSigner': acc.get('is_signer') if acc.get('is_signer') is not None else acc.get('isSigner'),
+                    'isWritable': acc.get('is_writable') if acc.get('is_writable') is not None else acc.get('isWritable')
+                })
+            instructions.append(normalized)
+        
+        tx_sig = sign_and_submit(
+            instructions=instructions,
+            keypair_path=args.keypair,
+            rpc_url=args.rpc
+        )
+        print(tx_sig)
             
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+

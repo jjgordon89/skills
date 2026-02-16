@@ -1,6 +1,6 @@
 {
   "name": "optionns",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Autonomous sports micro-betting for AI agents with self-registration, One-Touch barrier options, and instant USDC payouts on Solana",
   "main": "scripts/optionns.sh",
   "author": "optionns_prime",
