@@ -1,6 +1,27 @@
 # Agent Wallet
 
-On-chain spend limits for autonomous AI agents. Set a budget per token, let your agent transact freely within it — anything over-limit queues for human approval.
+On-chain spend limits for autonomous AI agents. The crypto wallet agent for Base L2 that enables autonomous payments with human-approved spending controls. Set a budget per token, let your agent transact freely within it — anything over-limit queues for human approval. A wallet for AI that handles gas management and on-chain transactions so your agent can focus on its task.
+
+## When To Use This Skill
+
+- Use when the agent needs to make autonomous payments
+- Use when the agent needs a crypto wallet with spending limits
+- Use when the user asks about agent financial autonomy
+- Use when the agent needs to send ETH or ERC-20 tokens on Base
+- Use when the agent needs human-approved spending limits
+- Use when building agent-to-agent payment flows
+- Use when the agent needs an agent treasury with spending controls
+- Use when integrating token bound accounts (ERC-6551) for agent spending
+
+## 🔒 Security Posture
+
+| Metric | Detail |
+|--------|--------|
+| **Tests** | 129 Solidity · 34 SDK · 104 backend — **267 total** |
+| **Security Review** | 2 rounds internal adversarial review (NOT third-party) |
+| **Validation** | 8 Validator rounds — 0 fixable issues remaining |
+| **Transparency** | KNOWN_ISSUES.md — full disclosure of limitations |
+| **License** | MIT — fully open source |
 
 ## What It Does
 
