@@ -1,0 +1,11 @@
+{
+  "owner": "fratua",
+  "slug": "git-changelog",
+  "displayName": "Git Changelog",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771181314093,
+    "commit": null
+  },
+  "history": []
+}
