@@ -262,7 +262,7 @@ cmd_faucet() {
         echo ""
         echo -e "${BLUE}🔍 Checking for cmUSDC token account...${NC}"
         
-        CMUSDC_MINT="9ZMsdhbcx1mC4Jynp3nbJQ9ANGCFvDTagrHem2Au1cit"
+        CMUSDC_MINT="DNaYq6QKoahq98fAwxsFyPiDJZsLaQPq2x3nixnuegJh"
         KEYPAIR_FILE="${HOME}/.config/optionns/agent_keypair.json"
         
         if [[ -f "$KEYPAIR_FILE" ]]; then
@@ -549,7 +549,6 @@ cmd_trade() {
         # SECURITY: Pass instructions via stdin to prevent code injection
         # DO NOT embed API response in command string (RCE risk)
         tx_sig=$(echo "$instructions_json" | python3 "$SCRIPT_DIR/signer.py" --stdin --keypair "$KEYPAIR_FILE" --rpc "$RPC_URL" 2>&1)
-" 2>&1)
         sign_exit_code=$?
         
         if [[ $sign_exit_code -eq 0 ]]; then

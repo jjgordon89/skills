@@ -4,7 +4,7 @@ description: Trade One-Touch barrier options on live sports micro-events. Autono
 homepage: https://optionns.com
 repository: https://github.com/optionnsprime/optionns-trader
 metadata:
-  version: 1.0.6
+  version: 1.0.10
   author: optionns_prime
   tags: ["sports", "trading", "usdc", "solana", "betting", "agentic-commerce"]
   system_binaries: ["curl >=7.0", "jq >=1.6", "python3 >=3.8", "solana-keygen >=1.14", "spl-token >=3.0"]

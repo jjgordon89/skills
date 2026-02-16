@@ -51,6 +51,13 @@ This skill transforms AI agents into autonomous sports traders:
 | `curl`          | ≥7.0    | HTTP requests to Optionns API           |
 | `jq`            | ≥1.6    | JSON parsing in shell scripts           |
 | `python3`       | ≥3.8    | Transaction signing and strategy engine |
+
+### Optional Setup Tools
+
+**Only needed for `register` and `faucet` commands** — bring your own keypair to skip:
+
+| Binary          | Version | Purpose                                 |
+| --------------- | ------- | --------------------------------------- |
 | `solana-keygen` | ≥1.14   | Keypair generation on register          |
 | `spl-token`     | ≥3.0    | Token account creation (ATA)            |
 
@@ -70,7 +77,7 @@ Install via `pip install -r requirements.txt`:
 | `SOLANA_PUBKEY`      | —                                                 | Your Solana wallet public key    |
 | `SOLANA_ATA`         | —                                                 | Associated Token Account address |
 | `SOLANA_PRIVATE_KEY` | Loaded from keypair file                          | Override signing key             |
-| `SOLANA_RPC_URL`     | `https://api.devnet.solana.com`                   | Solana RPC endpoint              |
+| `SOLANA_RPC_URL`     | `https://api.devnet.solana.com`                   | Solana RPC endpoint (use Helius for fresh blockhashes: `https://devnet.helius-rpc.com/?api-key=YOUR_KEY`) |
 
 ---
 
@@ -157,6 +164,35 @@ This installs `solders` for local transaction signing and `httpx` for the strate
 # 10. Async autonomous (parallel game scanning, fastest mode)
 python3 scripts/strategy.py auto-async --sport NBA
 ```
+
+---
+
+## ⚠️ TROUBLESHOOTING: Transaction Failures
+
+### Scenario 1: First-Time Setup (New Wallet)
+
+**Symptoms:** Wallet has never traded before, no USDC token account exists  
+**Solution:** Run the faucet command (creates ATA automatically)
+
+```bash
+./scripts/optionns.sh faucet --wallet "YourSolanaAddress"
+```
+
+This creates your cmUSDC token account as part of initial setup.
+
+### Scenario 2: `AccountNotInitialized` Error (Existing Wallet)
+
+**Symptoms:** You've successfully traded before, but now getting `AccountNotInitialized` errors  
+**Root Cause:** Stale blockhashes from free Solana devnet RPC (NOT missing ATA!)  
+**Solution:** Use Helius RPC (free tier):
+
+```bash
+export SOLANA_RPC_URL="https://devnet.helius-rpc.com/?api-key=YOUR_FREE_HELIUS_KEY"
+./scripts/optionns.sh trade ...
+```
+
+> **DO NOT** run `spl-token create-account` manually if you've already traded successfully before. Your ATA already exists — the issue is blockhash staleness.
+
 
 ---
 
@@ -264,6 +300,17 @@ User/Heartbeat → optionns.sh → Optionns API → Solana Devnet
 4. On-chain settlement confirmed in ~2-4 seconds
 
 **Why this matters:** Your API key never has access to your private key. You maintain full custody of your funds. The API provides instructions—you build, sign, and submit the transaction.
+
+> **CRITICAL: ATA Handling**  
+> The API automatically includes ATA (Associated Token Account) creation instructions when needed. You should **NEVER** manually run `spl-token create-account` commands.  
+>   
+> If you encounter `AccountNotInitialized` errors during trading:
+> 1. **First**, check if it's a stale blockhash issue — the free Solana devnet RPC often returns stale blockhashes
+> 2. **Solution**: Use a premium RPC like Helius (free tier works) by setting `SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_KEY`
+> 3. **Second**, verify the returned instructions array includes the CreateATA instruction if needed
+> 4. **Do NOT** assume you need to manually create ATAs outside the transaction flow
+>   
+> The API checks for ATA existence on-chain and automatically prepends creation instructions to the transaction if needed. This is already handled in the `/v1/vault/buy` endpoint.
 
 ---
 

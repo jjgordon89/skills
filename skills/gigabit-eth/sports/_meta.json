@@ -3,11 +3,16 @@
   "slug": "sports",
   "displayName": "Optionns",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1771208845855,
-    "commit": "https://github.com/openclaw/skills/commit/a501228dbb6d790622e5d0d6bd01b90b93a91077"
+    "version": "1.0.10",
+    "publishedAt": 1771217517090,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1771208845855,
+      "commit": "https://github.com/openclaw/skills/commit/a501228dbb6d790622e5d0d6bd01b90b93a91077"
+    },
     {
       "version": "1.0.5",
       "publishedAt": 1771208455097,
