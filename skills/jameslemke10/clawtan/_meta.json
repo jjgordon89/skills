@@ -3,11 +3,16 @@
   "slug": "clawtan",
   "displayName": "clawtan",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1770999791975,
-    "commit": "https://github.com/openclaw/skills/commit/dcd6da7cfab1ec00ebf29908447150c7d6093007"
+    "version": "1.0.4",
+    "publishedAt": 1771212342400,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1770999791975,
+      "commit": "https://github.com/openclaw/skills/commit/dcd6da7cfab1ec00ebf29908447150c7d6093007"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770936968275,
