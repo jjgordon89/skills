@@ -1,49 +1,45 @@
 ---
 name: discogs-cli
-description: Manages a user's vinyl record collection on Discogs. Use it to list records or folders from a collection.
+description: An OpenClaw skill to manage a user's vinyl record collection on Discogs.
 metadata: {"clawdbot":{"emoji":"Vinyl","requires":{"bins":["go"]}}}
 ---
 
-# Discogs Collection Manager
+# Discogs Collection Manager Skill for OpenClaw
 
-This skill provides a command-line interface to interact with a user's record collection on Discogs.com. It uses a subcommand structure similar to `git` or `gog`.
+This skill provides a command-line interface to interact with a user's record collection on Discogs.com. It is designed specifically for use within the OpenClaw assistant and uses a subcommand structure similar to `git` or `gog`.
 
 ## Prerequisites
 
-This skill is a Go program and requires the Go toolchain to be installed and compiled.
+This skill is a Go program and requires the Go toolchain to be installed.
 
 **Installation (Debian/Ubuntu):**
 `sudo apt-get update && sudo apt-get install -y golang-go`
 
 ## One-Time Setup
 
-Before first use, you must compile the tool, ensure the resulting binary is in the system's PATH, and configure your credentials.
+Before first use, you must run the included installer script. This will compile the Go binary and place it in a predictable location within the skill's directory.
 
-1.  **Compile the tool:**
-    Navigate to the `scripts` directory inside the skill and run the Go build command.
+1.  **Run the installer:**
     ```bash
-    cd <path_to_skill>/scripts && go build -o discogs-cli .
+    skills/discogs-cli/install.sh
     ```
 
-2.  **Install the tool:**
-    Move the compiled `discogs-cli` binary to a location in the system's PATH, such as `/usr/local/bin`.
-
-3.  **Configure Credentials:**
+2.  **Configure Credentials:**
     This command saves your Discogs token and username to a configuration file (`~/.config/discogs-cli/config.yaml`).
     ```bash
-    discogs-cli config set -u "YourUsername" -t "YourSecretToken"
+    skills/discogs-cli/bin/discogs-cli config set -u "YourUsername" -t "YourSecretToken"
     ```
 
 ## Usage
 
-Once the binary is compiled and in the system's PATH, you can run the following commands.
+All commands must be prefixed with the full path to the binary.
 
 ### Fetch Album Art
 
 Downloads the album art for a given release and displays it in the chat.
 
 ```bash
-discogs-cli release art <release_id>
+skills/discogs-cli/bin/discogs-cli release art <release_id>
 ```
 
 ### List Collection Folders
@@ -51,7 +47,7 @@ discogs-cli release art <release_id>
 Shows all folders and their record counts.
 
 ```bash
-discogs-cli collection list-folders
+skills/discogs-cli/bin/discogs-cli collection list-folders
 ```
 
 ### List Releases in a Folder
@@ -60,10 +56,10 @@ Shows all records within a specific folder. The output is a formatted table.
 
 ```bash
 # List all releases from the "All" folder (default)
-discogs-cli collection list
+skills/discogs-cli/bin/discogs-cli collection list
 
 # List all releases from a specific folder by ID
-discogs-cli collection list --folder 8815833
+skills/discogs-cli/bin/discogs-cli collection list --folder 8815833
 ```
 
 ## Search the Discogs Database
@@ -72,10 +68,10 @@ Search for releases, artists, or labels.
 
 ```bash
 # Search for a release (default type)
-discogs-cli search "Daft Punk - Discovery"
+skills/discogs-cli/bin/discogs-cli search "Daft Punk - Discovery"
 
 # Search for an artist
-discogs-cli search --type artist "Aphex Twin"
+skills/discogs-cli/bin/discogs-cli search --type artist "Aphex Twin"
 ```
 
 ## Manage Your Wantlist
@@ -87,7 +83,7 @@ Work with your Discogs wantlist.
 Displays all items in your wantlist.
 
 ```bash
-discogs-cli wantlist list
+skills/discogs-cli/bin/discogs-cli wantlist list
 ```
 
 ### Add to Your Wantlist
@@ -95,7 +91,7 @@ discogs-cli wantlist list
 Adds a release to your wantlist by its ID.
 
 ```bash
-discogs-cli wantlist add 12345
+skills/discogs-cli/bin/discogs-cli wantlist add 12345
 ```
 
 ### Remove from Your Wantlist
@@ -103,27 +99,27 @@ discogs-cli wantlist add 12345
 Removes a release from your wantlist by its ID.
 
 ```bash
-discogs-cli wantlist remove 12345
+skills/discogs-cli/bin/discogs-cli wantlist remove 12345
 ```
 
 ## Caching and Valuation Commands
 
-These commands rely on a local cache for performance. The user must run `sync` first to populate the cache.
+These commands rely on a local cache for performance. You must run `sync` first to populate the cache.
 
 ### Sync Collection Details (Slow)
 
 Fetches detailed data for every item in the collection and builds a local cache. This command is slow and should be run in the background. Inform the user that this will take time.
 
 ```bash
-discogs-cli collection sync
+skills/discogs-cli/bin/discogs-cli collection sync
 ```
 
 ### Get Collection Value (Fast)
 
-Reads the local cache to provide the estimated market value for each item and the total collection. This command is fast. If it fails, the cache is likely missing, and the user needs to run the `sync` command.
+Reads the local cache to provide the estimated market value for each item and the total collection. This command is fast. If it fails, the cache is likely missing, and you need to run the `sync` command.
 
 ```bash
-discogs-cli collection value
+skills/discogs-cli/bin/discogs-cli collection value
 ```
 
 ### Get Single Release Details (Fast)
@@ -131,5 +127,5 @@ discogs-cli collection value
 Provides a detailed view of a single release, including tracklist.
 
 ```bash
-discogs-cli collection get 35198584
+skills/discogs-cli/bin/discogs-cli collection get 35198584
 ```
