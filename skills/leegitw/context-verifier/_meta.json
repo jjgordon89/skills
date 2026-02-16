@@ -1,0 +1,11 @@
+{
+  "owner": "leegitw",
+  "slug": "context-verifier",
+  "displayName": "Context Verifier - File Integrity and Hash Computation",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771234335409,
+    "commit": null
+  },
+  "history": []
+}
