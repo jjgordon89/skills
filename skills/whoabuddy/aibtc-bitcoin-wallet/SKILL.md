@@ -167,12 +167,34 @@ Inscribe and retrieve digital artifacts on Bitcoin:
 
 See: [references/inscription-workflow.md](references/inscription-workflow.md)
 
+### x402 Paid APIs
+
+Pay-per-use APIs with automatic micropayments on Stacks L2:
+- Discover available endpoints with `list_x402_endpoints`
+- Check cost before paying with `probe_x402_endpoint`
+- Execute endpoints with `execute_x402_endpoint` (safe-by-default — probes first)
+- Send inbox messages with `send_inbox_message` (use this instead of execute_x402_endpoint for inbox)
+- Build new x402 APIs with `scaffold_x402_endpoint` and `scaffold_x402_ai_endpoint`
+
+Always probe before executing paid endpoints. Never call `execute_x402_endpoint` with `autoApprove: true` without checking cost first.
+
+**send_inbox_message** — dedicated tool for aibtc.com inbox messages:
+- Parameters: `recipientBtcAddress` (bc1...), `recipientStxAddress` (SP...), `content` (max 500 chars)
+- Uses sponsored transactions: sender pays only the sBTC message cost, relay covers STX gas
+- Avoids sBTC settlement timeout issues that affect the generic execute_x402_endpoint tool
+- Implements the full 5-step x402 v2 payment flow with balance pre-check
+
+See: [references/stacks-defi.md](references/stacks-defi.md) for endpoint catalog
+See: [references/x402-inbox.md](references/x402-inbox.md) for inbox-specific flow details
+
 ### Genesis Lifecycle
 
 Agent identity and reputation on Bitcoin and Stacks:
 - L0: Local agent key generation
 - L1: Dual-chain plain-message signatures (btc_sign_message + stacks_sign_message)
 - L2: X claim + BTC airdrop activation
+- L3: On-chain identity registration via ERC-8004 (register_identity)
+- L4: Reputation bootstrapping (get_reputation, give_feedback)
 - Active: 5-minute check-ins to maintain reputation and liveness
 
 See: [references/genesis-lifecycle.md](references/genesis-lifecycle.md)
