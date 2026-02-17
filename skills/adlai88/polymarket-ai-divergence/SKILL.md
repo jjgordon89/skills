@@ -2,16 +2,18 @@
 name: polymarket-ai-divergence
 displayName: Polymarket AI Divergence
 description: Surface markets where Simmer's AI price diverges from Polymarket. High divergence = potential alpha. Use when user wants to find AI vs market disagreements, scan for trading opportunities, or understand where the AI is bullish/bearish relative to external prices.
-metadata: {"clawdbot":{"emoji":"🔮","requires":{"env":["SIMMER_API_KEY"]},"cron":null,"autostart":false}}
+metadata: {"clawdbot":{"emoji":"🔮","requires":{"env":["SIMMER_API_KEY"],"pip":["simmer-sdk"]},"cron":null,"autostart":false}}
 authors:
   - Simmer (@simmer_markets)
-version: "1.0.3"
+version: "1.0.4"
 published: true
 ---
 
 # Polymarket AI Divergence Scanner
 
 Surface markets where Simmer's AI-driven price diverges from Polymarket.
+
+> **This is a template.** The default scan shows AI vs market divergence — remix it to add your own filters, combine with other signals, or build automated trading on top. The skill handles all the plumbing (market fetching, divergence calculation). Your agent provides the alpha.
 
 ## When to Use This Skill
 
@@ -56,7 +58,6 @@ python ai_divergence.py --json
 | Setting | Environment Variable | Default | Description |
 |---------|---------------------|---------|-------------|
 | API Key | `SIMMER_API_KEY` | (required) | Your Simmer SDK key |
-| API URL | `SIMMER_API_URL` | `https://api.simmer.markets` | API base URL |
 
 ## How It Works
 
