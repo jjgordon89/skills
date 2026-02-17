@@ -1,6 +1,8 @@
 ---
 name: "Fitness"
 description: "Auto-learns your fitness patterns. Absorbs data from wearables, conversations, and achievements."
+version: "1.0.1"
+changelog: "1.0.1: Preferences now persist across skill updates"
 ---
 
 ## Auto-Adaptive Fitness Tracking
@@ -16,6 +18,12 @@ This skill auto-evolves. Fills in as you learn how the user trains and what affe
 
 ---
 
+## Memory Storage
+
+User preferences and learned data persist in: `~/fitness/memory.md`
+
+**Format for memory.md:**
+```markdown
 ### Sources
 <!-- Where fitness data comes from. Format: "source: reliability" -->
 <!-- Examples: apple-health: synced daily, strava: runs + races, conversation: workout mentions -->
@@ -39,6 +47,6 @@ This skill auto-evolves. Fills in as you learn how the user trains and what affe
 ### Achievements
 <!-- PRs, milestones, events. Format: "achievement: date" -->
 <!-- Examples: bench 100kg: 2024-03, first marathon: 2024-10, 30 day streak: 2024-11 -->
+```
 
----
 *Empty sections = no data yet. Observe and fill.*
