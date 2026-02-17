@@ -1,9 +1,0 @@
-{
-  "name": "auto-troubleshooter",
-  "version": "1.0.0",
-  "description": "Automatically detects new error patterns in logs and appends draft entries to TROUBLESHOOTING.md.",
-  "main": "index.js",
-  "dependencies": {
-    "dotenv": "^16.0.3"
-  }
-}
