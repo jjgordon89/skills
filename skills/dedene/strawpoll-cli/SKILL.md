@@ -13,9 +13,6 @@ metadata:
   openclaw:
     primaryEnv: STRAWPOLL_API_KEY
     requires:
-      env:
-        - STRAWPOLL_API_KEY
-        - STRAWPOLL_KEYRING_BACKEND
       bins:
         - strawpoll
     install:
