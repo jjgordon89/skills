@@ -2,21 +2,21 @@
 name: videogames
 slug: videogames
 display_name: Video Games
-description: A skill to lookup video game information and compare prices across multiple stores.
+description: A skill to lookup video game information, prices, compatibility, and duration.
 author: ivanheral
-version: 1.0.0
+version: 1.0.1
 license: MIT
 ---
 
 # Video Game Skill 🎮
 
-This skill allows OpenClaw to search for games, view Steam details, and find the best prices using CheapShark.
+This skill allows OpenClaw to search for games, view Steam details, check ProtonDB compatibility, estimate playtime with HowLongToBeat, and find the best prices using CheapShark.
 
 ## Tools
 
 ### `scripts/game_tool.py`
 
-This Python script interacts with Steam and CheapShark.
+This Python script interacts with multiple game APIs (Steam, CheapShark, ProtonDB).
 
 **Usage:**
 
@@ -24,23 +24,22 @@ This Python script interacts with Steam and CheapShark.
     ```bash
     python3 scripts/game_tool.py deals "Game Name"
     ```
-    *Example:* `python3 scripts/game_tool.py deals "Batman"`
 
-2.  **Search on Steam:**
+2.  **Check Compatibility (ProtonDB):**
     ```bash
-    python3 scripts/game_tool.py search "Game Name"
+    python3 scripts/game_tool.py compatibility <APPID>
     ```
-    *Example:* `python3 scripts/game_tool.py search "Elden Ring"`
 
-3.  **View details (Steam):**
+3.  **Get Game Duration (HLTB):**
+    ```bash
+    python3 scripts/game_tool.py duration "Game Name"
+    ```
+
+4.  **View details & Specs (Steam):**
     ```bash
     python3 scripts/game_tool.py details <APPID>
     ```
-    *Example:* `python3 scripts/game_tool.py details 1245620`
 
 ## Notes
 - The script requires Python 3.
-- No external library installation required (uses standard `urllib`).
-
----
-*Created with love by Cachitos for Ivan.*
+- No external library installation required.
