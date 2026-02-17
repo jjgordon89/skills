@@ -1,29 +1,19 @@
 ---
+name: tokenQrusher
+description: Token optimization system for OpenClaw reducing costs 50-80%
+version: 2.0.6
+author: qsmtco
+license: MIT
+homepage: https://github.com/qsmtco/tokenQrusher
 metadata:
-  name: tokenQrusher
-  slug: tokenQrusher
-  description: Token optimization system for OpenClaw reducing costs 50-80%
-  version: 2.0.0
-  author: qsmtco
-  license: MIT
-  homepage: https://github.com/qsmtco/tokenQrusher
-  repository: https://github.com/qsmtco/tokenQrusher
-  keywords: 
-    - openclaw
-    - token-cost
-    - optimization
-    - cost-reduction
-    - budget
-    - usage-tracking
-  badges:
-    - "MIT License"
-    - "170 unit tests"
-    - "Production-ready"
-  requires:
-    openclaw: ">=2.0.0"
-    runtime:
-      bins: ["python3", "node"]
-  documentation: README.md
+  openclaw:
+    requires:
+      env:
+        - OPENROUTER_API_KEY
+      bins:
+        - python3
+        - node
+    emoji: "💰"
 ---
 
 # tokenQrusher Skill
@@ -445,7 +435,7 @@ Usage tracking requires records. Generate activity first:
 ```bash
 # Send some messages to OpenClaw to create usage records
 # Then check:
-tokenqrusher usage --days 1
+tokenQrusher usage --days 1
 ```
 
 ### High CPU Usage
@@ -504,3 +494,32 @@ MIT License. See LICENSE file.
 - **Framework**: OpenClaw Team
 
 Built with the OpenClaw Agent Framework: https://github.com/openclaw/openclaw
+
+---
+
+## External Endpoints
+
+This skill may optionally contact the following external endpoint when fetching model pricing:
+
+| Endpoint | Purpose | When Used |
+|----------|---------|-----------|
+| `https://openrouter.ai/api/v1/models` | Retrieve current model pricing | When `tokenqrusher budget` or `tokenqrusher optimize` are run and pricing data is not cached, **and** `OPENROUTER_API_KEY` is set |
+
+If `OPENROUTER_API_KEY` is not set, pricing falls back to built-in defaults and no external calls are made. Hooks and all other components operate entirely locally.
+
+## Security & Privacy
+
+- **Core functionality (hooks) is fully local** — no network access.
+- **Optional pricing fetch** contacts OpenRouter only when explicitly triggered and with API key present.
+- **No user data** (workspace files, messages) is ever transmitted externally.
+- All configuration is read from local files (`~/.openclaw/hooks/`).
+- Usage tracking reads OpenClaw's internal logs only.
+- The CLI tools (`tokenqrusher`) analyze local workspace files and OpenClaw state.
+
+## Model Invocation Note
+
+Hooks (`token-context`, `token-model`, `token-usage`, `token-cron`, `token-heartbeat`) are triggered automatically during agent bootstrap and gateway startup. This is the intended behavior; no user action is required beyond enabling the hooks.
+
+## Trust Statement
+
+By using this skill, all operations remain local to your machine. No data is sent to external servers. Only install if you trust the code and its author.

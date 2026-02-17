@@ -5,6 +5,30 @@ All notable changes to tokenQrusher will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-02-16
+
+### Fixed
+
+- Aligned manifest format: runtime requirements moved to `metadata.openclaw.requires.bins` in skill.json
+- Removed frontmatter from SKILL.md to avoid manifest conflicts; SKILL.md is now pure documentation
+- Verified hooks directory structure and inclusion
+
+## [2.0.3] - 2026-02-16
+
+### Fixed
+
+- Republished with corrected skill.json; previous version not indexed by registry.
+
+## [2.0.2] - 2026-02-16
+
+### Fixed
+
+- Registry metadata inconsistencies: added proper `skill.json` with runtime requirements and homepage
+- SKILL.md frontmatter converted to top-level keys (no nested `metadata`)
+- Included hook implementations in `hooks/` directory (token-context, token-model, token-usage, token-cron, token-heartbeat, token-shared)
+- Updated `.clawhubignore` to exclude internal audit docs, logs, tests, and research files
+- Bumped version to avoid ClawHub's immutable version policy
+
 ## [2.0.0] - 2026-02-15
 
 ### Added

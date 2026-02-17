@@ -1,11 +1,17 @@
 {
   "owner": "qsmtco",
   "slug": "tokenqrusher",
-  "displayName": "TokenQrusher",
+  "displayName": "tokenQrusher",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1771222385263,
-    "commit": "https://github.com/openclaw/skills/commit/76d136ac7ac750bca7e8126311106ec2a9dc57c7"
+    "version": "2.0.6",
+    "publishedAt": 1771267146420,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1771222385263,
+      "commit": "https://github.com/openclaw/skills/commit/76d136ac7ac750bca7e8126311106ec2a9dc57c7"
+    }
+  ]
 }
