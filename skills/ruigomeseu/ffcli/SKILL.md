@@ -1,6 +1,7 @@
 ---
 name: ffcli
 description: Query Fireflies.ai meeting data. Use when searching meetings, viewing transcripts, reading AI summaries, extracting action items, or looking up what was discussed in a call. Triggers on "meeting notes", "transcript", "action items from meeting", "what was discussed", "fireflies", "meeting summary".
+metadata: {"openclaw":{"requires":{"bins":["ffcli"],"env":["FIREFLIES_API_KEY"]},"primaryEnv":"FIREFLIES_API_KEY","install":[{"id":"brew","kind":"brew","formula":"ruigomeseu/tap/ffcli","bins":["ffcli"],"label":"Install ffcli (Homebrew tap)"},{"id":"npm","kind":"node","package":"@ruigomeseu/ffcli","bins":["ffcli"],"label":"Install ffcli (npm)"}]}}
 ---
 
 # ffcli — Fireflies.ai CLI
@@ -20,11 +21,13 @@ npm install -g @ruigomeseu/ffcli
 Authenticate with your Fireflies API key (get it from [Settings → Developer Settings](https://app.fireflies.ai/settings)):
 
 ```bash
-ffcli auth <your-api-key>    # Store key
+ffcli auth <your-api-key>    # Store key locally (~/.config/ffcli/)
 ffcli auth --check           # Verify it works
 ```
 
-Alternatively, set the `FIREFLIES_API_KEY` environment variable (takes precedence over config file).
+Alternatively, set the `FIREFLIES_API_KEY` environment variable (takes precedence over stored config). In OpenClaw, configure it via `skills.entries.ffcli.apiKey` in `openclaw.json`.
+
+**Note:** `ffcli` is a third-party CLI by @ruigomeseu (Homebrew tap or npm). Verify the source before installing: check the [npm package](https://www.npmjs.com/package/@ruigomeseu/ffcli) or [Homebrew tap repo](https://github.com/ruigomeseu/homebrew-tap) for code review and publish history.
 
 ## Commands
 
