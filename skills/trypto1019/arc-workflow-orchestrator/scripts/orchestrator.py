@@ -44,12 +44,20 @@ def load_workflow(filepath):
 
 
 def substitute_vars(text, variables):
-    """Replace {var_name} placeholders with actual values."""
+    """Replace {var_name} placeholders with actual values.
+
+    SECURITY: {env.*} access is BLOCKED to prevent environment variable leakage.
+    Only workflow-defined variables are substituted.
+    """
     def replacer(match):
         key = match.group(1)
         if key.startswith("env."):
-            return os.environ.get(key[4:], "")
-        return str(variables.get(key, match.group(0)))
+            # BLOCKED: env var access via workflow variables is a credential leak vector
+            return "{" + key + "}"
+        value = variables.get(key)
+        if value is None:
+            return match.group(0)
+        return str(value)
 
     return re.sub(r'\{(\w[\w.]*)\}', replacer, text)
 
@@ -98,6 +106,22 @@ def check_condition(condition, variables):
     return bool(condition.strip())
 
 
+SHELL_METACHARACTERS = set('|;&$`(){}!><\n')
+
+
+def _validate_command(command):
+    """Reject commands containing shell metacharacters after variable substitution.
+
+    Even with shell=False, variables substituted into commands could contain
+    payloads like $(cmd) or backticks that shlex.split would pass through
+    as literal arguments to programs that might re-interpret them.
+    """
+    for char in command:
+        if char in SHELL_METACHARACTERS:
+            return False, f"Shell metacharacter '{char}' detected in command after variable substitution"
+    return True, ""
+
+
 def run_step(step, variables, dry_run=False):
     """Execute a single workflow step."""
     name = step.get("name", "unnamed")
@@ -113,6 +137,12 @@ def run_step(step, variables, dry_run=False):
         print(f"  SKIP [{name}] — condition not met: {condition}")
         return True, None
 
+    # Validate command after substitution
+    valid, reason = _validate_command(command)
+    if not valid:
+        print(f"  BLOCKED [{name}] {reason}")
+        return False, None
+
     if dry_run:
         print(f"  [DRY] [{name}] {command}")
         return True, None
@@ -125,9 +155,11 @@ def run_step(step, variables, dry_run=False):
         print(f"  RUN  [{name}] {command[:120]}")
 
         try:
+            import shlex
+            cmd_parts = shlex.split(command)
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd_parts,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

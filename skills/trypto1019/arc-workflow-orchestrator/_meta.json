@@ -3,9 +3,15 @@
   "slug": "arc-workflow-orchestrator",
   "displayName": "Workflow Orchestrator",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771190871355,
-    "commit": "https://github.com/openclaw/skills/commit/adb810772baa4dc76473fcbd3f2dbe0b7081a74f"
+    "version": "1.1.0",
+    "publishedAt": 1771290090834,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771190871355,
+      "commit": "https://github.com/openclaw/skills/commit/adb810772baa4dc76473fcbd3f2dbe0b7081a74f"
+    }
+  ]
 }
