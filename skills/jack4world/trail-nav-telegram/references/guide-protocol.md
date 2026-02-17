@@ -10,7 +10,7 @@ Route ID used in examples: `qiniangshan_jinghua`
 - `/use <routeId>` bind route to current chat.
 - `/g` guide once. Location-only message may be treated as `/g`.
 
-## Output (2 lines)
+## Output (2-4 lines)
 Line 1 (machine):
 `G S:<0|1|2> D:<m> B:<deg><dir> GO:<m> IDX:<n>`
 
@@ -25,11 +25,22 @@ Line 2 (Chinese template, deterministic):
 - off_route: `你已偏离路线约{D}米。请朝{dir}（{B}°）走约{GO}米回到路线。`
 - arrived: `你已接近终点（{D}米内）。建议在此附近确认营地/下撤方向。`
 
+Line 3 (optional alert, if near a key node):
+`ALERT <letter>: <message>`
+
+Line 4 (optional weather alert, if enabled and sharp change detected):
+`WX ALERT: <CODE> <brief>`
+
 ## Defaults
 - toleranceM=50
 - arrivedM=60
 - lookaheadM=120
 - bboxGuardM=2000 (if far from bbox, return E:OUT_OF_BBOX)
+
+## Reference implementation
+- `scripts/guide_route.js`: given a GeoJSON LineString + (lat,lon) (+ optional lastIdx), prints the 2-3 line response.
+  - Add `--alerts references/<route>_alerts.json` to enable key-node alerts.
+  - Add `--state /tmp/guide_state.json --cooldown-sec 1800` to dedupe alerts.
 
 ## Errors (single line)
 - `E:NO_ROUTE`

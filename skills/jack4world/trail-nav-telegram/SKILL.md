@@ -43,8 +43,20 @@ Preferred alternative (often simplest): ask the user to export/send the **GPX/KM
   - `scripts/scrape_2bulu_tracks.js` list-page scraper → JSON/CSV + screenshot
   - `scripts/parse_2bulu_kml.js` parse KML → stats + geojson + routepack
   - `scripts/render_route_map.js` render route HTML+PNG map for sharing
+  - `scripts/render_route_map_annotated.js` render annotated map (GeoJSON + alerts) to HTML+PNG
+  - `scripts/guide_route.js` deterministic off-route guidance from GeoJSON + current location (outputs the 2-4 line guide protocol)
+  - `scripts/weather_alert.js` deterministic weather change alert (Open-Meteo) for day_hike/summit_camp/trail_run modes
+  - `scripts/outsideclaw_setup.sh` one-command install/update outsideclaw repo into ~/.outsideclaw/app/outsideclaw
+  - `scripts/generate_openclaw_snippet.js` prints an OpenClaw config snippet pointing to the installed outsideclaw skill
+  - `scripts/patch_openclaw_config.js` patches an OpenClaw config JSON to include the installed skill path (creates .bak)
+  - `scripts/openclaw_oneclick_setup.sh` one-click: install outsideclaw + patch config (+ optional gateway restart)
 - References:
   - `references/2bulu-notes.md`
   - `references/guide-protocol.md`
   - `references/safety-checklist.md`
   - `references/gear-list-overnight.md`
+  - `references/qiniangshan_alerts.json` risk-based key-node alerts (used for map annotations + alert triggering)
+  - `references/route-alerts.md` alerts schema + how to apply to any route
+  - `references/share-bundles.md` share route bundles between outsideclaw agents
+  - `references/outsideclaw-integration.md` install outsideclaw repo + generate OpenClaw config snippet
+  - `references/openclaw-oneclick.md` one-click OpenClaw integration (install + patch + optional restart)
