@@ -11,6 +11,7 @@ Usage:
     python x402_cli.py fetch <url> --json         # Output raw JSON
     python x402_cli.py fetch <url> --dry-run      # Preview without paying
     python x402_cli.py fetch <url> --max 5.00     # Override max payment
+    python x402_cli.py rpc <network> <method> [params]  # Quicknode RPC call
 
 Requires:
     EVM_PRIVATE_KEY environment variable
@@ -288,6 +289,87 @@ async def x402_balance():
 
 
 # =============================================================================
+# Quicknode x402 RPC
+# =============================================================================
+
+QUICKNODE_X402_BASE = "https://x402.quicknode.com"
+
+async def _quicknode_auth():
+    """Authenticate with Quicknode x402 via SIWE and return JWT."""
+    import httpx
+    import secrets
+    from datetime import datetime, timezone
+    from eth_account.messages import encode_defunct
+
+    account = get_wallet()
+    nonce = secrets.token_hex(8)
+    issued_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    message = (
+        f"x402.quicknode.com wants you to sign in with your Ethereum account:\n"
+        f"{account.address}\n\n"
+        f"By signing this message, you accept the Quicknode x402 Terms of Service.\n\n"
+        f"URI: https://x402.quicknode.com\n"
+        f"Version: 1\n"
+        f"Chain ID: 8453\n"
+        f"Nonce: {nonce}\n"
+        f"Issued At: {issued_at}"
+    )
+
+    signed = account.sign_message(encode_defunct(text=message))
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(f"{QUICKNODE_X402_BASE}/auth", json={
+            "message": message,
+            "signature": signed.signature.hex() if isinstance(signed.signature, bytes) else hex(signed.signature),
+        })
+        if resp.status_code != 200:
+            raise Exception(f"Quicknode auth failed: {resp.status_code} {resp.text[:200]}")
+        return resp.json()["token"]
+
+
+async def x402_rpc(network, method, params=None):
+    """
+    Make an RPC call via Quicknode x402.
+
+    Authenticates with SIWE, then makes the RPC call. If credits run out,
+    the x402 payment flow kicks in automatically.
+
+    Args:
+        network: Quicknode network name (e.g. 'ethereum-mainnet', 'polygon-mainnet')
+        method: JSON-RPC method (e.g. 'eth_getBalance', 'eth_blockNumber')
+        params: Optional list of RPC params
+
+    Returns:
+        The 'result' field from the JSON-RPC response
+    """
+    jwt = await _quicknode_auth()
+    url = f"{QUICKNODE_X402_BASE}/{network}"
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": method,
+        "params": params or [],
+    }
+
+    # Try with JWT auth first
+    httpx_client = _get_x402_httpx_client()
+    resp = await httpx_client.post(url, json=payload, headers={
+        "Authorization": f"Bearer {jwt}",
+        "Content-Type": "application/json",
+    })
+
+    if resp.status_code != 200:
+        raise Exception(f"Quicknode RPC error: HTTP {resp.status_code}: {resp.text[:300]}")
+
+    data = resp.json()
+    if "error" in data:
+        raise Exception(f"RPC error: {data['error']}")
+
+    return data.get("result")
+
+
+# =============================================================================
 # CLI Commands
 # =============================================================================
 
@@ -338,6 +420,12 @@ def main():
     # balance
     subparsers.add_parser("balance", help="Check wallet balances on Base")
 
+    # rpc
+    rpc_parser = subparsers.add_parser("rpc", help="Make RPC call via Quicknode x402")
+    rpc_parser.add_argument("network", help="Network name (e.g. ethereum-mainnet, polygon-mainnet, base-mainnet)")
+    rpc_parser.add_argument("method", help="JSON-RPC method (e.g. eth_getBalance, eth_blockNumber)")
+    rpc_parser.add_argument("params", nargs="*", help="RPC params (JSON strings or values)")
+
     # fetch
     fetch_parser = subparsers.add_parser("fetch", help="Fetch URL with x402 payment")
     fetch_parser.add_argument("url", help="URL to fetch")
@@ -358,6 +446,28 @@ def main():
 
     if args.command == "balance":
         asyncio.run(cmd_balance())
+
+    elif args.command == "rpc":
+        # Parse params — try JSON parsing for each, fall back to string
+        params = []
+        for p in (args.params or []):
+            try:
+                params.append(json.loads(p))
+            except (json.JSONDecodeError, ValueError):
+                params.append(p)
+
+        async def _run_rpc():
+            try:
+                result = await x402_rpc(args.network, args.method, params)
+                if isinstance(result, (dict, list)):
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(result)
+            except Exception as e:
+                print(f"Error: {e}", file=sys.stderr)
+                sys.exit(1)
+
+        asyncio.run(_run_rpc())
 
     elif args.command == "fetch":
         # Parse headers

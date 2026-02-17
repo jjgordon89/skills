@@ -47,6 +47,7 @@ Use this skill when:
 | `python x402_cli.py fetch <url> --json` | Same but output raw JSON only |
 | `python x402_cli.py fetch <url> --dry-run` | Show payment info without paying |
 | `python x402_cli.py fetch <url> --max 5.00` | Override max payment limit |
+| `python x402_cli.py rpc <network> <method> [params...]` | Make RPC call via Quicknode x402 |
 
 ## Examples
 
@@ -96,6 +97,19 @@ python x402_cli.py fetch "https://x402.simmer.markets/api/sdk/context/market-123
   --header "Authorization: Bearer sk_live_..." --json
 ```
 
+### Quicknode RPC — blockchain calls without API keys
+```bash
+# Get ETH balance on Ethereum mainnet
+python x402_cli.py rpc ethereum-mainnet eth_getBalance 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 latest
+
+# Get latest block on Polygon
+python x402_cli.py rpc polygon-mainnet eth_blockNumber
+
+# Get token balance on Base
+python x402_cli.py rpc base-mainnet eth_call '{"to":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913","data":"0x70a08231000000000000000000000000YOUR_ADDRESS"}' latest
+```
+Quicknode x402 supports 55+ networks (Ethereum, Polygon, Base, Arbitrum, Solana, Bitcoin, and more). $10 buys 1M RPC credits — each successful call costs 1 credit.
+
 ## Supported x402 Providers
 
 | Provider | Endpoint | Price | Description |
@@ -108,8 +122,10 @@ python x402_cli.py fetch "https://x402.simmer.markets/api/sdk/context/market-123
 | CoinGecko | `/api/v3/x402/simple/price` | $0.01/request | Token price data |
 | Simmer | `/api/sdk/context/:id` | $0.005/request | Market context (rate limit bypass) |
 | Simmer | `/api/sdk/briefing` | $0.005/request | Portfolio briefing (rate limit bypass) |
+| Quicknode | `/:network` (55+ networks) | $10/1M credits | Pay-per-request RPC access (no API key needed) |
 
 Kaito API docs: https://github.com/MetaSearch-IO/KaitoX402APIDocs
+Quicknode x402 docs: https://x402.quicknode.com/llms.txt
 
 ## Configuration
 
@@ -155,6 +171,12 @@ data = await x402_fetch("https://api.kaito.ai/api/payg/mindshare?token=BTC")
 - Private key never leaves your machine
 - Max payment safety cap prevents accidental overspend
 - Dry-run mode to preview payments before executing
+
+**Private key safety:**
+- Store your key in a `.env` file, never pass it inline in shell history
+- Ensure `.env` is in your `.gitignore` — never commit private keys to git
+- Use a dedicated hot wallet with limited funds, not your main wallet
+- Rotate the key immediately if you suspect it was exposed
 
 ## Troubleshooting
 
