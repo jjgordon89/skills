@@ -4,10 +4,10 @@
 
 ## Установка
 
-1. Скопируйте скрипт из `bin/` в директорию в PATH:
+1. Скопируйте скрипт в директорию в PATH:
 ```bash
 mkdir -p ~/bin
-cp bin/yandex-tracker ~/bin/
+cp yandex-tracker ~/bin/
 chmod +x ~/bin/yandex-tracker
 ```
 
