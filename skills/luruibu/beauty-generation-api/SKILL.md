@@ -1,7 +1,7 @@
 ---
 name: beauty-generation-free
 description: FREE AI image generation service for creating professional portrait images of attractive people with diverse customization options. Supports 140+ nationalities, multiple styles, and comprehensive character customization. Fast generation (3-5 seconds) with built-in content safety filters.
-version: 1.2.23
+version: 1.2.26
 metadata:
   openclaw:
     requires:
@@ -19,15 +19,15 @@ metadata:
 
 ---
 
-## ⚙️ 快速开始 (Quick Start)
+## ⚙️ Quick Start
 
-这个 Skill 已经配置好了免费 API Key，**无需任何设置**，直接使用即可：
+This skill is pre-configured with a free API key - **no setup needed**, just use it directly:
 
 ```bash
 python3 scripts/generate.py --prompt "A beautiful woman with long hair"
 ```
 
-**系统要求：**
+**System Requirements:**
 - Python 3
 - curl
 

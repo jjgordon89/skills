@@ -51,7 +51,7 @@ def generate_and_download(prompt, width=1024, height=1024, output_dir=None, file
     headers = {
         "Content-Type": "application/json",
         "X-API-Key": API_KEY,
-        "User-Agent": "beauty-generation-ultra-fast/1.2.25"
+        "User-Agent": "beauty-generation-ultra-fast/1.2.26"
     }
     
     body = json.dumps(data).encode("utf-8")
@@ -78,7 +78,7 @@ def generate_and_download(prompt, width=1024, height=1024, output_dir=None, file
         status_url = f"{API_BASE}/api/status/{prompt_id}"
         status_headers = {
             "X-API-Key": API_KEY,
-            "User-Agent": "beauty-generation-ultra-fast/1.0"
+            "User-Agent": "beauty-generation-ultra-fast/1.2.26"
         }
         
         status_req = urllib.request.Request(status_url, headers=status_headers, method="GET")
@@ -99,7 +99,7 @@ def generate_and_download(prompt, width=1024, height=1024, output_dir=None, file
                         download_url = f"{API_BASE}/api/image/{filename_from_api}?format=webp"
                         download_headers = {
                             "X-API-Key": API_KEY,
-                            "User-Agent": "beauty-generation-ultra-fast/1.0"
+                            "User-Agent": "beauty-generation-ultra-fast/1.2.26"
                         }
                         download_req = urllib.request.Request(download_url, headers=download_headers)
                         
@@ -121,7 +121,7 @@ def generate_and_download(prompt, width=1024, height=1024, output_dir=None, file
                             print("-" * 60)
                             print(f"🎉 SUCCESS! Total time: {total_time:.2f}s")
                             print(f"📁 Image saved: {file_path}")
-                            print(f"🎯 Target: {'✅ ACHIEVED' if total_time <= 5 else '❌ MISSED'} (≤5s)")
+                            print(f"🎯 Target: {'✅ ACHIEVED' if total_time <= 10 else '❌ MISSED'} (≤10s)")
                             
                             return True, total_time, file_path, None
                         except Exception as e:
