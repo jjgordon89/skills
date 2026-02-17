@@ -2,6 +2,7 @@
 
 # Introduction
 1. **Haiku 4.5** is the default model. Only spawn **Sonnet 4.5** or **Opus 4.6** when the task actually needs either of them
+2. Check **Model Rules** section to decide which model to use!
 2. Use sessions_spawn to use more advanced models
 ```
 sessions_spawn(
@@ -18,7 +19,7 @@ sessions_spawn(
 )
 ```
 
-# Models
+# Model Rules
 ## Haiku 4.5
 1. Simple Q&A - What, When, Who, Where
 2. Casual chat - No reasoning needed
@@ -35,7 +36,7 @@ sessions_spawn(
 11. If you think you will violate point 8-10, THEN ESCALATE TO THE NEXT ADVANCED MODEL
 
 ## Sonnet 4.5
-1. Analysis
+1. Analysis - Why, How
 2. Code
 3. Planning
 4. Reasoning
