@@ -1,8 +1,8 @@
 ---
 name: askgina-polymarket
 displayName: Polymarket via Gina
-description: Search, Trade, and Automate any strategy on Polymarket with your own agent.
-version: 0.1.0
+description: Fast setup for Claw bots: paste your Gina MCP token and start trading Polymarket in minutes.
+version: 0.1.1
 metadata:
   tags: polymarket, prediction-markets, trading, betting, gina, mcp, ask gina, crypto, agent, agentic, bot, automated
 authors:
@@ -60,15 +60,31 @@ Just type natural language prompts — no special syntax needed.
 
 ## Quick Start
 
-1. Add the server URL to your MCP client (Claude Code, Codex, Cursor, Windsurf, etc.)
-2. Your client opens a browser for sign-in — log in to Gina and approve access
-3. Start prompting
+1. Sign in at [askgina.ai](https://askgina.ai) and open **Agent Setup** (sidebar or `https://askgina.ai/agent-setup`).
+2. Give your token a name (e.g. "OpenClaw on MacBook") and click **Generate Token**.
+3. Copy the connection config immediately — the token is only shown once.
+4. Paste the config into your MCP client:
 
+```json
+{
+  "mcpServers": {
+    "gina-predictions": {
+      "transport": "http",
+      "url": "https://askgina.ai/ai/predictions/mcp",
+      "headers": {
+        "Authorization": "Bearer <PASTE_TOKEN_HERE>"
+      }
+    }
+  }
+}
+```
+
+5. Restart your MCP client and ask: `"search NBA markets on Polymarket"`.
 For detailed client setup instructions, see the [Quick Start guide](https://docs.askgina.ai/predictions-mcp/quick-start).
 
 ## How It Works
 
-- **Auth**: OAuth 2.1 with PKCE — your client handles it automatically. No API keys to manage.
+- **Auth**: Long-lived JWT token generated at `https://askgina.ai/agent-setup`. Tokens expire after 90 days. You can have up to 5 active tokens and revoke any of them from the Agent Setup page.
 - **Wallets**: Self-custodial via [Privy](https://privy.io). You own your keys.
 - **Trades**: Execute on-chain on Polymarket (Polygon / USDC).
 - **Gas**: Gina provides gas sponsorship to help cover transaction fees.
@@ -77,9 +93,11 @@ For detailed client setup instructions, see the [Quick Start guide](https://docs
 
 ## Safety
 
+- Treat your token like a private key — never share it publicly
 - Trading uses real money (USDC on Polygon) — always review before confirming
 - Start with read-only prompts (search, trending) before trading
 - Large trades require explicit confirmation
+- Revoke tokens immediately if you suspect exposure (Agent Setup page)
 - If the auth flow asks for private keys, **do not proceed**
 
 ## Links
@@ -91,4 +109,3 @@ For detailed client setup instructions, see the [Quick Start guide](https://docs
 - **Troubleshooting**: https://docs.askgina.ai/predictions-mcp/troubleshooting
 - **Terms**: https://askgina.ai/terms-and-conditions
 - **Twitter**: https://x.com/askginadotai
-

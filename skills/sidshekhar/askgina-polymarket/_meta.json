@@ -3,9 +3,15 @@
   "slug": "askgina-polymarket",
   "displayName": "Polymarket via Gina",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1771068548704,
-    "commit": "https://github.com/openclaw/skills/commit/ad28bf0bbd85934ede214c3411ccca5c75557be3"
+    "version": "0.1.1",
+    "publishedAt": 1771331884717,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1771068548704,
+      "commit": "https://github.com/openclaw/skills/commit/ad28bf0bbd85934ede214c3411ccca5c75557be3"
+    }
+  ]
 }

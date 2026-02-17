@@ -1,6 +1,6 @@
-# Polymarket via Gina
+# askgina-polymarket
 
-Search, Trade, and Automate any strategy on Polymarket with your own agent.
+Polymarket via Gina. Search, trade, and automate prediction market strategies.
 
 ## Connect
 
@@ -8,9 +8,27 @@ Search, Trade, and Automate any strategy on Polymarket with your own agent.
 https://askgina.ai/ai/predictions/mcp
 ```
 
-OAuth sign-in happens automatically. No API keys or private keys to manage.
+1. Sign in at [askgina.ai](https://askgina.ai) and open **Agent Setup** (sidebar or `https://askgina.ai/agent-setup`).
+2. Name your token (e.g. "OpenClaw on MacBook"), click **Generate Token**, and copy the config — it's only shown once.
+3. Paste into your MCP client:
 
-Works with: Claude Code, Codex, Cursor, Windsurf, and any MCP client.
+```json
+{
+  "mcpServers": {
+    "gina-predictions": {
+      "transport": "http",
+      "url": "https://askgina.ai/ai/predictions/mcp",
+      "headers": {
+        "Authorization": "Bearer <PASTE_TOKEN_HERE>"
+      }
+    }
+  }
+}
+```
+
+Tokens expire after 90 days. You can have up to 5 active tokens and revoke any from the Agent Setup page.
+
+Works with: OpenClaw, Claude Code, Codex, Cursor, Windsurf, and any MCP client.
 
 ## What You Can Do
 
@@ -27,11 +45,12 @@ Full features with all example prompts: https://docs.askgina.ai/predictions-mcp/
 
 ## How It Works
 
-- **Auth**: OAuth 2.1 + PKCE. Your client handles it. No keys to paste.
+- **Auth**: Long-lived JWT token from `https://askgina.ai/agent-setup`. Expires after 90 days; revoke anytime.
 - **Wallets**: Self-custodial via [Privy](https://privy.io). You own your keys.
 - **Trades**: On-chain on Polymarket (Polygon / USDC). Large trades require confirmation.
 - **Gas**: Gina provides gas sponsorship to help cover fees.
 - **Automations**: Create, list, pause, or delete anytime via prompts.
+- **Security**: Treat your token like a private key — never share it publicly.
 
 ## Links
 
@@ -46,4 +65,3 @@ Full features with all example prompts: https://docs.askgina.ai/predictions-mcp/
 Gina is agentic onchain infrastructure — trade, analyze, and automate across 12+ chains, prediction markets, and perpetual futures, all through natural language.
 
 https://askgina.ai
-
