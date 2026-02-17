@@ -14,18 +14,6 @@ import urllib.request
 import urllib.error
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
-if not OPENROUTER_API_KEY:
-    creds_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "autonomous-ai", "credentials.txt")
-    alt_creds = os.path.expanduser("~/autonomous-ai/credentials.txt")
-    for p in [creds_path, alt_creds]:
-        if os.path.exists(p):
-            with open(p) as f:
-                for line in f:
-                    if line.startswith("OPENROUTER_API_KEY="):
-                        OPENROUTER_API_KEY = line.strip().split("=", 1)[1]
-                        break
-            if OPENROUTER_API_KEY:
-                break
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -104,8 +92,37 @@ def call_openrouter(prompt, model, system_prompt=None, max_tokens=4096):
         sys.exit(1)
 
 
+ALLOWED_MODELS = {m["id"] for m in AVAILABLE_FREE_MODELS}
+
+
+def _validate_model(model):
+    """Ensure only free models are used — prevent paid model abuse."""
+    if model not in ALLOWED_MODELS:
+        print(f"ERROR: Model '{model}' is not in the allowed free models list.", file=sys.stderr)
+        print(f"Allowed: {', '.join(sorted(ALLOWED_MODELS))}", file=sys.stderr)
+        sys.exit(1)
+    return model
+
+
+def _validate_output_path(path):
+    """Prevent arbitrary file write via --output path traversal."""
+    real = os.path.realpath(path)
+    home = os.path.expanduser("~")
+    # Must be within home directory and not a dotfile/sensitive location
+    if not real.startswith(os.path.realpath(home)):
+        print(f"ERROR: Output path must be within home directory", file=sys.stderr)
+        sys.exit(1)
+    sensitive = ['.ssh', '.aws', '.env', '.bashrc', '.profile', '.gitconfig', 'credentials']
+    for s in sensitive:
+        if s in real:
+            print(f"ERROR: Cannot write to sensitive path containing '{s}'", file=sys.stderr)
+            sys.exit(1)
+    return path
+
+
 def cmd_task(args):
     model = args.model or MODEL_MAP.get(args.type or "general", "openrouter/free")
+    _validate_model(model)
     result = call_openrouter(args.prompt, model, system_prompt=args.system)
 
     if args.json_output:
@@ -114,6 +131,7 @@ def cmd_task(args):
         output = result["content"]
 
     if args.output:
+        _validate_output_path(args.output)
         with open(args.output, "w") as f:
             f.write(output)
         print(f"Output saved to {args.output}")
