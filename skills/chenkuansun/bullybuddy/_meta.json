@@ -3,11 +3,16 @@
   "slug": "bullybuddy",
   "displayName": "BullyBuddy",
   "latest": {
-    "version": "0.6.0",
-    "publishedAt": 1771419442673,
-    "commit": "https://github.com/openclaw/skills/commit/45dda7add74aa1b8fcf113d061402f53b8bb94b7"
+    "version": "0.6.1",
+    "publishedAt": 1771425182938,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.6.0",
+      "publishedAt": 1771419442673,
+      "commit": "https://github.com/openclaw/skills/commit/45dda7add74aa1b8fcf113d061402f53b8bb94b7"
+    },
     {
       "version": "0.5.1",
       "publishedAt": 1770938826245,
