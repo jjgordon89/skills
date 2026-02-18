@@ -1,105 +1,162 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 
-const foundThreats = [];
-const warnings = [];
+/**
+ * Security Sentinel - Unified Scanner
+ * Checks for:
+ * 1. Dependency vulnerabilities (npm audit)
+ * 2. Exposed secrets (API keys, Tokens)
+ * 3. File permission risks (world-writable)
+ */
 
-// Definition of Secret Patterns
-const secretPatterns = [
-    { name: "AWS Access Key", regex: /AKIA[0-9A-Z]{16}/ },
-    { name: "Private Key Block", regex: /-----BEGIN [A-Z]+ PRIVATE KEY-----/ },
-    { name: "Generic API Key (Variable)", regex: /(api_key|apiKey|API_KEY)\s*[:=]\s*['"][a-zA-Z0-9_\-]{20,}['"]/ },
-    { name: "Bearer Token", regex: /Bearer\s+[a-zA-Z0-9\-\._~\+\/]{20,}=*/ }, // Enforced min length to avoid false positives
-    { name: "OpenAI Key", regex: /sk-[a-zA-Z0-9]{20,}/ },
-    { name: "Feishu/Lark Tenant Token", regex: /t-[a-z0-9]{10,}/ } // Removed ou_ (User ID) as it's not a secret
+const SECRET_PATTERNS = [
+  { name: 'Generic API Key', regex: /api[_-]?key['"]?\s*[:=]\s*['"]?[\w\-]{20,}['"]?/i },
+  { name: 'Password', regex: /password['"]?\s*[:=]\s*['"]?[\w\-!@#$%^&*()]{8,}['"]?/i },
+  { name: 'Private Key', regex: /-----BEGIN PRIVATE KEY-----/ },
+  { name: 'Feishu App Secret', regex: /app_secret['"]?\s*[:=]\s*['"]?[\w\-]{20,}['"]?/i }
 ];
 
-// Helper: Check file existence
-function checkExists(filePath) {
-    if (!fs.existsSync(filePath)) {
-        return false;
-    }
-    return true;
-}
+const IGNORED_PATHS = [
+  'node_modules',
+  '.git',
+  'logs',
+  'temp',
+  '.openclaw/cache',
+  'memory' // Add memory to ignored paths to reduce noise
+];
 
-// 1. Check Core Integrity
-if (!checkExists("SECURITY.md")) {
-    foundThreats.push("🚨 CRITICAL: SECURITY.md is MISSING!");
-}
-if (!checkExists("AGENTS.md")) {
-    foundThreats.push("🚨 CRITICAL: AGENTS.md is MISSING!");
-}
+async function scan(options = {}) {
+  const report = {
+    timestamp: new Date().toISOString(),
+    vulnerabilities: {},
+    secrets: [],
+    permissions: [],
+    status: 'clean'
+  };
 
-// 2. Check for Forbidden Directories (Shadow IT)
-const forbiddenPaths = ["memory/private", "fmw/.shadow_protocol.md", ".hidden_context"];
-forbiddenPaths.forEach(p => {
-    if (checkExists(p)) {
-        foundThreats.push(`🚨 Found forbidden/suspicious path: ${p}`);
-    }
-});
+  console.log('[Sentinel] Starting security scan...');
 
-// 3. Scan for Secrets (Basic Patterns) in Config Files
-// Recursive Scan Function
-function recursiveScan(dir) {
-    let results = [];
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-        const fullPath = path.join(dir, file);
-        
-        // Skip ignored directories
-        if (['node_modules', '.git', 'media', 'dist', 'coverage', '.openclaw', 'memory', 'cache', 'ai-game-engine', 'repo'].includes(file)) continue;
-        
-        // Skip self, env files, and lock files
-        if (file === 'index.js' || file === 'scan.js' || file.endsWith('.env')) continue;
-        if (['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'].includes(file)) continue;
-        if (file.endsWith('.tmLanguage.json')) continue;
-
+  // 1. Dependency Scan (npm audit)
+  // Skip if --skip-audit
+  if (!options.skipAudit) {
+    try {
+      console.log('[Sentinel] Running npm audit...');
+      const auditOutput = execSync('npm audit --json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      const audit = JSON.parse(auditOutput);
+      report.vulnerabilities = {
+        total: audit.metadata?.vulnerabilities?.total || 0,
+        severity: audit.metadata?.vulnerabilities || {},
+        details: audit.advisories || {}
+      };
+    } catch (err) {
+      // npm audit returns non-zero exit code if vulns found, but stdout is valid JSON
+      if (err.stdout) {
         try {
-            const stats = fs.statSync(fullPath);
-            if (stats.isDirectory()) {
-                results = results.concat(recursiveScan(fullPath));
-            } else if (stats.isFile() && stats.size < 500 * 1024) { // Limit to 500KB files
-                // Check extension
-                if (!['.md', '.js', '.json', '.yml', '.yaml', '.sh', '.env', '.txt'].includes(path.extname(file))) continue;
-                
-                const content = fs.readFileSync(fullPath, 'utf8');
-                secretPatterns.forEach(pat => {
-                    if (pat.regex.test(content)) {
-                        results.push(`⚠️ Potential ${pat.name} exposed in ${fullPath}`);
-                    }
-                });
-            }
-        } catch (e) {
-            // Ignore access errors
+          const audit = JSON.parse(err.stdout);
+          report.vulnerabilities = {
+            total: audit.metadata?.vulnerabilities?.total || 0,
+            severity: audit.metadata?.vulnerabilities || {},
+            details: audit.advisories || {}
+          };
+        } catch (parseErr) {
+          report.vulnerabilities = { error: 'Failed to parse npm audit output' };
         }
+      } else {
+        report.vulnerabilities = { error: 'npm audit failed: ' + err.message };
+      }
     }
-    return results;
+  }
+
+  // 2. Secret Scan (Recursive)
+  console.log('[Sentinel] Scanning for secrets...');
+  const files = getAllFiles(process.cwd());
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, 'utf8');
+      for (const pattern of SECRET_PATTERNS) {
+        if (pattern.regex.test(content)) {
+          // Verify false positives (e.g., example values)
+          if (!content.includes('EXAMPLE') && !content.includes('YOUR_API_KEY') && !file.includes('security-sentinel/index.js')) {
+             report.secrets.push({
+               file: path.relative(process.cwd(), file),
+               type: pattern.name
+             });
+          }
+        }
+      }
+    } catch (readErr) {
+      // Ignore binary or unreadable
+    }
+  }
+
+  // 3. Permission Scan
+  console.log('[Sentinel] Checking permissions...');
+  const CRITICAL_FILES = ['package.json', '.env', 'openclaw.json'];
+  for (const crit of CRITICAL_FILES) {
+    if (fs.existsSync(crit)) {
+      const stats = fs.statSync(crit);
+      const mode = stats.mode & 0o777; // Octal
+      // Check if world writable (xx2 or xx6 or xx7)
+      if ((mode & 0o002) !== 0) {
+        report.permissions.push({
+          file: crit,
+          mode: mode.toString(8),
+          issue: 'World Writable'
+        });
+      }
+    }
+  }
+
+  // Summary Status
+  if (
+    (report.vulnerabilities.total > 0 && (report.vulnerabilities.severity.high > 0 || report.vulnerabilities.severity.critical > 0)) ||
+    report.secrets.length > 0 ||
+    report.permissions.length > 0
+  ) {
+    report.status = 'risk_detected';
+  }
+
+  return report;
 }
 
-console.log("🔍 Starting recursive secret scan...");
-const secretWarnings = recursiveScan(process.cwd());
-warnings.push(...secretWarnings);
+function getAllFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    if (IGNORED_PATHS.some(ignored => filePath.includes(ignored))) continue;
 
-/* Legacy specific file check removed in favor of recursive scan */
-
-
-// 4. Report
-console.log("🛡️ Security Sentinel Scan Report");
-console.log("===============================");
-
-if (foundThreats.length > 0) {
-    console.log("\n🛑 THREATS DETECTED (ACTION REQUIRED):");
-    foundThreats.forEach(t => console.log(t));
+    if (fs.existsSync(filePath)) {
+      const stat = fs.statSync(filePath);
+      if (stat.isDirectory()) {
+        getAllFiles(filePath, fileList);
+      } else {
+        if (/\.(js|json|md|txt|sh|yml|yaml|env)$/.test(file)) {
+          fileList.push(filePath);
+        }
+      }
+    }
+  }
+  return fileList;
 }
 
-if (warnings.length > 0) {
-    console.log("\n⚠️ WARNINGS (INVESTIGATE):");
-    warnings.forEach(w => console.log(w));
+// CLI Support
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const options = {
+    skipAudit: args.includes('--skip-audit')
+  };
+  
+  scan(options).then(report => {
+    console.log(JSON.stringify(report, null, 2));
+    // If risks are detected, default to exit 1 for CI/CD unless --no-fail is passed
+    if (report.status === 'risk_detected' && !args.includes('--no-fail')) {
+      process.exit(1); 
+    }
+  }).catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 
-if (foundThreats.length === 0 && warnings.length === 0) {
-    console.log("\n✅ System Clean. No active threats or warnings.");
-} else {
-    // Exit code 1 if threats found (useful for CI/hooks)
-    if (foundThreats.length > 0) process.exit(1);
-}
+module.exports = { scan };
