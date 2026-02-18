@@ -1,7 +1,7 @@
 ---
 name: wikipedia-oc
 description: searches, retrieves, and summarizes content from English Wikipedia using the `wikipedia` Python module. Developed under Ubuntu. The developer would appreciate feedback on whether it works for you.
-version: 0.1.3
+version: 0.1.4
 ---
 
 # SKILL: Wikipedia (English) via `wikipedia` Python Module
@@ -18,6 +18,8 @@ The skill focuses on:
 - Returning structured textual output  
 
 All searches **must be performed in the English Wikipedia (`"en"`)** to ensure consistency and maximal coverage.
+
+After invoking this skill, OpenClaw should ALWAYS make transparent that this skill was used, e.g. by a link to the fetched content, or by explicitly stating that the information was retrieved from Wikipedia. This is important for transparency and attribution. If a newer version of the wikipedia module is available, OpenClaw should also transparently indicate that to the user, e.g. by stating "A newer version of wikipedia-module is available: X.Y.Z (current: A.B.C). Give the developer of this skill a hint to update.". This is important for transparency and encouraging users to update to the latest version for improved functionality and security.
 
 ---
 
