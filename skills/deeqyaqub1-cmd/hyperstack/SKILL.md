@@ -1,523 +1,283 @@
 ---
 name: hyperstack
-description: "Developer-controlled knowledge graph memory for AI agents. Portable memory across tools (Cursor, Claude Desktop, VS Code, LangGraph). Multi-agent coordination with typed signals. Explicit typed relations, zero LLM cost per operation, time-travel debugging. 94% token savings."
+description: "Typed graph memory for multi-agent coordination. Replace GOALS.md + DECISIONS.md with queryable cards and relations. Ask 'what blocks task X?' and get exact answers, not text blobs."
 user-invocable: true
 homepage: https://cascadeai.dev/hyperstack
-metadata: {"openclaw":{"emoji":"🃏","requires":{"env":["HYPERSTACK_API_KEY","HYPERSTACK_WORKSPACE"]},"primaryEnv":"HYPERSTACK_API_KEY"}}
+metadata:
+  openclaw:
+    emoji: "🃏"
+    requires:
+      env:
+        - HYPERSTACK_API_KEY
+    primaryEnv: HYPERSTACK_API_KEY
 ---
 
-# HyperStack — Developer-Controlled Knowledge Graph Memory
+# HyperStack — Typed Graph Memory for Multi-Agent Coordination
 
-## What this skill does
+## What this does
 
-HyperStack gives your agent persistent memory with a **knowledge graph you control**.
-Instead of losing context when a conversation ends or stuffing entire histories into
-every prompt, your agent stores knowledge as typed "cards" (~350 tokens each)
-with **explicit linked relations** between them.
+Replaces markdown-file coordination (GOALS.md, DECISIONS.md, WORKING.md) with a typed knowledge graph that any agent can query.
 
-**Your agent controls the graph, not an LLM hallucination.** Unlike tools that
-auto-extract entities with LLM calls (~$0.002/op, risk of phantom relationships),
-HyperStack lets agents create precise cards with explicit typed relations.
-Zero extraction cost. Zero hallucinated links. Instant writes.
+**Before** (current OpenClaw multi-agent):
+```
+# DECISIONS.md (append-only)
+- 2026-02-15: Use Clerk for auth (coder-agent)
+- 2026-02-16: Migration blocks production deploy (ops-agent)
+```
+"What blocks deploy?" → `grep -r "blocks.*deploy" *.md` → manual, fragile
 
-**Portable memory across tools.** One knowledge graph that works in Cursor, Claude Desktop,
-VS Code, LangGraph, or any tool with MCP/API access. Switch IDEs without losing your
-agent's brain. Every card tracks which tool created it (`sourceAgent`).
-
-**Multi-agent coordination.** Agents can send typed signals to each other through the
-graph. Agent A stores a decision in Cursor, Agent B picks it up in LangGraph. Cards
-can be directed at specific agents (`targetAgent`) and queried as an inbox.
-
-**Real-time agent-to-agent orchestration (Team/Business).** Register webhooks so agents get
-notified instantly when signals arrive. No polling needed. SSE event streams,
-HMAC-signed payloads, auto-disable on failures. No other memory tool offers
-real-time agent-to-agent webhooks on a typed knowledge graph.
-
-**Time-travel debugging:** Every card change is versioned. Query the graph
-at any point in time to see exactly what your agent knew when it made a decision.
-"Git blame for agent memory."
-
-The result: **94% less tokens per message** and **~$254/mo saved** on API costs
-for a typical workflow.
-
-## When to use HyperStack
-
-Use HyperStack in these situations:
-
-1. **Start of every conversation**: Search memory for context about the user/project
-2. **When you learn something new**: Store preferences, decisions, people, tech stacks
-3. **Before answering questions**: Check if you already know the answer from a previous session
-4. **When a decision is made**: Record the decision AND the rationale with links to who decided
-5. **When context is getting long**: Extract key facts into cards, keep the prompt lean
-6. **When tracing dependencies**: Use graph links to find what depends on what
-7. **When debugging**: Time-travel to see the graph state when a bad decision was made
-8. **When coordinating with other agents**: Send signals via `targetAgent` and check inbox
-
-## Context Graph
-
-Cards can link to each other with typed relations, forming a knowledge graph:
-
-```json
-{
-  "slug": "use-clerk",
-  "title": "Auth: Use Clerk",
-  "cardType": "decision",
-  "sourceAgent": "cursor-mcp",
-  "links": [
-    {"target": "alice", "relation": "decided"},
-    {"target": "cto", "relation": "approved"},
-    {"target": "auth-api", "relation": "triggers"}
-  ],
-  "meta": {"reason": "Better DX, lower cost, native Next.js support"}
-}
+**After** (HyperStack):
+```
+"What blocks deploy?" → hs_blockers deploy-prod → [migration-23] Auth migration to Clerk
 ```
 
-### Card Types
-- `person` — teammates, contacts, roles
-- `project` — services, repos, infrastructure
-- `decision` — why you chose X over Y
-- `preference` — settings, style, conventions
-- `workflow` — deploy steps, CI/CD, runbooks
-- `event` — milestones, incidents, launches
-- `signal` — inter-agent communication (directed at another agent)
-- `account` — accounts and billing
-- `general` — everything else
+Typed relations. Exact answers. Zero LLM cost.
 
-### Relation Types
-- `owns` — person owns a project/service
-- `decided` — person made a decision
-- `approved` — person approved something
-- `uses` — project uses a dependency
-- `triggers` — change triggers downstream effects
-- `blocks` — something blocks something else
-- `depends-on` — dependency relationship
-- `reviews` — person reviews something
-- `notifies` — agent-to-agent signal/message
-- `related` — general association
+## Tools
 
-### Graph Traversal (Pro+)
-
-Query the graph to find connected cards:
-
-```bash
-curl "https://hyperstack-cloud.vercel.app/api/graph?workspace=default&from=auth-api&depth=2" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+### hs_search
+Search the shared knowledge graph. Hybrid semantic + keyword matching.
+```
+hs_search({ query: "authentication setup" })
 ```
 
-Parameters:
-- `from` — starting card slug
-- `depth` — how many hops to traverse (1-3, default 1)
-- `relation` — filter by relation type (optional)
-- `type` — filter by card type (optional)
-
-Returns the full subgraph: nodes, edges, and traversal path. Use for:
-- **Impact analysis**: "What breaks if we change auth?"
-- **Decision trail**: "Why did we choose Stripe?"
-- **Ownership**: "Who owns the database?"
-- **Agent coordination**: "What did the LangGraph agent decide?"
-
-### Time-Travel Debugging (Pro+)
-
-Reconstruct the graph at any point in time:
-
-```bash
-curl "https://hyperstack-cloud.vercel.app/api/graph?workspace=default&from=auth-api&depth=2&at=2026-02-01T00:00:00Z" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+### hs_store
+Store a card in the graph. Auto-tags with your agent ID.
+```
+hs_store({
+  slug: "use-clerk",
+  title: "Use Clerk for auth",
+  body: "Better DX, lower cost, native Next.js support",
+  type: "decision",
+  links: "auth-api:triggers,alice:decided"
+})
 ```
 
-The `at` parameter accepts any ISO timestamp. The API reconstructs every card
-from its version history at that moment — different titles, different links,
-different relations. See exactly what your agent knew when it made a decision.
-
-Response includes `"mode": "time-travel"` and `"versionAt"` on each node showing
-which version was active at that time.
-
-Use for:
-- **Debugging**: "What did the graph look like when auth broke on Tuesday?"
-- **Audit trail**: "Show the graph state when this decision was approved"
-- **Root cause**: "The agent changed this card on Feb 5 — what was it before?"
-
-**Note:** Graph API and time-travel require Pro plan or above. Free tier stores links but cannot traverse.
-
-## Portable Memory & Multi-Agent Coordination
-
-### How sourceAgent works
-
-Every card tracks which tool created it. This happens automatically when using
-the MCP server or LangGraph integration. For direct API calls, pass `sourceAgent`:
-
-```bash
-curl -X POST "https://hyperstack-cloud.vercel.app/api/cards?workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "use-stripe",
-    "title": "Use Stripe for payments",
-    "body": "Chose Stripe over Paddle for per-seat billing.",
-    "cardType": "decision",
-    "sourceAgent": "cursor-mcp"
-  }'
+### hs_decide
+Record a decision with full provenance — who decided, what it affects, what it blocks.
+```
+hs_decide({
+  slug: "use-clerk",
+  title: "Use Clerk for auth",
+  rationale: "Better DX, lower cost vs Auth0",
+  affects: "auth-api,user-service",
+  blocks: ""
+})
 ```
 
-### How inter-agent signals work
-
-Agent A can direct a card at Agent B using `targetAgent`:
-
-```bash
-curl -X POST "https://hyperstack-cloud.vercel.app/api/cards?workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "stripe-review-needed",
-    "title": "Stripe integration needs security review",
-    "body": "Found potential PCI compliance issue with current Stripe setup.",
-    "cardType": "signal",
-    "sourceAgent": "langgraph",
-    "targetAgent": "cursor-mcp",
-    "links": [{"target": "use-stripe", "relation": "blocks"}]
-  }'
+### hs_blockers
+Check what blocks a task/card. Returns exact typed blockers, not fuzzy search results.
+```
+hs_blockers({ slug: "deploy-prod" })
+→ "1 blocker: [migration-23] Auth migration to Clerk"
 ```
 
-### Querying by agent (inbox pattern)
+### hs_graph
+Traverse the knowledge graph from a starting card. See connections, ownership, dependencies. Supports time-travel: pass a timestamp to reconstruct the graph as it was at any point in time.
+```
+hs_graph({ from: "auth-api", depth: 2 })
+→ nodes: [auth-api, use-clerk, migration-23, alice]
+→ edges: [auth-api→triggers→use-clerk, migration-23→blocks→deploy-prod]
 
-Agent B can check for cards directed at it:
-
-```bash
-# Get all cards directed at cursor-mcp
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&targetAgent=cursor-mcp" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-
-# Get cards from a specific agent
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&sourceAgent=langgraph" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-
-# Get cards since a specific time (polling pattern)
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&targetAgent=cursor-mcp&since=2026-02-14T10:00:00Z" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+# Time-travel: see the graph at a specific moment
+hs_graph({ from: "auth-api", depth: 2, at: "2026-02-15T03:00:00Z" })
 ```
 
-### Filter query parameters
-
-These can be combined on the list endpoint (`GET /api/cards`):
-- `sourceAgent` — filter by which agent created the card
-- `targetAgent` — filter by which agent the card is directed at
-- `since` — ISO timestamp, only return cards updated after this time
-- `type` — filter by card type (e.g. `signal`)
-
-### Real-time agent-to-agent orchestration (Team/Business plans)
-
-Instead of polling, agents can register webhooks to receive events instantly.
-
-**Register a webhook:**
-```bash
-curl -X POST "https://hyperstack-cloud.vercel.app/api/agent-webhooks" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agentId": "cursor-mcp",
-    "url": "https://your-agent.example.com/webhook",
-    "events": ["signal.received", "card.created"],
-    "secret": "optional-hmac-secret"
-  }'
+### hs_my_cards
+List all cards created by this agent.
+```
+hs_my_cards()
+→ "3 cards by agent researcher: [finding-clerk-pricing] [finding-auth0-limits]"
 ```
 
-When a card with `targetAgent: "cursor-mcp"` is created, HyperStack POSTs the card data to the registered URL with HMAC signature in `X-HyperStack-Signature` header.
-
-**SSE event stream:**
-```bash
-curl -N "https://hyperstack-cloud.vercel.app/api/agent-webhooks?mode=events&agent=cursor-mcp&workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+### hs_ingest
+Auto-extract cards from raw text. Paste a conversation transcript, meeting notes, or project description — HyperStack extracts people, decisions, preferences, and tech stack mentions. Zero LLM cost (regex-based). Best for onboarding: go from 0 to populated graph in seconds.
+```
+hs_ingest({ text: "We're using Next.js 14 and PostgreSQL. Alice decided to use Clerk for auth." })
+→ "✅ Created 3 cards from 78 chars:
+  [tech-nextjs] Next.js 14 (preference)
+  [tech-postgresql] PostgreSQL (preference)
+  [decision-use-clerk] Use Clerk for auth (decision)"
 ```
 
-Returns Server-Sent Events with heartbeats. Reconnect with `?since=` timestamp from the `done` event.
+### hs_inbox
+Check for cards directed at this agent by other agents. Enables multi-agent coordination through shared memory — Agent A stores a signal for Agent B, Agent B picks it up via inbox.
+```
+hs_inbox({})
+→ "Inbox for cursor-mcp: 1 card(s)
+  [review-needed] Review auth migration (signal) from=claude-desktop-mcp"
+```
 
-**Webhook management:**
-- `GET /api/agent-webhooks` — list all webhooks
-- `PUT /api/agent-webhooks?id=X` — enable/disable
-- `DELETE /api/agent-webhooks?id=X` — remove
-- Auto-disables after 10 consecutive failures
+### hs_webhook (Team+)
+Register a webhook so this agent gets notified in real time when cards are directed at it. Agent A stores a blocker → Agent B gets notified automatically.
+```
+hs_webhook({
+  url: "https://your-server.com/webhook",
+  events: "card.created,signal.received"
+})
+```
 
-## Auto-Capture Mode
+### hs_stats ✨ NEW in v1.0.15
+Get token savings stats and memory usage for this workspace. Shows how much context HyperStack is saving vs loading everything into context. Requires Pro plan.
+```
+hs_stats()
+→ "HyperStack Stats for workspace: default
+   Cards: 24 | Tokens stored: 246 | Stale: 0
+   Without HyperStack: 246 tokens/msg ($11.07/mo)
+   With HyperStack:    200 tokens/msg ($9.00/mo)
+   Saving: 15% — $2.07/mo
+   
+   Card breakdown:
+   decisions: 8 | preferences: 6 | general: 10"
+```
 
-HyperStack supports automatic memory capture — but **always ask the user for
-confirmation before storing**. After a meaningful exchange, suggest cards to
-create and wait for approval. Never store silently. Examples of what to suggest:
+### hs_agent_tokens (Team+) ✨ NEW in v1.0.15
+Create, list, and revoke scoped per-agent tokens. Instead of sharing one master API key across all agents, give each agent only the permissions it needs. Requires Team plan.
+```
+# Create a scoped token for a specific agent
+hs_agent_tokens({
+  action: "create",
+  name: "Researcher Agent",
+  agentId: "researcher",
+  canRead: ["*"],
+  canWrite: ["general", "signal"],
+  allowedStacks: ["general", "decisions"]
+})
+→ "Created token for researcher: hsa_abc123...
+   Read: all | Write: general, signal | Stacks: general, decisions"
 
-- **Preferences stated**: "I prefer TypeScript over JavaScript" → suggest storing as preference card
-- **Decisions made**: "Let's go with PostgreSQL" → suggest storing as decision card with links to who decided
-- **People mentioned**: "Alice is our backend lead" → suggest storing as person card with ownership links
-- **Tech choices**: "We're using Next.js 14 with App Router" → suggest storing as project card
-- **Workflows described**: "We deploy via GitHub Actions to Vercel" → suggest storing as workflow card
-- **Dependencies**: "Auth API depends on Clerk" → suggest storing with `depends-on` link
+# List all agent tokens
+hs_agent_tokens({ action: "list" })
 
-**Rules for auto-capture:**
-- **Always confirm with the user before creating or updating a card**
-- Only store facts that would be useful in a future session
-- Never store secrets, credentials, PII, or sensitive data
-- Keep cards concise (2-5 sentences)
-- Use meaningful slugs (e.g., `preference-typescript` not `card-1`)
-- Update existing cards rather than creating duplicates — search first
-- **Add links** when cards reference other cards — this builds the graph
+# Revoke a token
+hs_agent_tokens({ action: "revoke", id: "token-id" })
+```
+
+## Multi-Agent Setup
+
+Each agent gets its own ID. Cards are auto-tagged so you can see who created what.
+
+Recommended roles:
+- **coordinator**: Routes tasks, monitors blockers (`hs_blockers`, `hs_graph`, `hs_decide`)
+- **researcher**: Investigates, stores findings (`hs_search`, `hs_store`, `hs_ingest`)
+- **builder**: Implements, records tech decisions (`hs_store`, `hs_decide`, `hs_blockers`)
 
 ## Setup
 
-Get a free API key at https://cascadeai.dev/hyperstack (10 cards free, no credit card).
-
-Set environment variables:
+### Option A: VPS / Self-hosted agent (recommended)
+Run the SDK on your own machine or VPS. Authenticate via browser — no manual key management.
 ```bash
-export HYPERSTACK_API_KEY=hs_your_key_here
-export HYPERSTACK_WORKSPACE=default
+npm i hyperstack-core
+npx hyperstack-core login          # opens browser, approve device, done
+npx hyperstack-core init openclaw-multiagent
+```
+Credentials are saved to `~/.hyperstack/credentials.json`. All commands and tools authenticate automatically.
+
+### Option B: OpenClaw environment variable
+1. Get free API key: https://cascadeai.dev/hyperstack
+2. Set `HYPERSTACK_API_KEY=hs_your_key` in your OpenClaw env
+3. Tools are available immediately
+
+### Option C: Programmatic (Node.js adapter)
+```js
+import { createOpenClawAdapter } from "hyperstack-core/adapters/openclaw";
+const adapter = createOpenClawAdapter({ agentId: "builder" });
+await adapter.onSessionStart({ agentName: "Builder", agentRole: "Implementation" });
+// adapter.tools: hs_search, hs_store, hs_decide, hs_blockers, hs_graph, hs_my_cards, hs_ingest
+await adapter.onSessionEnd({ summary: "Completed auth migration" });
 ```
 
-The API base URL is `https://hyperstack-cloud.vercel.app`.
+### How it works
+The SDK runs on your machine/VPS. Every `hs_store`, `hs_search`, `hs_blockers` call hits the HyperStack API. You own your agent. We host the graph.
 
-All requests need the header `X-API-Key: $HYPERSTACK_API_KEY`.
+Free: 10 cards, keyword search.
+Pro ($29/mo): 100 cards, graph traversal, semantic search, time-travel debugging, token savings stats.
+Team ($59/mo): 500 cards, 5 team API keys, webhooks, unlimited workspaces, scoped agent tokens.
 
-## Data safety rules
+## When to use
 
-**NEVER store any of the following in cards:**
-- Passwords, API keys, tokens, secrets, or credentials of any kind
-- Social security numbers, government IDs, or financial account numbers
-- Credit card numbers or banking details
-- Medical records or health information
-- Full addresses or phone numbers (use city/role only for people cards)
+- **Start of session**: `hs_search` for relevant context
+- **New project/onboarding**: `hs_ingest` to auto-populate from existing docs
+- **Decision made**: `hs_decide` with rationale and links
+- **Task blocked**: `hs_store` with `blocks` relation
+- **Before starting work**: `hs_blockers` to check dependencies
+- **Debug a bad decision**: `hs_graph` with `at` timestamp to see what the agent knew
+- **Cross-agent signal**: `hs_store` with `targetAgent` → other agent checks `hs_inbox`
+- **Check efficiency**: `hs_stats` to see token savings and memory health
+- **Lock down agents**: `hs_agent_tokens` to give each agent only what it needs
 
-**Before storing any card**, check: "Would this be safe in a data breach?" If no, don't store it. Strip sensitive details and store only the non-sensitive fact.
+## Data safety
 
-**Before using /api/ingest**, warn the user that raw text will be sent to an external API. Do not auto-ingest without user confirmation. Redact any PII, secrets, or credentials from text before sending.
+NEVER store passwords, API keys, tokens, PII, or credentials. Cards should be safe in a data breach. Always confirm with user before storing.
 
-**The user controls their data:**
-- All cards can be listed, viewed, and deleted at any time
-- API keys can be rotated or revoked at https://cascadeai.dev/hyperstack
-- Users should use a scoped/test key before using their primary key
-- Data is stored on encrypted PostgreSQL (Neon, AWS us-east-1)
+## Changelog
 
-## How to use
+### v1.0.15 (Feb 17, 2026)
 
-### Store a Memory (with links and agent tracking)
+#### ✨ `hs_stats` — Token Savings & Memory Health (Pro+)
+Previously there was no way for an agent to know how much context HyperStack was saving or how healthy its memory was. `hs_stats` calls the analytics endpoint and returns a full report:
+- **Cards stored** and total tokens in memory
+- **Token savings comparison** — what you'd spend loading everything into context vs using HyperStack's selective retrieval
+- **Monthly cost savings** in dollars (based on 100 msgs/day at GPT-4 rates)
+- **Card breakdown by stack** — how many decisions, preferences, projects etc.
+- **Last 7 days activity** — reads, writes, token usage
+- **Stale card count** — cards not updated in 30+ days that may need review
 
-```bash
-curl -X POST "https://hyperstack-cloud.vercel.app/api/cards?workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "use-clerk",
-    "title": "Auth: Use Clerk",
-    "body": "Chose Clerk over Auth0. Better DX, lower cost, native Next.js support.",
-    "cardType": "decision",
-    "stack": "decisions",
-    "keywords": ["clerk", "auth", "auth0"],
-    "sourceAgent": "cursor-mcp",
-    "links": [
-      {"target": "alice", "relation": "decided"},
-      {"target": "auth-api", "relation": "triggers"}
-    ],
-    "meta": {"reason": "Auth0 pricing too high for startup"}
-  }'
-```
+Use case: agents can call `hs_stats` at the end of a session to report efficiency gains. Also the strongest argument for upgrading from Free to Pro.
 
-Creates or updates a card (upsert by slug). Cards are automatically embedded for semantic search.
+#### ✨ `hs_agent_tokens` — Scoped Per-Agent Permissions (Team+)
+Previously all agents shared one master API key, meaning any agent could read or write any card. This was a blocker for teams putting sensitive data in HyperStack — a rogue or compromised agent could read everything.
 
-**Fields:**
-- `slug` (required) — unique identifier, used for upsert and links
-- `title` (required) — short descriptive title
-- `body` (required) — 2-5 sentence description
-- `cardType` — person, project, decision, preference, workflow, event, signal, account, general
-- `stack` — projects, people, decisions, preferences, workflows, general
-- `keywords` — array of search terms
-- `links` — array of `{target, relation}` to connect cards
-- `sourceAgent` — which tool/agent created this (auto-set by MCP/LangGraph)
-- `targetAgent` — direct this card at a specific agent
-- `meta` — freeform object for structured data (reason, date, etc.)
+`hs_agent_tokens` lets you create scoped tokens per agent:
+- **canRead** — restrict which card types the agent can read (`general`, `decision`, `preference`, `person`, `project`, `workflow`, `signal`, or `*` for all)
+- **canWrite** — restrict which card types the agent can write
+- **allowedStacks** — restrict which stacks the agent can access
+- **expiresIn** — optional TTL in seconds for temporary access
+- Tokens are prefixed `hsa_` (agent-scoped) vs `hs_` (master key) so you can tell them apart
+- Revoke any token instantly without rotating your master key
 
-### Search Memory (Hybrid: Semantic + Keyword)
+Use case: give your researcher agent read-only access to decisions, give your builder agent write access to projects only, give a third-party skill access to nothing sensitive.
 
-```bash
-curl "https://hyperstack-cloud.vercel.app/api/search?workspace=default&q=authentication+setup" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-```
+### v1.0.14 (Feb 17, 2026)
 
-Searches using **hybrid semantic + keyword matching**. Finds cards by meaning,
-not just exact word matches. Returns `"mode": "hybrid"` when semantic search
-is active. Top result includes full body, others return metadata only (saves tokens).
+#### ✨ `hs_ingest` — Auto-Extract Cards from Raw Text (zero LLM cost)
+Before v1.0.14, populating HyperStack required manually calling `hs_store` for every card. Starting from scratch meant a lot of upfront work.
 
-### Query the Graph (Pro+)
+`hs_ingest` takes raw text — a conversation transcript, meeting notes, project description, or any unstructured text — and automatically extracts structured cards using regex pattern matching. No LLM cost, no API calls to OpenAI.
 
-```bash
-curl "https://hyperstack-cloud.vercel.app/api/graph?workspace=default&from=auth-api&depth=2" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-```
+What it detects:
+- **Decisions** — "we decided", "chose X over Y", "went with"
+- **Preferences** — "I prefer", "we always use", "don't use"
+- **People** — "Alice is the lead", "owned by", "responsible for"
+- **Projects** — "we're building", "our backend", "milestone"
+- **Workflows** — "first X then Y", "whenever we", "pipeline"
+- **Tech stack** — auto-detects 40+ frameworks, databases, and services and bundles them into a single tech-stack card
 
-Traverses the knowledge graph from a starting card. Returns connected cards,
-edges with relation types, and the traversal path.
+Use case: paste your entire project README or a team meeting transcript and go from 0 to a populated knowledge graph in seconds.
 
-### Time-Travel the Graph (Pro+)
+#### ✨ `hs_inbox` — Agent-Directed Card Retrieval
+Before v1.0.14, agents could store cards with a `targetAgent` field but had no dedicated tool to check for cards directed at them. `hs_inbox` polls for cards where `targetAgent` matches the current agent's ID, optionally filtered by timestamp so agents only see new messages since their last check.
 
-```bash
-curl "https://hyperstack-cloud.vercel.app/api/graph?workspace=default&from=auth-api&depth=2&at=2026-02-01T00:00:00Z" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-```
+Use case: Agent A finishes a task and stores a signal card directed at Agent B. Agent B calls `hs_inbox` at the start of its session and picks up the handoff automatically — no shared file system, no message queue needed.
 
-Reconstructs the graph at a specific point in time using card version history.
-Every card is returned as it existed at that moment — the title, body, links,
-and relations reflect the versioned state, not the current state.
+#### ✨ `hs_webhook` / `hs_webhooks` — Real-Time Agent Notifications (Team+)
+Instead of polling `hs_inbox`, Team plan agents can register a webhook URL and get notified in real time when cards are directed at them. Supports event filtering (`card.created`, `card.updated`, `signal.received`, or `*` for all). HMAC secret signing for verification.
 
-### List Cards (with filters)
+#### 🔧 OAuth Device Flow for CLI Login
+`npx hyperstack-core login` now uses RFC 8628 OAuth device flow. CLI displays a short code, user approves in browser, credentials saved automatically. No more manual copy-pasting of API keys for VPS/self-hosted agents.
 
-```bash
-# List all cards
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+### v1.0.13 and earlier — Core Foundation
 
-# Filter by source agent
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&sourceAgent=cursor-mcp" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
+The original HyperStack toolset that established the core value proposition:
 
-# Inbox: cards directed at this agent since a time
-curl "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&targetAgent=langgraph&since=2026-02-14T00:00:00Z" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-```
+- **`hs_search`** — Hybrid keyword + semantic search across all cards. Keyword search is free, semantic search (vector similarity via pgvector) requires Pro. Returns ranked results with relevance scores.
 
-Returns all cards in the workspace with plan info and card count.
+- **`hs_store`** — Create or update a card with full metadata: slug, title, body, cardType, keywords, links with typed relations (owns, triggers, blocks, depends-on, reviews, notifies, approved, decided), sourceAgent, targetAgent.
 
-### Delete a Card
+- **`hs_decide`** — Specialized decision recorder. Creates a decision card with provenance — who decided, what it affects, what it blocks. Automatically creates typed graph edges so decisions are queryable by relation, not just text.
 
-```bash
-curl -X DELETE "https://hyperstack-cloud.vercel.app/api/cards?workspace=default&id=use-clerk" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY"
-```
+- **`hs_blockers`** — The headline feature. Given a card slug, traverses the graph with `relation=blocks` filter and returns exact typed blockers. "What blocks deploy-prod?" returns the exact cards, not a fuzzy search result. Deterministic, $0 cost.
 
-Permanently removes the card and its embedding.
+- **`hs_graph`** — Full graph traversal from any starting node. Configurable depth (1-3 hops), relation filter, and time-travel (`at` timestamp to reconstruct the graph as it was at any past moment). Requires Pro plan.
 
-### Auto-Extract from Text
-
-```bash
-curl -X POST "https://hyperstack-cloud.vercel.app/api/ingest?workspace=default" \
-  -H "X-API-Key: $HYPERSTACK_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Alice is a senior engineer. We decided to use FastAPI over Django."}'
-```
-
-Automatically extracts structured memories from raw conversation text.
-No LLM needed — uses pattern matching (free, instant).
-
-**Important:** Always confirm with the user before sending text to /api/ingest.
-Redact any PII or secrets from the text first.
-
-## Stacks (categories)
-
-| Stack | Emoji | Use for |
-|-------|-------|---------|
-| `projects` | 📦 | Tech stacks, repos, architecture, deployment |
-| `people` | 👤 | Teammates, contacts, roles, relationships |
-| `decisions` | ⚖️ | Why you chose X over Y, trade-offs, rationale |
-| `preferences` | ⚙️ | Editor settings, tools, coding style, conventions |
-| `workflows` | 🔄 | Deploy steps, review processes, CI/CD, runbooks |
-| `general` | 📄 | Everything else |
-
-## Important behavior rules
-
-1. **Always search before answering** — run a search at conversation start and when topics change.
-2. **Suggest storing important facts** — preferences, decisions, people, tech choices. Always confirm with the user first. Never store secrets or PII.
-3. **Add links between cards** — when a card references another card, add a typed link. This builds the graph.
-4. **Keep cards concise** — 2-5 sentences per card. Think "executive summary."
-5. **Use meaningful slugs** — `project-webapp` not `card-123`. Slugs are how you update, delete, and link.
-6. **Add keywords generously** — they power search. Include synonyms and related terms.
-7. **Set cardType** — typed cards enable graph features and render differently in the visual explorer.
-8. **Delete stale cards** — outdated info pollutes search. When a decision changes, update the card.
-9. **Use the right stack** — it helps filtering.
-10. **Include the memory badge** in responses when relevant: `🃏 HyperStack | <card_count> cards | <workspace>`
-11. **Check inbox** when coordinating with other agents — query with `targetAgent` to see signals.
-
-## Slash Commands
-
-Users can type:
-- `/hyperstack` or `/hs` → Search memory for current topic
-- `/hyperstack store` → Store current context as a card
-- `/hyperstack list` → List all cards
-- `/hyperstack stats` → Show card count and token savings
-- `/hyperstack graph <slug>` → Show graph connections for a card
-- `/hyperstack inbox` → Check for signals from other agents
-
-## Token savings math
-
-Without HyperStack, agents stuff full context into every message:
-- Average context payload: **~6,000 tokens/message**
-- With 3 agents × 50 messages/day × 30 days = 4,500 messages
-- At $3/M tokens (GPT-4 class): **~$81/mo per agent**
-
-With HyperStack:
-- Average card retrieval: **~350 tokens/message**
-- Same usage: **~$4.72/mo per agent**
-- **Savings: ~$76/mo per agent, ~$254/mo for a typical 3-agent setup**
-
-## Also available as
-
-| Platform | Install |
-|----------|---------|
-| **MCP Server** | `npx hyperstack-mcp` (Cursor, Claude Desktop, VS Code, Windsurf) — v1.2.0 |
-| **LangGraph** | `pip install hyperstack-langgraph` — v1.1.0 |
-| **Python SDK** | `pip install hyperstack-py` |
-| **REST API** | Works with any language, any framework |
-| **ClawHub Skill** | You're using it right now |
-
-## How HyperStack compares
-
-|  | HyperStack | Mem0 | Zep/Graphiti | Letta |
-|--|------------|------|--------------|-------|
-| Knowledge graph | ✅ (explicit) | ✅ (auto-extracted) | ✅ (temporal KG) | ❌ (memory blocks) |
-| Explicit typed relations | ✅ (10 types) | ❌ (generic) | ❌ (generic) | ❌ |
-| Portable across tools | ✅ (sourceAgent) | ❌ | ❌ | ❌ |
-| Multi-agent signals | ✅ (targetAgent) | ❌ | ❌ | ❌ |
-| Real-time webhooks | ✅ (Team+) | ❌ | ❌ | ❌ |
-| Time-travel debugging | ✅ | ❌ | ⚠️ (temporal, not debug) | ❌ |
-| Zero LLM cost per op | ✅ **$0** | ❌ (~$0.002) | ❌ (~$0.002) | Varies |
-| Semantic search | ✅ (hybrid) | ✅ | ✅ | ✅ |
-| Setup time | **30 seconds** | 5-10 min | 5+ min (Neo4j) | 10-15 min |
-| Docker required | **No** | Yes | Yes (self-host) | Yes |
-| Indie pricing | ✅ ($0-$29) | ❌ (enterprise) | ❌ (credit-based) | ⚠️ (OSS) |
-| Data safety rules | ✅ | ❌ | ❌ | ❌ |
-
-### Why HyperStack over Mem0/Zep?
-
-- **You control the graph.** Mem0 and Zep auto-extract entities using LLM calls.
-  This costs ~$0.002 per operation AND can hallucinate relationships that don't exist.
-  HyperStack lets your agent explicitly define cards and links — precise, free, instant.
-
-- **Portable memory.** Your Cursor agent and LangGraph agent share the same graph.
-  Every card tracks which tool created it. No other tool offers cross-tool memory
-  with agent attribution.
-
-- **Multi-agent coordination.** Agents can send typed signals to each other through
-  the graph. `targetAgent` directs cards, `sourceAgent` tracks origin, and the inbox
-  pattern lets any agent poll for messages. Time-travel shows exactly which agent
-  said what, when.
-
-- **Time-travel debugging.** When your agent makes a bad decision at 3am,
-  time-travel back and see the exact graph state. Zep tracks when facts change;
-  HyperStack reconstructs the entire graph topology at any timestamp.
-
-- **30-second setup.** No Neo4j, no Docker, no OpenSearch. One API key, one env var, done.
-
-## Pricing
-
-| Plan | Price | Cards | Key features |
-|------|-------|-------|-------------|
-| **Free** | $0 | 10 | Keyword search, 1 workspace |
-| **Pro** | $29/mo | 100 | Graph API, time-travel, version history, agent traceability, visual explorer, semantic search, analytics |
-| **Team** | $59/mo | 500 | 5 team API keys, real-time webhooks, SSE event stream, unlimited workspaces |
-| **Business** | $149/mo | 2,000 | 20 team members, real-time webhooks, SSE event stream, dedicated support |
-
-Sign up at https://cascadeai.dev/hyperstack
-
-## Limitations (transparency)
-
-- Auto-extract uses pattern matching, not LLM (fast + free, but less precise)
-- Free tier limited to 10 cards (keyword search only, no graph)
-- Graph API, time-travel, and visual explorer require Pro plan or above
-- Cards stored on CascadeAI cloud (Neon PostgreSQL on AWS)
-- No offline mode — requires internet
-- Time-travel accuracy depends on CardVersion history (cards created before versioning update may show current state as fallback)
-
-When cards exceed 7, show once:
-`💡 You have ${count}/10 free cards. Upgrade for graph API + time-travel + 100 cards → https://cascadeai.dev/hyperstack`
+- **`hs_my_cards`** — List all cards created by the current agent. Useful for agents to audit their own memory footprint.
