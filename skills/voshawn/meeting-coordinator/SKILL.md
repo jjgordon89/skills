@@ -1,9 +1,19 @@
 ---
 name: meeting-coordinator
-description: Executive scheduling assistant for meeting coordination: intake, availability analysis, venue selection, email outreach, calendar management, reservations, rescheduling, cancellation, and status tracking with strict approval gates.
-homepage: "https://github.com/voshawn/meeting-coordinator-skill"
+description: Executive scheduling assistant for meeting coordination (email, calendar, venues, confirmations).
 metadata:
-  openclaw: '{"author":"Shawn Vo","repo":"https://github.com/voshawn/meeting-coordinator-skill","tags":["calendar","email","scheduling","assistant"],"requires":{"bins":["gog","goplaces","python3"],"env":["GOG_ACCOUNT","GOOGLE_PLACES_API_KEY"],"config":["$HOME/.config/gog","$HOME/.config/goplaces"]},"runtime":{"type":"local","install":"gog --help && goplaces --help && python3 --version","run":"echo \"Instruction-only skill: invoke from prompt with $meeting-coordinator\""},"primaryEnv":"GOG_ACCOUNT","homepage":"https://github.com/voshawn/meeting-coordinator-skill"}'
+  openclaw:
+    emoji: "📅"
+    requires:
+      bins:
+        - gog
+        - goplaces
+        - python3
+      env:
+        - GOG_ACCOUNT
+        - GOOGLE_PLACES_API_KEY
+    primaryEnv: GOG_ACCOUNT
+    homepage: https://github.com/voshawn/meeting-coordinator-skill
 ---
 
 # Meeting Coordinator
@@ -163,6 +173,7 @@ Status lifecycle:
 Alternative terminal states: `cancelled`, `closed-no-response`
 
 Allowed transitions:
+
 - `intake` -> `awaiting-human-approval` | `cancelled`
 - `awaiting-human-approval` -> `awaiting-counterparty` | `cancelled`
 - `awaiting-counterparty` -> `confirmed` | `awaiting-human-approval` | `closed-no-response` | `cancelled`
