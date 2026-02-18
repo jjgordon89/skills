@@ -3,9 +3,15 @@
   "slug": "mobilerun",
   "displayName": "Mobile Run",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1771411272067,
-    "commit": "https://github.com/openclaw/skills/commit/3b2182a105e7337731fba4d5ba6a2d6c112e27cb"
+    "version": "1.0.4",
+    "publishedAt": 1771420079320,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1771411272067,
+      "commit": "https://github.com/openclaw/skills/commit/3b2182a105e7337731fba4d5ba6a2d6c112e27cb"
+    }
+  ]
 }
