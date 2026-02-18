@@ -3,11 +3,16 @@
   "slug": "zoho-email-integration",
   "displayName": "Zoho Email Integration",
   "latest": {
-    "version": "2.2.6",
-    "publishedAt": 1771053971137,
-    "commit": "https://github.com/openclaw/skills/commit/404e5b9e0d9b1731b68257a5bd18e945a52cf14f"
+    "version": "2.2.7",
+    "publishedAt": 1771406013733,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.6",
+      "publishedAt": 1771053971137,
+      "commit": "https://github.com/openclaw/skills/commit/404e5b9e0d9b1731b68257a5bd18e945a52cf14f"
+    },
     {
       "version": "2.2.4",
       "publishedAt": 1770917997387,
