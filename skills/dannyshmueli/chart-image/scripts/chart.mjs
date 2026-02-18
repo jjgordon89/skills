@@ -72,9 +72,17 @@ STYLING:
   --y-format    Y axis format: percent, dollar, compact, integer, decimal2
   --hline       Horizontal line: "value" or "value,color,label"
   --no-grid     Remove gridlines for cleaner look
+  --smooth      Smooth/curved lines (monotone interpolation)
   --legend      Legend position: top, bottom, left, right, none
+  --output-size Platform preset: twitter, discord, slack, instagram, story, thumbnail, wide, square
+
+SORTING:
+  --sort            Sort bars by value: asc, desc (bar charts only)
+  --bar-labels      Show value labels on top of every bar (bar charts only)
+  --gradient        Gradient fill for area charts (fades from color to background)
 
 ANNOTATIONS:
+  --trend-line      Add linear regression trend line (dashed)
   --show-change     Show % change from first to last value
   --focus-change    Zoom Y axis to highlight the change
   --focus-recent N  Focus on last N data points
@@ -195,6 +203,13 @@ function parseArgs(args) {
       case '--no-grid': opts.noGrid = true; break;
       case '--legend': opts.legend = next; i++; break;  // top, bottom, left, right, none
       case '--x-label-angle': opts.xLabelAngle = parseFloat(next); i++; break;  // X axis label rotation angle
+      case '--trend-line': opts.trendLine = true; break;  // Linear regression trend line
+      case '--watermark': opts.watermark = next; i++; break;  // Watermark text overlay
+      case '--smooth': opts.smooth = true; break;  // Smooth/curved line interpolation (monotone)
+      case '--output-size': opts.outputSize = next; i++; break;  // Size preset: twitter, discord, slack, instagram, thumbnail
+      case '--sort': opts.sort = next; i++; break;  // Sort bars: asc, desc, none (default: none)
+      case '--bar-labels': opts.barLabels = true; break;  // Show value on every bar
+      case '--gradient': opts.gradient = true; break;  // Gradient fill for area charts (top-to-bottom fade)
       case '-o': opts.output = next; i++; break;  // Shorthand for --output
     }
   }
@@ -205,6 +220,30 @@ function parseArgs(args) {
     opts.height = opts.height === 300 ? 20 : opts.height;  // Default 20 unless specified
     opts.noAxes = true;
     opts.title = null;  // No title for sparklines
+  }
+  
+  // Output size presets (apply only if width/height weren't explicitly set)
+  if (opts.outputSize) {
+    const sizePresets = {
+      'twitter':     { w: 1200, h: 675 },   // Twitter/X card 16:9
+      'x':           { w: 1200, h: 675 },   // Alias for twitter
+      'discord':     { w: 800,  h: 400 },   // Discord embed
+      'discord-embed': { w: 800, h: 400 },  // Alias
+      'slack':       { w: 800,  h: 450 },   // Slack unfurl
+      'instagram':   { w: 1080, h: 1080 },  // Instagram square
+      'story':       { w: 1080, h: 1920 },  // Instagram/TikTok story 9:16
+      'thumbnail':   { w: 320,  h: 180 },   // Small thumbnail
+      'wide':        { w: 1200, h: 400 },   // Wide banner
+      'square':      { w: 600,  h: 600 },   // Square
+    };
+    const preset = sizePresets[opts.outputSize.toLowerCase()];
+    if (preset) {
+      // Only override if user didn't explicitly set width/height
+      if (opts.width === 600) opts.width = preset.w;
+      if (opts.height === 300) opts.height = preset.h;
+    } else {
+      console.error(`Unknown --output-size preset: ${opts.outputSize}. Available: ${Object.keys(sizePresets).join(', ')}`);
+    }
   }
   
   return opts;
@@ -264,9 +303,16 @@ function buildSpec(opts) {
   };
   
   const markConfig = {
-    line: { type: 'line', point: true, color: theme.accent, strokeWidth: 2 },
+    line: { type: 'line', point: true, color: theme.accent, strokeWidth: 2, ...(opts.smooth ? { interpolate: 'monotone' } : {}) },
     bar: { type: 'bar', color: theme.accent },
-    area: { type: 'area', color: theme.accent, opacity: 0.7, line: { color: theme.accent } },
+    area: {
+      type: 'area',
+      ...(opts.gradient
+        ? { color: { x1: 1, y1: 1, x2: 1, y2: 0, gradient: 'linear', stops: [{ offset: 0, color: theme.bg }, { offset: 1, color: theme.accent }] } }
+        : { color: theme.accent, opacity: 0.7 }),
+      line: { color: theme.accent },
+      ...(opts.smooth ? { interpolate: 'monotone' } : {})
+    },
     point: { type: 'point', color: theme.accent, size: 100 },
     candlestick: null, // Handled separately as composite chart
   };
@@ -583,7 +629,7 @@ function buildSpec(opts) {
       background: theme.bg,
       padding: { left: 10, right: 10, top: 10, bottom: 10 },
       data: { values: opts.data },
-      mark: { type: 'line', point: true, strokeWidth: 2 },
+      mark: { type: 'line', point: true, strokeWidth: 2, ...(opts.smooth ? { interpolate: 'monotone' } : {}) },
       encoding: {
         x: {
           field: opts.xField,
@@ -794,7 +840,13 @@ function buildSpec(opts) {
         field: opts.xField,
         type: xAxisType,
         title: opts.xTitle || opts.xField,
-        axis: { labelAngle: opts.xLabelAngle !== undefined ? opts.xLabelAngle : -45 }
+        axis: { labelAngle: opts.xLabelAngle !== undefined ? opts.xLabelAngle : -45 },
+        // Sort bar charts by value when --sort is specified
+        ...(opts.sort && opts.type === 'bar' ? {
+          sort: opts.sort === 'desc' ? { field: opts.yField, order: 'descending' }
+               : opts.sort === 'asc' ? { field: opts.yField, order: 'ascending' }
+               : null
+        } : {})
       },
       y: {
         field: opts.yField,
@@ -811,6 +863,43 @@ function buildSpec(opts) {
   
   const layers = [mainLayer];
   
+  // Add value labels on every bar (--bar-labels)
+  if (opts.barLabels && opts.type === 'bar' && opts.data && opts.data.length > 0) {
+    const yFormat2 = resolveYFormat(opts.yFormat);
+    const fmtBarVal = (v) => {
+      if (!yFormat2) return typeof v === 'number' ? (Number.isInteger(v) ? `${v}` : v.toFixed(1)) : `${v}`;
+      if (yFormat2 === '.1%') return `${(v * 100).toFixed(1)}%`;
+      if (yFormat2 === '$,.2f') return `$${v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      if (yFormat2 === ',.4f') return v.toFixed(4);
+      if (yFormat2 === '.2e') return v.toExponential(2);
+      if (yFormat2 === '~s') return v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `${(v/1e3).toFixed(1)}K` : `${v}`;
+      return typeof v === 'number' ? (Number.isInteger(v) ? `${v}` : v.toFixed(1)) : `${v}`;
+    };
+    layers.push({
+      mark: {
+        type: 'text',
+        align: 'center',
+        dy: -8,
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: theme.text
+      },
+      encoding: {
+        x: {
+          field: opts.xField,
+          type: xAxisType,
+          ...(opts.sort && opts.type === 'bar' ? {
+            sort: opts.sort === 'desc' ? { field: opts.yField, order: 'descending' }
+                 : opts.sort === 'asc' ? { field: opts.yField, order: 'ascending' }
+                 : null
+          } : {})
+        },
+        y: { field: opts.yField, type: 'quantitative' },
+        text: { field: opts.yField, type: 'quantitative', format: yFormat2 || '' }
+      }
+    });
+  }
+
   // Add change annotation on the last point
   if (changeText && opts.data && opts.data.length >= 1) {
     const lastPoint = opts.data[opts.data.length - 1];
@@ -941,6 +1030,41 @@ function buildSpec(opts) {
         });
       }
     }
+  }
+  
+  // Add linear regression trend line
+  if (opts.trendLine && opts.data && opts.data.length >= 2) {
+    // Simple linear regression: y = mx + b
+    const n = opts.data.length;
+    const xs = opts.data.map((_, i) => i);
+    const ys = opts.data.map(d => d[opts.yField]);
+    const sumX = xs.reduce((a, b) => a + b, 0);
+    const sumY = ys.reduce((a, b) => a + b, 0);
+    const sumXY = xs.reduce((acc, x, i) => acc + x * ys[i], 0);
+    const sumX2 = xs.reduce((acc, x) => acc + x * x, 0);
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
+    
+    const trendColor = opts.dark ? '#fbbf24' : '#d97706';
+    const firstPoint = opts.data[0];
+    const lastPoint = opts.data[opts.data.length - 1];
+    const y0 = b;
+    const y1 = m * (n - 1) + b;
+    
+    // Add trend line as a layer with two-point dataset
+    layers.push({
+      data: {
+        values: [
+          { _tx: firstPoint[opts.xField], _ty: y0 },
+          { _tx: lastPoint[opts.xField], _ty: y1 }
+        ]
+      },
+      mark: { type: 'line', color: trendColor, strokeWidth: 2, strokeDash: [6, 4], opacity: 0.8 },
+      encoding: {
+        x: { field: '_tx', type: xAxisType },
+        y: { field: '_ty', type: 'quantitative' }
+      }
+    });
   }
   
   // Add horizontal reference lines (thresholds, targets, etc.)
@@ -1112,9 +1236,27 @@ async function main() {
     console.log(`SVG saved to ${opts.output}`);
   } else {
     // Convert SVG to PNG using sharp
-    const pngBuffer = await sharp(Buffer.from(svg))
+    let pngBuffer = await sharp(Buffer.from(svg))
       .png()
       .toBuffer();
+    
+    // Apply watermark if specified
+    if (opts.watermark) {
+      const meta = await sharp(pngBuffer).metadata();
+      const w = meta.width || opts.width;
+      const h = meta.height || opts.height;
+      const fontSize = Math.max(12, Math.round(h * 0.035));
+      const escaped = opts.watermark.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const wmSvg = `<svg width="${w}" height="${h}">
+        <text x="${w - 10}" y="${h - 10}" font-family="sans-serif" font-size="${fontSize}"
+              fill="${opts.dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)'}"
+              text-anchor="end">${escaped}</text>
+      </svg>`;
+      pngBuffer = await sharp(pngBuffer)
+        .composite([{ input: Buffer.from(wmSvg), top: 0, left: 0 }])
+        .png()
+        .toBuffer();
+    }
     
     writeFileSync(opts.output, pngBuffer);
     console.log(`Chart saved to ${opts.output}`);
