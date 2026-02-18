@@ -7,6 +7,31 @@ import subprocess
 import shutil
 import re
 
+# SECURITY: Validate file paths to prevent path traversal
+def validate_file_path(file_path, must_exist=True):
+    """Validate file path for security - must be within workspace"""
+    if not file_path:
+        return None
+    
+    # Resolve to absolute path
+    abs_path = os.path.abspath(file_path)
+    workspace_root = os.path.abspath(os.getcwd())
+    
+    # SECURITY: Enforce workspace containment - file MUST be inside current working directory
+    if not abs_path.startswith(workspace_root + os.sep) and abs_path != workspace_root:
+        raise ValueError(f"Access denied: file must be within workspace ({workspace_root})")
+    
+    # SECURITY: Block sensitive system directories (defense in depth)
+    forbidden_prefixes = ['/etc/', '/proc/', '/sys/', '/root/', '/home/']
+    for prefix in forbidden_prefixes:
+        if abs_path.startswith(prefix):
+            raise ValueError(f"Access denied: cannot access {prefix} directories")
+    
+    if must_exist and not os.path.exists(abs_path):
+        raise FileNotFoundError(f"File not found: {abs_path}")
+    
+    return abs_path
+
 # Lazy imports
 def get_whisper(): import whisper; return whisper
 def get_gtts(): from gtts import gTTS; return gTTS
@@ -25,20 +50,41 @@ def run_ffmpeg(args):
         return True, process.stderr.decode()
     except subprocess.CalledProcessError as e:
         return False, e.stderr.decode()
+    except FileNotFoundError as e:
+        return False, f"File not found: {str(e)}"
+    except Exception as e:
+        return False, f"FFmpeg error: {str(e)}"
 
 def transcribe(file_path, model_name="base"):
     try:
+        # SECURITY: Validate file path
+        safe_path = validate_file_path(file_path, must_exist=True)
+        
         whisper = get_whisper()
         model = whisper.load_model(model_name)
-        result = model.transcribe(file_path)
+        result = model.transcribe(safe_path)
         return {"text": result["text"], "segments": result.get("segments", [])}
+    except FileNotFoundError as e:
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
 def tts(text, output_path=None):
     try:
+        # SECURITY: Validate text input
+        if not text or not isinstance(text, str):
+            return {"error": "Text is required and must be a string"}
+        
+        if len(text) > 10000:
+            return {"error": "Text too long (max 10000 characters)"}
+        
         if not output_path:
             output_path = f"tts_{int(time.time())}.mp3"
+        
+        # SECURITY: Validate output path
+        safe_output = validate_file_path(output_path, must_exist=False)
+        if safe_output:
+            output_path = safe_output
         
         gTTS = get_gtts()
         tts_obj = gTTS(text=text, lang='en')
@@ -49,8 +95,11 @@ def tts(text, output_path=None):
 
 def extract_features(file_path):
     try:
+        # SECURITY: Validate file path
+        safe_path = validate_file_path(file_path, must_exist=True)
+        
         librosa = get_librosa()
-        y, sr = librosa.load(file_path, sr=None)
+        y, sr = librosa.load(safe_path, sr=None)
         duration = librosa.get_duration(y=y, sr=sr)
         mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
         rms = librosa.feature.rms(y=y)
@@ -59,20 +108,25 @@ def extract_features(file_path):
             "duration": duration,
             "sample_rate": sr,
             "mfcc_mean": mfcc.mean(axis=1).tolist(),
-            "rms_mean": rms.mean().tolist()
+            "rms_mean": float(rms.mean())  # Convert numpy to Python float
         }
+    except FileNotFoundError as e:
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
 def vad_segments(file_path, aggressiveness=2):
     try:
+        # SECURITY: Validate file path
+        safe_path = validate_file_path(file_path, must_exist=True)
+        
         # Use ffmpeg silencedetect filter
         # noise=-30dB, duration=0.5s (adjust based on aggressiveness)
         # aggressiveness 1-3 map to silence thresholds roughly
         db_threshold = -30 - (aggressiveness * 5) # e.g. -40dB for agg 2
         
         cmd = [
-            "-i", file_path,
+            "-i", safe_path,
             "-af", f"silencedetect=noise={db_threshold}dB:d=0.3",
             "-f", "null",
             "-"
@@ -138,19 +192,30 @@ def vad_segments(file_path, aggressiveness=2):
             
         return {"segments": speech_segments}
         
+    except FileNotFoundError as e:
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
 def transform(file_path, operations):
     try:
+        # SECURITY: Validate file path
+        safe_path = validate_file_path(file_path, must_exist=True)
+        
         # Build ffmpeg command filter chain
         filters = []
-        output_path = file_path + ".processed.wav"
+        # SECURITY: Validate output path
+        output_path = validate_file_path(file_path + ".processed.wav", must_exist=False)
+        if not output_path:
+            output_path = file_path + ".processed.wav"
         
         # Base command
-        cmd = ["-i", file_path]
+        cmd = ["-i", safe_path]
         
         for op in operations:
+            if not isinstance(op, dict) or "op" not in op:
+                continue
+                
             if op["op"] == "trim":
                 # Use -ss and -t for trimming
                 start = str(op.get("start", 0))
@@ -174,6 +239,8 @@ def transform(file_path, operations):
             return {"error": f"FFmpeg failed: {err}"}
             
         return {"file_path": output_path}
+    except FileNotFoundError as e:
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
@@ -223,8 +290,9 @@ if __name__ == "__main__":
         if args.ops:
             try:
                 ops = json.loads(args.ops)
-            except:
-                pass
+            except json.JSONDecodeError:
+                print(json.dumps({"error": "Invalid JSON for --ops"}))
+                sys.exit(1)
         result = transform(args.file_path, ops)
 
     print(json.dumps(result, indent=2))

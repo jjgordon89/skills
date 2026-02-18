@@ -3,9 +3,15 @@
   "slug": "iyeque-audio-processing",
   "displayName": "Audio Processing (Iyeque)",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1771148776810,
-    "commit": "https://github.com/openclaw/skills/commit/5ad6215fe9ea987a56fefd5222352641a297ac39"
+    "version": "1.1.1",
+    "publishedAt": 1771348102370,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771148776810,
+      "commit": "https://github.com/openclaw/skills/commit/5ad6215fe9ea987a56fefd5222352641a297ac39"
+    }
+  ]
 }
