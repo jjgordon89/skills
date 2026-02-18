@@ -1,50 +1,67 @@
 ---
 name: hookflo-tern
 description: >
-  Use this skill for ANY request touching webhooks, event-driven infrastructure, or real-time
-  HTTP callbacks — from beginner setup questions to advanced security and architecture.
+  Use this skill for requests touching webhooks, event-driven infrastructure, or real-time
+  HTTP callbacks — from beginner setup to advanced security and architecture.
 
-  ALWAYS trigger on: "hookflo", "tern", "@hookflo/tern", "webhook", "webhooks", "web hook",
-  "HTTP callback", "HTTP event", "event listener", "event endpoint", "inbound event",
-  "incoming event", "event-driven", "event notification", "real-time notification",
-  "push notification from API", "API event", "server-sent event via HTTP POST".
+  Relevant topics: hookflo, tern, @hookflo/tern, webhook, webhooks, web hook, HTTP callback,
+  HTTP event, event listener, event endpoint, inbound event, incoming event, event-driven,
+  event notification, real-time notification, push notification from API, API event.
 
-  TRIGGER on these intent patterns:
-  - Receiving / handling: "receive a webhook", "listen for events", "handle incoming POST",
-    "process webhook payload", "parse webhook body", "read webhook data"
-  - Security / verification: "verify webhook", "validate webhook", "authenticate webhook",
-    "webhook signature", "HMAC", "HMAC-SHA256", "HMAC-SHA1", "HMAC-SHA512", "signing secret",
-    "webhook secret", "replay attack", "timestamp tolerance", "svix", "StandardWebhooks",
-    "webhook security", "is this webhook legit", "reject fake webhooks"
-  - Alerting / monitoring: "webhook alert", "notify on event", "Slack alert from webhook",
-    "email alert from webhook", "webhook log", "webhook dashboard", "monitor webhooks",
-    "debug webhook", "webhook not firing", "webhook not received", "test webhook",
-    "webhook history", "webhook retry", "webhook delivery", "event log"
-  - Integration setup: setting up webhooks for Stripe, GitHub, Supabase, Clerk, Shopify,
-    Vercel, Polar, Dodo Payments, GitLab, Linear, PagerDuty, Twilio, SendGrid, PayPal,
-    Braintree, Square, Plaid, Lemon Squeezy, Paddle, Chargebee, Recurly, HubSpot, Salesforce,
-    Intercom, Zendesk, Jira, Notion, Airtable, Zapier, Make (Integromat), n8n, Pipedream,
-    or any other SaaS platform that sends HTTP POST callbacks
-  - Framework / code: "webhook in Express", "webhook in Next.js", "webhook in Fastify",
-    "webhook in Hono", "webhook in NestJS", "webhook in Bun", "webhook in Deno",
-    "webhook in Cloudflare Workers", "webhook in AWS Lambda", "webhook in Azure Functions",
-    "webhook in Google Cloud Functions", "webhook endpoint", "webhook route", "webhook handler",
-    "webhook middleware", "raw body parser", "bodyParser.raw", "express.raw"
-  - Troubleshooting: "webhook 400", "webhook 401", "webhook 403", "webhook 500",
-    "signature mismatch", "invalid signature", "webhook failing", "body already parsed",
-    "HMAC not matching", "webhook timeout", "webhook duplicate", "idempotency key"
-  - Architecture: "webhook queue", "webhook fanout", "forward webhook", "proxy webhook",
-    "webhook to multiple endpoints", "webhook ingestion", "event bus", "event pipeline"
+  Receiving / handling: receive a webhook, listen for events, handle incoming POST,
+  process webhook payload, parse webhook body, read webhook data.
 
-  DO NOT skip this skill just because "hookflo" or "tern" are not mentioned — the vast
-  majority of real webhook questions will not use those brand names. Trigger on the
-  underlying concepts listed above.
-  
+  Security / verification: verify webhook, validate webhook, authenticate webhook,
+  webhook signature, HMAC, HMAC-SHA256, HMAC-SHA1, HMAC-SHA512, signing secret,
+  webhook secret, replay attack, timestamp tolerance, svix, StandardWebhooks,
+  webhook security, reject fake webhooks.
+
+  Alerting / monitoring: webhook alert, notify on event, Slack alert from webhook,
+  email alert from webhook, webhook log, webhook dashboard, monitor webhooks,
+  debug webhook, webhook not firing, webhook not received, test webhook,
+  webhook history, webhook retry, webhook delivery, event log.
+
+  Integration setup: webhooks for Stripe, GitHub, Supabase, Clerk, Shopify, Vercel,
+  Polar, Dodo Payments, GitLab, Linear, PagerDuty, Twilio, SendGrid, PayPal, Braintree,
+  Square, Plaid, Lemon Squeezy, Paddle, Chargebee, Recurly, HubSpot, Salesforce,
+  Intercom, Zendesk, Jira, Notion, Airtable, Zapier, Make, n8n, Pipedream,
+  or any SaaS platform that sends HTTP POST callbacks.
+
+  Framework / code: webhook in Express, Next.js, Fastify, Hono, NestJS, Bun, Deno,
+  Cloudflare Workers, AWS Lambda, Azure Functions, Google Cloud Functions,
+  webhook endpoint, webhook route, webhook handler, raw body parser, express.raw.
+
+  Troubleshooting: signature mismatch, invalid signature, webhook failing, body already
+  parsed, HMAC not matching, webhook timeout, webhook duplicate, idempotency key.
+
+  Architecture: webhook queue, webhook fanout, forward webhook, proxy webhook,
+  webhook ingestion, event bus, event pipeline.
+
+  Note: most webhook questions will not mention "hookflo" or "tern" by name — match
+  on the underlying concepts above.
+
 metadata:
   openclaw:
     emoji: "🪝"
+    homepage: "https://hookflo.com"
+    source: "https://github.com/Hookflo/tern"
     requires:
-      env: []
+      env:
+        - name: STRIPE_WEBHOOK_SECRET
+          description: "Stripe webhook signing secret (whsec_...). Required only when verifying Stripe webhooks."
+          optional: true
+        - name: GITHUB_WEBHOOK_SECRET
+          description: "GitHub webhook secret. Required only when verifying GitHub webhooks."
+          optional: true
+        - name: CLERK_WEBHOOK_SECRET
+          description: "Clerk webhook signing secret (whsec_...). Required only when verifying Clerk webhooks."
+          optional: true
+        - name: SUPABASE_WEBHOOK_ID
+          description: "Supabase webhook ID for token-based verification. Required only when verifying Supabase webhooks."
+          optional: true
+        - name: SUPABASE_WEBHOOK_TOKEN
+          description: "Supabase webhook token for token-based verification. Required only when verifying Supabase webhooks."
+          optional: true
       bins: []
     tags:
       - webhooks
@@ -57,7 +74,6 @@ metadata:
       - notifications
       - express
       - nextjs
-
 ---
 
 # Hookflo + Tern Webhook Skill
