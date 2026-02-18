@@ -1,18 +1,14 @@
 ---
 name: javascript-sdk
-description: |
-  JavaScript/TypeScript SDK for inference.sh - run AI apps, build agents, integrate 150+ models.
-  Package: @inferencesh/sdk (npm install). Full TypeScript support, streaming, file uploads.
-  Build agents with template or ad-hoc patterns, tool builder API, skills, human approval.
-  Use for: JavaScript integration, TypeScript, Node.js, React, Next.js, frontend apps.
-  Triggers: javascript sdk, typescript sdk, npm install, node.js api, js client, react ai,
-  next.js ai, frontend sdk, @inferencesh/sdk, typescript agent, browser sdk, js integration
+description: "JavaScript/TypeScript SDK for inference.sh - run AI apps, build agents, integrate 150+ models. Package: @inferencesh/sdk (npm install). Full TypeScript support, streaming, file uploads. Build agents with template or ad-hoc patterns, tool builder API, skills, human approval. Use for: JavaScript integration, TypeScript, Node.js, React, Next.js, frontend apps. Triggers: javascript sdk, typescript sdk, npm install, node.js api, js client, react ai, next.js ai, frontend sdk, @inferencesh/sdk, typescript agent, browser sdk, js integration"
 allowed-tools: Bash(npm *), Bash(npx *), Bash(node *), Bash(pnpm *), Bash(yarn *)
 ---
 
 # JavaScript SDK
 
 Build AI applications with the [inference.sh](https://inference.sh) JavaScript/TypeScript SDK.
+
+![JavaScript SDK](https://cloud.inference.sh/app/files/u/4mg21r6ta37mpaz6ktzwtt8krr/01kgvftjwhby36trvaj66bwzcf.jpeg)
 
 ## Quick Start
 
@@ -516,16 +512,16 @@ const result = await client.run({...});
 
 ```bash
 # Python SDK
-npx skills add inference-sh/agent-skills@python-sdk
+npx skills add inference-sh/skills@python-sdk
 
 # Full platform skill (all 150+ apps via CLI)
-npx skills add inference-sh/agent-skills@inference-sh
+npx skills add inference-sh/skills@inference-sh
 
 # LLM models
-npx skills add inference-sh/agent-skills@llm-models
+npx skills add inference-sh/skills@llm-models
 
 # Image generation
-npx skills add inference-sh/agent-skills@ai-image-generation
+npx skills add inference-sh/skills@ai-image-generation
 ```
 
 ## Documentation
