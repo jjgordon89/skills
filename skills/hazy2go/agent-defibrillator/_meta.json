@@ -1,0 +1,11 @@
+{
+  "owner": "hazy2go",
+  "slug": "agent-defibrillator",
+  "displayName": "Agent Defibrillator",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1771241724894,
+    "commit": null
+  },
+  "history": []
+}
