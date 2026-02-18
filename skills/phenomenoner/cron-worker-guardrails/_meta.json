@@ -1,0 +1,11 @@
+{
+  "owner": "phenomenoner",
+  "slug": "cron-worker-guardrails",
+  "displayName": "Cron Worker Guardrails",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771446247199,
+    "commit": null
+  },
+  "history": []
+}
