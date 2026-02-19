@@ -28,9 +28,10 @@ require_cmd() {
 }
 
 # URL-encode a string (handles special chars like #, &, =, spaces, etc.)
+# Uses jq (required dep) as primary encoder; falls back to python3 (optional) then sed.
 urlencode() {
-  python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.stdin.read().rstrip('\n'), safe=''))" <<< "$1" 2>/dev/null \
-    || printf '%s' "$1" | jq -sRr @uri 2>/dev/null \
+  printf '%s' "$1" | jq -sRr @uri 2>/dev/null \
+    || python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.stdin.read().rstrip('\n'), safe=''))" <<< "$1" 2>/dev/null \
     || printf '%s' "$1" | sed 's/%/%25/g; s/ /%20/g; s/#/%23/g; s/&/%26/g; s/=/%3D/g; s/+/%2B/g; s/@/%40/g'
 }
 

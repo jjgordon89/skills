@@ -1,6 +1,6 @@
 ---
 name: bring-list
-description: "The best Bring! skill on ClawHub. Zero dependencies, VirusTotal clean, OpenClaw HIGH CONFIDENCE. Full CRUD, batch ops, default list, and guided agent setup — your AI sets it all up for you."
+description: "The best Bring! skill on ClawHub. VirusTotal clean, OpenClaw HIGH CONFIDENCE. Full CRUD, batch ops, default list — your AI sets it all up for you. Privacy-first: agent asks whether you want to share credentials in chat or enter them privately in your terminal."
 ---
 
 # Bring! Shopping Lists
@@ -14,13 +14,37 @@ When a user asks you to set up or use Bring for the first time, follow these ste
 ### Step 1: Check if already configured
 Run `scripts/bring.sh lists` first. If it works, setup is already done — skip to usage.
 
-### Step 2: Ask for credentials
-Tell the user:
-- "I need your Bring! login (email + password). If you don't have an account yet, you can create one for free at getbring.com or in the Bring! app."
-- **If they signed up via Google/Apple:** They need to set a direct password first in the Bring! app (Settings → Account → Change Password).
-- **Never store credentials in chat.** Write them directly to the config file.
-- If the user is uncomfortable sharing their password in chat, suggest they create the file manually:
-  `~/.config/bring/credentials.json` with `{"email": "...", "password": "..."}`
+### Step 2: Set up credentials
+Bring! requires an email + password. If the user doesn't have an account yet, they can create one for free at getbring.com or in the Bring! app.
+
+**If they signed up via Google/Apple:** They need to set a direct password first in the Bring! app (Settings → Account → Change Password) before the API works.
+
+Ask the user how they'd like to provide their credentials:
+
+> "I need your Bring! email and password. You can either share them here in chat (I'll write them to a config file and never mention them again), or if you prefer to keep them out of the chat entirely, I can give you a terminal command to enter them privately. Which do you prefer?"
+
+**Option A — via chat (convenient):**
+User shares email + password in chat. Write them directly to the config file and do not echo them back:
+```bash
+mkdir -p ~/.config/bring
+cat > ~/.config/bring/credentials.json << 'EOF'
+{"email": "USER_EMAIL", "password": "USER_PASSWORD"}
+EOF
+chmod 600 ~/.config/bring/credentials.json
+```
+After writing, confirm: "Done — credentials saved securely. I won't repeat them."
+
+**Option B — via terminal (more private):**
+Give the user this command to run in their own terminal. Credentials never appear in chat:
+```bash
+mkdir -p ~/.config/bring
+read -rsp "Bring! Email: " BEMAIL && echo
+read -rsp "Bring! Password: " BPASS && echo
+printf '{"email":"%s","password":"%s"}\n' "$BEMAIL" "$BPASS" > ~/.config/bring/credentials.json
+chmod 600 ~/.config/bring/credentials.json
+unset BEMAIL BPASS
+```
+Tell the user: "Run that in your terminal, then come back and I'll continue the setup."
 
 **⚠️ Do NOT use `scripts/bring.sh setup`** — it requires an interactive terminal (TTY) which agents don't have. Always create the credentials file manually as shown in Step 3.
 

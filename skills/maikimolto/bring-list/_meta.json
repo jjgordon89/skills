@@ -1,13 +1,18 @@
 {
   "owner": "maikimolto",
   "slug": "bring-list",
-  "displayName": "Bring List",
+  "displayName": "Bring! List",
   "latest": {
-    "version": "1.2.1",
-    "publishedAt": 1771313703703,
-    "commit": "https://github.com/openclaw/skills/commit/f0ddd1edd8eb8242ae03ba7815d3f4d33ca6853d"
+    "version": "1.2.2",
+    "publishedAt": 1771516090053,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.1",
+      "publishedAt": 1771313703703,
+      "commit": "https://github.com/openclaw/skills/commit/f0ddd1edd8eb8242ae03ba7815d3f4d33ca6853d"
+    },
     {
       "version": "1.2.0",
       "publishedAt": 1771247768729,
