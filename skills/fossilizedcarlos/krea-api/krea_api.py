@@ -61,9 +61,9 @@ class KreaAPI:
             raise ValueError(
                 "API credentials required. Set via:\n"
                 "  1. Arguments: --key-id ID --secret SECRET\n"
-                "  2. File: ~/.clawdbot/credentials/krea.json\n"
+                "  2. File: ~/.openclaw/credentials/krea.json\n"
                 "     Format: {\"apiKey\": \"KEY_ID:SECRET\"}\n"
-                "     Permissions: chmod 600 ~/.clawdbot/credentials/krea.json"
+                "     Permissions: chmod 600 ~/.openclaw/credentials/krea.json"
             )
         
         self.token = f"{key_id}:{secret}"
@@ -75,10 +75,8 @@ class KreaAPI:
         }
     
     def _get_credentials_from_file(self) -> tuple:
-        """Read credentials from ~/.clawdbot/credentials/krea.json or ~/.openclaw/credentials/krea.json"""
-        # Check multiple possible locations
+        """Read credentials from ~/.openclaw/credentials/krea.json"""
         possible_paths = [
-            "~/.clawdbot/credentials/krea.json",
             "~/.openclaw/credentials/krea.json",
         ]
         

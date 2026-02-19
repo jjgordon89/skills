@@ -5,7 +5,7 @@ See [SKILL.md](./SKILL.md) for full documentation.
 ## Quick Start
 
 ```bash
-# Generate an image (will use clawdbot config if set)
+# Generate an image (uses credentials from ~/.openclaw/credentials/krea.json)
 python3 krea_api.py --prompt "A cute crab at a desk" --model flux
 
 # List available models
@@ -14,19 +14,26 @@ python3 krea_api.py --list-models
 
 ## Configure Credentials
 
+Create the credentials file:
 ```bash
-clawdbot config set skill.krea_api.key_id YOUR_KEY_ID
-clawdbot config set skill.krea_api.secret YOUR_SECRET
+mkdir -p ~/.openclaw/credentials
+echo '{"apiKey": "YOUR_KEY_ID:YOUR_SECRET"}' > ~/.openclaw/credentials/krea.json
+chmod 600 ~/.openclaw/credentials/krea.json
 ```
 
-## Publish to ClawdHub
+Or pass directly via CLI:
+```bash
+python3 krea_api.py --prompt "..." --key-id YOUR_KEY_ID --secret YOUR_SECRET
+```
+
+## Publish to ClawHub
 
 ```bash
 # Login once
 clawdhub login
 
 # Publish this skill folder
-clawdhub publish /Users/fossilizedcarlos/clawd/skills/krea-api --slug krea-api --name "Krea.ai API" --version 0.1.3 --changelog "Fix 403 polling + CLI improvements"
+clawdhub publish . --slug krea-api --name "Krea.ai API"
 ```
 
 ## Requirements
