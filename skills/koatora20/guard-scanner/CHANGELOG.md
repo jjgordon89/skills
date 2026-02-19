@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.1.0] - 2026-02-18
+
+### 🆕 PII Exposure Detection (OWASP LLM02 / LLM06)
+
+New `pii-exposure` threat category with 13 patterns covering four attack vectors:
+
+#### New
+- **Hardcoded PII detection** (context-aware): `PII_HARDCODED_CC`, `PII_HARDCODED_SSN`, `PII_HARDCODED_PHONE`, `PII_HARDCODED_EMAIL`
+- **PII output/logging**: `PII_LOG_SENSITIVE`, `PII_SEND_NETWORK`, `PII_STORE_PLAINTEXT`
+- **Shadow AI detection**: `SHADOW_AI_OPENAI`, `SHADOW_AI_ANTHROPIC`, `SHADOW_AI_GENERIC` — detects unauthorized LLM API calls
+- **PII collection instructions** (doc scanning): `PII_ASK_ADDRESS`, `PII_ASK_DOB`, `PII_ASK_GOV_ID` (supports マイナンバー)
+- **3 risk amplifiers**: pii+exfiltration (×3), pii+shadow-ai (×2.5), pii+credential (×2)
+- **8 new tests** for PII exposure detection and risk amplification
+- PII recommendation in JSON output
+
+#### Fixed
+- **VERSION constant** was stuck at `1.1.0` since initial release — now correctly reads `2.1.0`
+
+#### Stats
+- Patterns: 115 → 129
+- Categories: 20 → 21
+- Scanner tests: 56 → 64
+- Total tests (scanner + plugin): 99
+
 ## [2.0.0] - 2026-02-18
 
 ### 🆕 Plugin Hook Runtime Guard — Actual Blocking!

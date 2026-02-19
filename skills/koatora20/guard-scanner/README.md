@@ -2,16 +2,16 @@
   <h1 align="center">🛡️ guard-scanner</h1>
   <p align="center">
     <strong>Static security scanner for AI agent skills</strong><br>
-    Detect prompt injection, credential theft, exfiltration, identity hijacking, and 16 more threat categories.<br>
-    <sub>🆕 Plugin Hook v2.0 — <strong>actual blocking</strong> via <code>block</code>/<code>blockReason</code> API</sub>
+    Detect prompt injection, credential theft, exfiltration, PII exposure, Shadow AI, and 17 more threat categories.<br>
+    <sub>🆕 v2.1 — PII Exposure Detection + Shadow AI + Plugin Hook blocking via <code>block</code>/<code>blockReason</code> API</sub>
   </p>
   <p align="center">
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
     <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen" alt="Node.js 18+">
     <img src="https://img.shields.io/badge/dependencies-0-success" alt="Zero Dependencies">
-    <img src="https://img.shields.io/badge/tests-91%2F91-brightgreen" alt="Tests Passing">
-    <img src="https://img.shields.io/badge/patterns-186-orange" alt="186 Patterns">
-    <img src="https://img.shields.io/badge/categories-20-blueviolet" alt="20 Categories">
+    <img src="https://img.shields.io/badge/tests-99%2F99-brightgreen" alt="Tests Passing">
+    <img src="https://img.shields.io/badge/patterns-129-orange" alt="129 Patterns">
+    <img src="https://img.shields.io/badge/categories-21-blueviolet" alt="21 Categories">
   </p>
 </p>
 
@@ -40,8 +40,8 @@ The AI agent skill ecosystem has the same supply-chain security problem that npm
 
 | Feature | Description |
 |---|---|
-| **20 Threat Categories** | Snyk ToxicSkills + OWASP MCP Top 10 + Identity Hijacking + Sandbox/Complexity/Config |
-| **186 Detection Patterns** | Regex-based static analysis covering code, docs, and data files |
+| **21 Threat Categories** | Snyk ToxicSkills + OWASP MCP Top 10 + Identity Hijacking + Sandbox/Complexity/Config + PII |
+| **129 Detection Patterns** | Regex-based static analysis covering code, docs, and data files |
 | **IoC Database** | Known malicious IPs, domains, URLs, usernames, and typosquat names |
 | **Data Flow Analysis** | Lightweight JS analysis: secret reads → network calls → exec chains |
 | **Cross-File Analysis** | Phantom references, base64 fragment assembly, multi-file exfil detection |
@@ -84,7 +84,7 @@ npx guard-scanner ~/.openclaw/workspace/skills --self-exclude --verbose
 cp hooks/guard-scanner/plugin.ts ~/.openclaw/plugins/guard-scanner-runtime.ts
 ```
 
-> **🆕 v2.0 Plugin Hook** — Uses OpenClaw's native `block`/`blockReason` API to actually prevent dangerous tool calls. Supports 3 modes: `monitor` (log only), `enforce` (block CRITICAL), `strict` (block HIGH + CRITICAL).
+> **🆕 v2.1** — PII Exposure Detection (OWASP LLM02/06) + Shadow AI detection + Plugin Hook `block`/`blockReason` API. 3 modes: `monitor`, `enforce`, `strict`.
 
 ### Installation (Optional)
 
@@ -109,7 +109,7 @@ guard-scanner ~/.openclaw/workspace/skills/ --self-exclude --verbose
 
 ## Threat Categories
 
-guard-scanner covers **20 threat categories** derived from four sources:
+guard-scanner covers **21 threat categories** derived from four sources:
 
 | # | Category | Based On | Severity | What It Detects |
 |---|----------|----------|----------|----------------|
@@ -133,8 +133,9 @@ guard-scanner covers **20 threat categories** derived from four sources:
 | 18 | **Sandbox Validation** | v1.1 | HIGH | Dangerous binary requirements in SKILL.md, overly broad file scope, sensitive env vars, exec/network declarations |
 | 19 | **Code Complexity** | v1.1 | MEDIUM | Excessive file length (>1000 lines), deep nesting (>5 levels), high eval/exec density |
 | 20 | **Config Impact** | v1.1 | CRITICAL | `openclaw.json` writes, exec approval bypass, exec host gateway, internal hooks modification, network wildcard |
+| 21 | **PII Exposure** | v2.1 | CRITICAL | Hardcoded CC/SSN/phone/email (context-aware), PII logging/network send/plaintext store, Shadow AI (OpenAI/Anthropic/generic LLM), PII collection instructions (address/DOB/government ID) |
 
-> **Categories 17–20** are unique to guard-scanner. Category 17 (Identity Hijacking) was developed from a real attack. Categories 18–20 were added in v1.1.0 based on community feedback.
+> **Categories 17–21** are unique to guard-scanner. Category 17 (Identity Hijacking) was developed from a real attack. Categories 18–20 added in v1.1.0. Category 21 (PII Exposure) added in v2.1.0 covering OWASP LLM02/LLM06.
 
 ---
 
@@ -143,7 +144,7 @@ guard-scanner covers **20 threat categories** derived from four sources:
 ### Terminal (Default)
 
 ```
-🛡️  guard-scanner v2.0.0
+🛡️  guard-scanner v2.1.0
 ══════════════════════════════════════════════════════
 📂 Scanning: ./skills/
 📦 Skills found: 22
@@ -228,6 +229,9 @@ Certain combinations multiply the base score:
 | Config impact | **×2** | OpenClaw configuration tampering |
 | Config impact + Sandbox violation | **min 70** | Combined config + capability abuse |
 | Complexity + Malicious code/Obfuscation | **×1.5** | Complex code hiding threats |
+| PII exposure + Exfiltration | **×3** | PII being sent to external servers |
+| PII exposure + Shadow AI | **×2.5** | PII leak through unauthorized LLM |
+| PII exposure + Credential handling | **×2** | Combined PII + credential risk |
 | Known IoC (IP/URL/typosquat) | **= 100** | Confirmed malicious |
 
 ### Verdict Thresholds
@@ -400,8 +404,8 @@ Options:
 ```
 guard-scanner/
 ├── src/
-│   ├── scanner.js      # GuardScanner class — core scan engine (20 checks)
-│   ├── patterns.js     # 186 threat detection patterns (Cat 1–20)
+│   ├── scanner.js      # GuardScanner class — core scan engine (21 checks)
+│   ├── patterns.js     # 129 threat detection patterns (Cat 1–21)
 │   ├── ioc-db.js       # Indicators of Compromise database
 │   └── cli.js          # CLI entry point and argument parser
 ├── hooks/
@@ -410,9 +414,9 @@ guard-scanner/
 │       ├── handler.ts  # Legacy Internal Hook — warn only (deprecated)
 │       └── HOOK.md     # Internal Hook manifest (legacy)
 ├── test/
-│   ├── scanner.test.js # 56 tests — static scanner
+│   ├── scanner.test.js # 64 tests — static scanner (incl. PII v2.1)
 │   ├── plugin.test.js  # 35 tests — Plugin Hook runtime guard
-│   └── fixtures/       # Malicious, clean, complex, config-changer samples
+│   └── fixtures/       # Malicious, clean, complex, config-changer, pii-leaky samples
 ├── package.json        # Zero dependencies, node --test
 ├── CHANGELOG.md
 ├── LICENSE             # MIT
@@ -536,9 +540,9 @@ console.log(scanner.toHTML());    // HTML string
 ## Test Results
 
 ```
-ℹ tests 91
-ℹ suites 14
-ℹ pass 91
+ℹ tests 99
+ℹ suites 16
+ℹ pass 99
 ℹ fail 0
 ℹ duration_ms 142ms
 ```
@@ -550,7 +554,7 @@ console.log(scanner.toHTML());    // HTML string
 | Risk Score Calculation | 5 | Empty, single, combo amplifiers, IoC override |
 | Verdict Determination | 5 | All verdicts + strict mode |
 | Output Formats | 4 | JSON + SARIF 2.1.0 + HTML structure |
-| Pattern Database | 4 | 100+ count, required fields, category coverage, regex safety |
+| Pattern Database | 4 | 125+ count, required fields, category coverage, regex safety |
 | IoC Database | 5 | Structure, ClawHavoc C2, webhook.site |
 | Shannon Entropy | 2 | Low entropy, high entropy |
 | Ignore Functionality | 1 | Pattern exclusion |
@@ -558,7 +562,8 @@ console.log(scanner.toHTML());    // HTML string
 | Manifest Validation | 4 | Dangerous bins, broad files, sensitive env, clean negatives |
 | Complexity Metrics | 2 | Deep nesting, clean negatives |
 | Config Impact | 4 | openclaw.json write, exec approval, gateway host, clean negatives |
-| **🆕 Plugin Hook Runtime Guard** | **35** | **Blocking in enforce/strict, passthrough in monitor, all 12 threat patterns, blockReason format** |
+| **🆕 PII Exposure Detection** | **8** | **Hardcoded CC/SSN, PII logging, network send, Shadow AI, doc collection, risk amp, clean negatives** |
+| **Plugin Hook Runtime Guard** | **35** | **Blocking in enforce/strict, passthrough in monitor, all 12 threat patterns, blockReason format** |
 
 ---
 
@@ -568,7 +573,7 @@ OpenClaw's official [`THREAT-MODEL-ATLAS.md`](https://github.com/openclaw/opencl
 
 | Gap (from ATLAS / Source Code) | OpenClaw Status | guard-scanner |
 |---|---|---|
-| _"Simple regex easily bypassed"_ — ClawHub moderation | ⚠️ Basic `FLAG_RULES` | ✅ 186+ patterns, 20 categories |
+| _"Simple regex easily bypassed"_ — ClawHub moderation | ⚠️ Basic `FLAG_RULES` | ✅ 129 patterns, 21 categories |
 | _"Does not analyze actual skill code content"_ | ❌ Not implemented | ✅ Full code + doc + data flow analysis |
 | No SOUL.md / IDENTITY.md integrity verification | ❌ Not implemented | ✅ Identity hijacking detection (Cat 17) |
 | `skill:before_install` hook | ❌ Not implemented | 🔜 Proposed ([Issue #18677](https://github.com/openclaw/openclaw/issues/18677)) |
@@ -597,17 +602,17 @@ guard-scanner's coverage of the [OWASP Top 10 for LLM Applications (2025)](https
 | # | Risk | Status | Detection Method |
 |---|------|--------|------------------|
 | LLM01 | Prompt Injection | ⚠️ Partial | Regex: Unicode exploits, role override, system tags, base64 instructions |
-| LLM02 | Insecure Output Handling | 🔜 v1.2 | Planned: unvalidated output execution patterns |
+| LLM02 | Sensitive Information Disclosure | ⚠️ Partial | PII Exposure Detection (v2.1): hardcoded PII, PII logging/network/storage, Shadow AI, PII collection instructions |
 | LLM03 | Training Data Poisoning | ⬜ N/A | Out of scope for static analysis |
-| LLM04 | Model Denial of Service | 🔜 v1.3 | Planned: excessive input / infinite loop patterns |
+| LLM04 | Model Denial of Service | 🔜 v2.2 | Planned: excessive input / infinite loop patterns |
 | LLM05 | Supply Chain Vulnerabilities | ⚠️ Partial | IoC database, typosquat detection, dependency chain scan |
-| LLM06 | Sensitive Information Disclosure | ⚠️ Partial | Secret detection, PII patterns, credential leaks |
+| LLM06 | Insecure Output Handling | ⚠️ Partial | PII output detection (console.log, network send, plaintext store) |
 | LLM07 | Insecure Plugin Design | 🔜 v1.3 | Planned: unvalidated plugin input patterns |
 | LLM08 | Excessive Agency | 🔜 v1.3 | Planned: over-permissioned scope detection |
 | LLM09 | Overreliance | 🔜 v1.3 | Planned: unverified output trust patterns |
 | LLM10 | Model Theft | 🔜 v1.3 | Planned: model file exfiltration patterns |
 
-> **Current coverage: 3/10 (partial).** Full OWASP Gen AI coverage is targeted for v2.1. See [ROADMAP.md](ROADMAP.md) for details.
+> **Current coverage: 5/10 (partial).** LLM02 and LLM06 added in v2.1.0. Full coverage targeted for v3.0. See [ROADMAP.md](ROADMAP.md) for details.
 >
 > **Known limitation:** Regex-based detection can be evaded by AI-generated code obfuscation. v3.0 will introduce AST analysis and ML-based detection to address this structural gap.
 
@@ -619,7 +624,7 @@ guard-scanner's coverage of the [OWASP Top 10 for LLM Applications (2025)](https
 2. Create a feature branch (`git checkout -b feature/new-pattern`)
 3. Add your pattern to `src/patterns.js` with the required fields
 4. Add a test case in `test/fixtures/` and `test/scanner.test.js`
-5. Run `npm test` — all 91+ tests must pass
+5. Run `npm test` — all 99+ tests must pass
 6. Submit a Pull Request
 
 ### Adding a New Detection Pattern
@@ -658,17 +663,34 @@ We built one.
 
 ## 🔒 Need More? — GuavaSuite
 
-guard-scanner catches threats **before** installation and **blocks** them at runtime. [**GuavaSuite**](https://github.com/koatora20) goes further with defense-in-depth for production:
+guard-scanner catches threats **before** installation and **blocks** CRITICAL threats at runtime. **GuavaSuite** unlocks **strict mode** — blocking HIGH + CRITICAL threats, plus exclusive defense-in-depth features.
 
-| | guard-scanner (OSS) | GuavaSuite (Private) |
+### How to Upgrade
+
+```bash
+# 1. Install GuavaSuite
+clawhub install guava-suite
+
+# 2. Hold 1M+ $GUAVA on Polygon
+#    Token: 0x25cBD481901990bF0ed2ff9c5F3C0d4f743AC7B8
+#    Buy on QuickSwap V2: https://quickswap.exchange
+
+# 3. Activate with your wallet → get JWT → strict mode enabled
+```
+
+### Feature Comparison
+
+| | guard-scanner (Free) | GuavaSuite ($GUAVA) |
 |---|---|---|
-| Static scan | ✅ 20 categories, 186+ patterns | ✅ 20+ categories (extended ruleset) |
-| Runtime blocking | ✅ Plugin Hook v2.0 (`block`/`blockReason`) | ✅ SuiteGate (enhanced, multi-layer) |
-| SOUL.md integrity | ✅ Tampering pattern detection (Cat 17) | ✅ SHA-256 hash watchdog + auto-rollback |
-| Audit trail | ✅ File-based audit log | ✅ Structured audit + dashboard |
-| On-chain verification | — | ⏳ SoulChain (Polygon, Phase 2) |
+| Static scan (129 patterns, 21 categories) | ✅ | ✅ |
+| Runtime Guard — `enforce` (block CRITICAL) | ✅ | ✅ |
+| **Runtime Guard — `strict` (block HIGH + CRITICAL)** | ❌ | ✅ |
+| **Soul Lock** (SOUL.md integrity + auto-rollback) | ❌ | ✅ |
+| **Memory Guard** (L1-L5 記憶保護) | ❌ | ✅ |
+| **On-chain Identity** (SoulRegistry V2 on Polygon) | ❌ | ✅ |
+| Audit Log (JSONL) | ✅ | ✅ |
 
-guard-scanner is and always will be **free, open-source, and zero-dependency**. If your agent handles production workloads and you want defense-in-depth, [reach out](https://github.com/koatora20).
+guard-scanner is and always will be **free, open-source, and zero-dependency**.
 
 ---
 
@@ -678,8 +700,8 @@ guard-scanner is and always will be **free, open-source, and zero-dependency**. 
 |---------|-------|------|
 | v1.1.1 ✅ | Stability | 56 tests, bug fixes |
 | v2.0.0 ✅ | **Plugin Hook Runtime Guard** | `block`/`blockReason` API, 3 modes (monitor/enforce/strict), 91 tests |
-| v2.1 | PII + OWASP Gen AI | Credential-in-context, unauthorized LLM API calls, complete LLM02/04/07/08/09/10 coverage |
-| v2.2 | Community | YAML pattern definitions, CONTRIBUTING guide, automated pattern updates |
+| v2.1.0 ✅ | **PII Exposure + Shadow AI** | 13 PII patterns, OWASP LLM02/06, Shadow AI detection, 3 risk amplifiers, 99 tests |
+| v2.2 | OWASP Full Coverage | LLM04/07/08/09/10, YAML pattern definitions, CONTRIBUTING guide |
 | v3.0 | AST + ML | JavaScript AST analysis, taint tracking, ML-based obfuscation detection, SBOM generation |
 
 See [ROADMAP.md](ROADMAP.md) for full details.

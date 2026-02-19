@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * guard-scanner v1.0.0 — Agent Skill Security Scanner 🛡️
+ * guard-scanner v2.1.0 — Agent Skill Security Scanner 🛡️
  *
  * @security-manifest
  *   env-read: []
@@ -24,13 +24,14 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 const { PATTERNS } = require('./patterns.js');
 const { KNOWN_MALICIOUS } = require('./ioc-db.js');
 const { generateHTML } = require('./html-template.js');
 
 // ===== CONFIGURATION =====
-const VERSION = '1.1.0';
+const VERSION = '2.1.0';
 
 const THRESHOLDS = {
     normal: { suspicious: 30, malicious: 80 },
@@ -867,6 +868,11 @@ class GuardScanner {
         if (cats.has('config-impact') && cats.has('sandbox-validation')) score = Math.max(score, 70);
         if (cats.has('complexity') && (cats.has('malicious-code') || cats.has('obfuscation'))) score = Math.round(score * 1.5);
 
+        // v2.1 PII exposure amplifiers
+        if (cats.has('pii-exposure') && cats.has('exfiltration')) score = Math.round(score * 3);
+        if (cats.has('pii-exposure') && (ids.has('SHADOW_AI_OPENAI') || ids.has('SHADOW_AI_ANTHROPIC') || ids.has('SHADOW_AI_GENERIC'))) score = Math.round(score * 2.5);
+        if (cats.has('pii-exposure') && cats.has('credential-handling')) score = Math.round(score * 2);
+
         return Math.min(100, score);
     }
 
@@ -942,6 +948,7 @@ class GuardScanner {
             if (cats.has('sandbox-validation')) skillRecs.push('🔒 SANDBOX: Skill requests dangerous capabilities.');
             if (cats.has('complexity')) skillRecs.push('🧩 COMPLEXITY: Excessive code complexity may hide malicious behavior.');
             if (cats.has('config-impact')) skillRecs.push('⚙️ CONFIG IMPACT: Modifies OpenClaw configuration. DO NOT INSTALL.');
+            if (cats.has('pii-exposure')) skillRecs.push('🆔 PII EXPOSURE: Handles personally identifiable information. Review data handling.');
 
             if (skillRecs.length > 0) recommendations.push({ skill: skillResult.skill, actions: skillRecs });
         }
@@ -974,11 +981,21 @@ class GuardScanner {
                         properties: { tags: ['security', f.cat], 'security-severity': f.severity === 'CRITICAL' ? '9.0' : f.severity === 'HIGH' ? '7.0' : f.severity === 'MEDIUM' ? '4.0' : '1.0' }
                     });
                 }
+                const normalizedFile = String(f.file || '')
+                    .replaceAll('\\', '/')
+                    .replace(/^\/+/, '');
+                const artifactUri = `${skillResult.skill}/${normalizedFile}`;
+                const fingerprintSeed = `${f.id}|${artifactUri}|${f.line || 0}|${(f.sample || '').slice(0, 200)}`;
+                const lineHash = crypto.createHash('sha256').update(fingerprintSeed).digest('hex').slice(0, 24);
+
                 results.push({
                     ruleId: f.id, ruleIndex: ruleIndex[f.id],
                     level: f.severity === 'CRITICAL' ? 'error' : f.severity === 'HIGH' ? 'error' : f.severity === 'MEDIUM' ? 'warning' : 'note',
                     message: { text: `[${skillResult.skill}] ${f.desc}${f.sample ? ` — "${f.sample}"` : ''}` },
-                    locations: [{ physicalLocation: { artifactLocation: { uri: `${skillResult.skill}/${f.file}`, uriBaseId: '%SRCROOT%' }, region: f.line ? { startLine: f.line } : undefined } }]
+                    partialFingerprints: {
+                        primaryLocationLineHash: lineHash
+                    },
+                    locations: [{ physicalLocation: { artifactLocation: { uri: artifactUri, uriBaseId: '%SRCROOT%' }, region: f.line ? { startLine: f.line } : undefined } }]
                 });
             }
         }

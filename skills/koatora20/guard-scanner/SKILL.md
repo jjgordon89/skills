@@ -54,29 +54,23 @@ Scan a specific skill:
 node skills/guard-scanner/src/cli.js /path/to/new-skill/ --strict --verbose
 ```
 
-### 2. Runtime Guard (Real-time Protection) — ⚠️ Experimental
+### 2. Runtime Guard (OpenClaw) — ⚠️ warn-only currently
 
-> **Note:** Requires the OpenClaw Hook API ([Issue #18677](https://github.com/openclaw/openclaw/issues/18677)), which has not been officially adopted yet. The handler is included for early testing and will be updated once the API is finalized.
-
-Install the hook to block dangerous tool calls before execution:
+> **Note:** OpenClaw `InternalHookEvent` does not yet expose cancel/veto. Runtime hook detections are warning + audit log until [Issue #18677](https://github.com/openclaw/openclaw/issues/18677) is adopted.
 
 ```bash
 openclaw hooks install skills/guard-scanner/hooks/guard-scanner
 openclaw hooks enable guard-scanner
+openclaw hooks list
 ```
 
-Restart the gateway, then verify:
-```bash
-openclaw hooks list   # Should show 🛡️ guard-scanner as ✓ ready
-```
-
-### 3. Full Setup (Recommended)
+### 3. Recommended order
 
 ```bash
-# Static scan first
+# Pre-install / pre-update gate first
 node skills/guard-scanner/src/cli.js ~/.openclaw/workspace/skills/ --verbose --self-exclude --html
 
-# Then enable runtime protection
+# Then keep runtime monitoring enabled
 openclaw hooks install skills/guard-scanner/hooks/guard-scanner
 openclaw hooks enable guard-scanner
 ```

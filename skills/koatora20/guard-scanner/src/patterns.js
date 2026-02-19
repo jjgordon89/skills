@@ -185,6 +185,28 @@ const PATTERNS = [
     { id: 'CFG_EXEC_HOST_GW', cat: 'config-impact', regex: /tools\.exec\.host\s*[:=]\s*['"]gateway['"]/gi, severity: 'CRITICAL', desc: 'Set exec host to gateway (bypass sandbox)', all: true },
     { id: 'CFG_SANDBOX_OFF', cat: 'config-impact', regex: /(?:sandbox|sandboxed|containerized)\s*[:=]\s*(?:false|off|none|disabled|0)/gi, severity: 'CRITICAL', desc: 'Disable sandbox via configuration', all: true },
     { id: 'CFG_TOOL_OVERRIDE', cat: 'config-impact', regex: /(?:tools|capabilities)\s*\.\s*(?:exec|write|browser|web_fetch)\s*[:=]\s*\{[^}]*(?:enabled|allowed|host)/gi, severity: 'HIGH', desc: 'Override tool security settings', codeOnly: true },
+
+    // ── Category 21: PII Exposure (OWASP LLM02 / LLM06) ──
+    // A. Hardcoded PII — actual PII values in code/config (context-aware to reduce FP)
+    { id: 'PII_HARDCODED_CC', cat: 'pii-exposure', regex: /(?:card|cc|credit|payment|pan)[_\s.-]*(?:num|number|no)?\s*[:=]\s*['"`]\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{3,4}['"`]/gi, severity: 'CRITICAL', desc: 'Hardcoded credit card number', codeOnly: true },
+    { id: 'PII_HARDCODED_SSN', cat: 'pii-exposure', regex: /(?:ssn|social[_\s-]*security|tax[_\s-]*id)\s*[:=]\s*['"`]\d{3}-?\d{2}-?\d{4}['"`]/gi, severity: 'CRITICAL', desc: 'Hardcoded SSN/tax ID', codeOnly: true },
+    { id: 'PII_HARDCODED_PHONE', cat: 'pii-exposure', regex: /(?:phone|tel|mobile|cell|fax)[_\s.-]*(?:num|number|no)?\s*[:=]\s*['"`][+]?[\d\s().-]{7,20}['"`]/gi, severity: 'HIGH', desc: 'Hardcoded phone number', codeOnly: true },
+    { id: 'PII_HARDCODED_EMAIL', cat: 'pii-exposure', regex: /(?:email|e-mail|user[_\s-]*mail|contact)\s*[:=]\s*['"`][a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}['"`]/gi, severity: 'HIGH', desc: 'Hardcoded email address', codeOnly: true },
+
+    // B. PII output/logging — code that outputs or transmits PII-like variables
+    { id: 'PII_LOG_SENSITIVE', cat: 'pii-exposure', regex: /(?:console\.log|console\.info|console\.warn|logger?\.\w+|print|puts)\s*\([^)]*\b(?:ssn|social_security|credit_card|card_number|cvv|cvc|passport|tax_id|date_of_birth|dob)\b/gi, severity: 'HIGH', desc: 'PII variable logged to console', codeOnly: true },
+    { id: 'PII_SEND_NETWORK', cat: 'pii-exposure', regex: /(?:fetch|axios|request|http|post|put|send)\s*\([^)]*\b(?:ssn|social_security|credit_card|card_number|cvv|passport|bank_account|routing_number)\b/gi, severity: 'CRITICAL', desc: 'PII variable sent over network', codeOnly: true },
+    { id: 'PII_STORE_PLAINTEXT', cat: 'pii-exposure', regex: /(?:writeFile|writeFileSync|appendFile|fs\.write|fwrite)\s*\([^)]*\b(?:ssn|social_security|credit_card|card_number|cvv|passport|tax_id|bank_account)\b/gi, severity: 'HIGH', desc: 'PII stored in plaintext file', codeOnly: true },
+
+    // C. Shadow AI — unauthorized LLM API calls (data leaks to external AI)
+    { id: 'SHADOW_AI_OPENAI', cat: 'pii-exposure', regex: /(?:api\.openai\.com|https:\/\/api\.openai\.com)\s*|openai\.(?:chat|completions|ChatCompletion)/gi, severity: 'HIGH', desc: 'Shadow AI: OpenAI API call', codeOnly: true },
+    { id: 'SHADOW_AI_ANTHROPIC', cat: 'pii-exposure', regex: /(?:api\.anthropic\.com|https:\/\/api\.anthropic\.com)\s*|anthropic\.(?:messages|completions)/gi, severity: 'HIGH', desc: 'Shadow AI: Anthropic API call', codeOnly: true },
+    { id: 'SHADOW_AI_GENERIC', cat: 'pii-exposure', regex: /\/v1\/(?:chat\/completions|completions|embeddings|models)\b.*(?:fetch|axios|request|http)|(?:fetch|axios|request|http)\s*\([^)]*\/v1\/(?:chat\/completions|completions|embeddings)/gi, severity: 'MEDIUM', desc: 'Shadow AI: generic LLM API endpoint', codeOnly: true },
+
+    // D. PII collection instructions in docs (extends LEAK_COLLECT_PII)
+    { id: 'PII_ASK_ADDRESS', cat: 'pii-exposure', regex: /(?:collect|ask\s+for|request|get|require)\s+(?:the\s+)?(?:user'?s?\s+)?(?:home\s+)?(?:address|street|zip\s*code|postal\s*code|residence)/gi, severity: 'HIGH', desc: 'PII collection: home address', docOnly: true },
+    { id: 'PII_ASK_DOB', cat: 'pii-exposure', regex: /(?:collect|ask\s+for|request|get|require)\s+(?:the\s+)?(?:user'?s?\s+)?(?:date\s+of\s+birth|birth\s*date|birthday|DOB|age)/gi, severity: 'HIGH', desc: 'PII collection: date of birth', docOnly: true },
+    { id: 'PII_ASK_GOV_ID', cat: 'pii-exposure', regex: /(?:collect|ask\s+for|request|get|require)\s+(?:the\s+)?(?:user'?s?\s+)?(?:passport|driver'?s?\s+licen[sc]e|national\s+id|my\s*number|マイナンバー|国民健康保険|social\s+insurance)/gi, severity: 'CRITICAL', desc: 'PII collection: government ID', docOnly: true },
 ];
 
 module.exports = { PATTERNS };

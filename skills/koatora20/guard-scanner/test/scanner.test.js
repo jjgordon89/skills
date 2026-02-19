@@ -214,10 +214,23 @@ describe('Output Formats', () => {
     it('toSARIF should return valid SARIF 2.1.0', () => {
         const sarif = scanner.toSARIF(FIXTURES);
         assert.equal(sarif.version, '2.1.0');
+        assert.ok(sarif.$schema && sarif.$schema.includes('sarif-2.1.0'), 'Should include SARIF schema URL');
         assert.ok(sarif.runs, 'Should have runs');
         assert.ok(sarif.runs[0].tool.driver.name === 'guard-scanner');
         assert.ok(sarif.runs[0].results.length > 0, 'Should have results');
         assert.ok(sarif.runs[0].tool.driver.rules.length > 0, 'Should have rules');
+
+        const first = sarif.runs[0].results[0];
+        assert.ok(first.ruleId, 'Result must include ruleId');
+        assert.ok(first.locations?.[0]?.physicalLocation?.artifactLocation?.uri, 'Result must include artifact URI');
+
+        // GitHub ingestion stability: partialFingerprints should be present
+        assert.ok(first.partialFingerprints, 'Result should include partialFingerprints');
+        assert.ok(first.partialFingerprints.primaryLocationLineHash, 'Result should include primaryLocationLineHash fingerprint');
+
+        const uri = first.locations[0].physicalLocation.artifactLocation.uri;
+        assert.ok(!path.isAbsolute(uri), 'SARIF artifact URI should be relative, not absolute');
+        assert.ok(!uri.includes('\\\\'), 'SARIF artifact URI should be normalized (no backslashes)');
     });
 
     it('toHTML should return valid HTML', () => {
@@ -230,8 +243,8 @@ describe('Output Formats', () => {
 
 // ===== 6. Pattern Database Integrity =====
 describe('Pattern Database', () => {
-    it('should have 100+ patterns', () => {
-        assert.ok(PATTERNS.length >= 100, `Expected 100+ patterns, got ${PATTERNS.length}`);
+    it('should have 125+ patterns', () => {
+        assert.ok(PATTERNS.length >= 125, `Expected 125+ patterns, got ${PATTERNS.length}`);
     });
 
     it('all patterns should have required fields', () => {
@@ -251,7 +264,7 @@ describe('Pattern Database', () => {
         const expected = [
             'prompt-injection', 'malicious-code', 'suspicious-download',
             'credential-handling', 'secret-detection', 'exfiltration',
-            'obfuscation', 'identity-hijack'
+            'obfuscation', 'identity-hijack', 'pii-exposure'
         ];
         for (const e of expected) {
             assert.ok(cats.has(e), `Missing category: ${e}`);
@@ -479,5 +492,79 @@ describe('Config Impact Analysis (v1.1)', () => {
         const findings = scanner.findings[0]?.findings || [];
         const configFindings = findings.filter(f => f.cat === 'config-impact');
         assert.equal(configFindings.length, 0, 'Clean skill should have no config impact findings');
+    });
+});
+
+// ===== 15. PII Exposure Detection (v2.1) =====
+describe('PII Exposure Detection (v2.1)', () => {
+    it('should detect hardcoded credit card numbers', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'PII_HARDCODED_CC'),
+            'Should detect hardcoded credit card number');
+    });
+
+    it('should detect hardcoded SSN patterns', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'PII_HARDCODED_SSN'),
+            'Should detect hardcoded SSN');
+    });
+
+    it('should detect PII logging to console', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'PII_LOG_SENSITIVE'),
+            'Should detect PII variable logged to console');
+    });
+
+    it('should detect PII sent over network', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'PII_SEND_NETWORK'),
+            'Should detect PII variable sent over network');
+    });
+
+    it('should detect Shadow AI API calls', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'SHADOW_AI_OPENAI'),
+            'Should detect Shadow AI OpenAI API call');
+    });
+
+    it('should detect PII collection instructions in docs', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'pii-leaky-skill'), 'pii-leaky-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        assert.ok(findings.some(f => f.id === 'PII_ASK_ADDRESS'),
+            'Should detect PII collection instruction for address');
+        assert.ok(findings.some(f => f.id === 'PII_ASK_DOB'),
+            'Should detect PII collection instruction for DOB');
+        assert.ok(findings.some(f => f.id === 'PII_ASK_GOV_ID'),
+            'Should detect PII collection instruction for government ID');
+    });
+
+    it('should amplify risk for pii+exfiltration combo', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        const findings = [
+            { severity: 'CRITICAL', id: 'PII_HARDCODED_CC', cat: 'pii-exposure' },
+            { severity: 'HIGH', id: 'EXFIL_WEBHOOK', cat: 'exfiltration' }
+        ];
+        const risk = scanner.calculateRisk(findings);
+        // CRITICAL(25) + HIGH(15) = 40, then pii+exfil 3x = 120 → capped at 100
+        assert.ok(risk >= 100, `PII + exfiltration should max risk, got ${risk}`);
+    });
+
+    it('should NOT flag clean skills for PII exposure', () => {
+        const scanner = new GuardScanner({ summaryOnly: true });
+        scanner.scanSkill(path.join(__dirname, 'fixtures', 'clean-skill'), 'clean-skill');
+        const findings = scanner.findings[0]?.findings || [];
+        const piiFindings = findings.filter(f => f.cat === 'pii-exposure');
+        assert.equal(piiFindings.length, 0, 'Clean skill should have no PII exposure findings');
     });
 });
