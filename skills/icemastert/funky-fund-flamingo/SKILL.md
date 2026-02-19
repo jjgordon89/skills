@@ -8,7 +8,7 @@ metadata:
   clawdbot:
     emoji: "🦩"
     requires:
-      env: []
+      env: []   # all env vars below are optional
     files: ["index.js", "evolve.js", "agents/*.yaml", "ADL.md", "VFM.md", "TREE.md"]
 tags:
   - meta
@@ -88,18 +88,36 @@ Each cycle should:
 ## External Endpoints
 | URL | Data sent | Purpose |
 |-----|-----------|---------|
-| None | — | This skill is **local-only**. It reads session logs, workspace memory, and skill files from disk. It does not call any external APIs or send data off the machine. |
+| None (from this skill's code) | — | **This skill's Node.js code does not open sockets or make HTTP requests.** It only reads/writes local files. |
+
+**Important:** The repo includes agent config templates (`agents/openai.yaml`, `agents/openrouter.yaml`) for use by an OpenClaw (or other) agent. **When you run an agent that uses this skill with a cloud model (OpenAI, OpenRouter, etc.), that agent will send the prompts this skill builds — which can include excerpts from session logs, memory, and workspace context — to the provider's API.** So "local-only" applies to the skill binary itself; if the skill is invoked by an agent backed by a third-party LLM, data can leave the machine via that agent. To stay fully local, run `node index.js run` (or `--dry-run`) without routing the generated prompt through a cloud model.
 
 ## Security & Privacy
 - **Reads**: Session logs under `~/.openclaw/agents/<agent>/sessions/*.jsonl`, workspace `MEMORY.md`, `memory/`, `USER.md`, and the `skills/` directory.
-- **Writes**: `memory/evolution_state.json`, `memory/funky_fund_flamingo_persistent_memory.json`, and optionally prompt artifacts in the memory dir. No data leaves the machine unless the user explicitly configures external tools elsewhere.
-- **No network**: Default execution does not open sockets or make HTTP requests.
+- **Writes**: `memory/evolution_state.json`, `memory/funky_fund_flamingo_persistent_memory.json`, and optionally prompt artifacts in the memory dir. This skill does not push or publish anywhere; any outbound data is only via whatever agent/model stack you choose to run.
+- **No network from skill code**: The skill itself does not open sockets or make HTTP requests.
 
-## Model Invocation Note
-Evolution cycles can be run manually (`node index.js run`) or by an agent following this skill. In relay mode (`--loop` / `--funky-fund-flamingo`), the same process plans and reports; it does not spawn additional model calls unless the user’s environment does so. Opt-out: do not run the skill or disable the loop.
+## Optional environment variables
+No env vars are required. The following are optional overrides (see `evolve.js` / README):
+
+| Variable | Purpose | Typical default |
+|----------|---------|-----------------|
+| `AGENT_NAME` | Agent session folder under `~/.openclaw/agents/` | `main` |
+| `MEMORY_DIR` | Directory for evolution state and persistent memory | workspace `memory/` |
+| `TARGET_SESSION_BYTES` | Max bytes read from latest session log | `64000` |
+| `LOOP_MIN_INTERVAL_SECONDS` | Min delay between loop cycles | `900` |
+| `MAX_MEMORY_CHARS`, `MAX_TODAY_LOG_CHARS`, `MAX_PERSISTENT_MEMORY_CHARS` | Content caps for prompts | see evolve.js |
+| `ECONOMIC_KEYWORDS` | Comma-separated keywords for value scoring | built-in list |
+| `EVOLVE_REPORT_DIRECTIVE`, `EVOLVE_EXTRA_MODES`, `EVOLVE_ENABLE_SESSION_ARCHIVE` | Behavior tweaks | — |
+
+## Model invocation
+Evolution can be run manually (`node index.js run`) or by an agent that uses this skill. In relay mode (`--loop` / `--funky-fund-flamingo`), this process only plans and writes prompts; it does not call any model API. If you run an agent that consumes this skill with OpenAI/OpenRouter/etc., that agent will perform the model calls. To avoid sending local context to a provider, run the skill in `--dry-run` and do not feed the generated prompt to a cloud model.
+
+## Master directive and mutation pressure
+The master directive (`funky-fund-flamingo-master-directive.json`) sets `must_evolve_each_cycle` and `no_op_forbidden`, which push every cycle toward making a concrete change. That can increase how often local files are mutated. For lower risk, prefer **`--review`** (confirm before significant edits) or **`--dry-run`** (prompt generation only, no writes). You can also edit or override the directive to relax these flags.
 
 ## Trust Statement
-By using this skill, you run Node.js code that reads and writes files in your OpenClaw workspace and agent session directories. No data is sent to third parties by this skill. Only install if you trust the skill source (e.g. ClawHub and the publisher).
+By using this skill, you run Node.js code that reads and writes files in your OpenClaw workspace and agent session directories. This skill's code does not send data to third parties; if an agent that uses this skill calls a cloud LLM, that agent (not this skill binary) sends the prompt. Only install if you trust the skill source (e.g. ClawHub and the publisher).
 
 ## Supporting References
 - `ADL.md` — anti-degeneration so we don't break the money printer

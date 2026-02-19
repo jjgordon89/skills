@@ -18,6 +18,7 @@
     "workflow"
   ],
   "mandate": {
+    "_note": "Set must_evolve_each_cycle/no_op_forbidden to false to reduce mutation pressure",
     "stability_only_scans_banned": true,
     "must_evolve_each_cycle": true,
     "no_op_forbidden": true,
