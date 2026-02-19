@@ -1,11 +1,17 @@
 {
   "owner": "ucmai",
   "slug": "ucm",
-  "displayName": "UCM — Universal Commerce Marketplace",
+  "displayName": "Ucm",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1771260379496,
-    "commit": "https://github.com/openclaw/skills/commit/a3dd3c8b29e47ee22b77dc0ab91e3df0f0b01c53"
+    "version": "1.0.5",
+    "publishedAt": 1771425067070,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1771260379496,
+      "commit": "https://github.com/openclaw/skills/commit/a3dd3c8b29e47ee22b77dc0ab91e3df0f0b01c53"
+    }
+  ]
 }

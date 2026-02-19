@@ -1,167 +1,227 @@
 ---
 name: ucm
-description: "API marketplace for AI agents — 100 services (web search, image gen, code sandbox, TTS, NASA, recipes, Pokemon, and 90+ more) via one API key"
-homepage: https://github.com/ucmai/skills
-metadata: {"openclaw": {"emoji": "🛒", "requires": {"env": ["UCM_API_KEY"], "anyBins": ["curl", "node"]}, "primaryEnv": "UCM_API_KEY", "install": [{"id": "node", "kind": "node", "package": "@ucm/mcp-server", "bins": ["ucm-mcp"], "label": "Install UCM MCP Server (node)"}]}}
+description: >-
+  Provides API marketplace access for AI agents. Discovers and calls external
+  capabilities including web search, image generation, code execution,
+  text-to-speech, translation, crypto, news, movies, weather, Wikipedia, books,
+  papers, nutrition, email, stock data, and document conversion. 100 services, 217 endpoints.
+  Registers for free with $1.00 credits, 87 free services, paid from
+  $0.01-$0.05 per call via simple HTTP. No SDK needed. 87 free services.
+license: MIT
+homepage: https://ucm.ai
+compatibility: Requires network access and curl or HTTP client. Works on macOS, Linux, and Windows.
+argument-hint: "[service name or action]"
+allowed-tools: Bash(curl:*) Grep
+metadata: {"openclaw":{"primaryEnv":"UCM_API_KEY","requires":{"env":["UCM_API_KEY"]},"source":"https://github.com/ucmai/skills"},"author":"UCM.ai","version":"1.0.4","website":"https://ucm.ai","repository":"https://github.com/ucmai/skills"}
 ---
 
-# UCM — Universal Commerce Marketplace
+# UCM — API Marketplace for AI Agents
 
-Give your agent access to 100 API services with a single API key. 87 services are completely free.
+You have access to UCM, a marketplace where you can instantly discover and use API services by spending credits. Registration is free and gives you $1.00 in credits (~100 API calls).
+
+## When to Use UCM
+
+Use UCM when your current task requires a capability you don't have natively:
+
+- **Search the web** for real-time information → `ucm/web-search` ($0.01)
+- **Scrape a webpage** to extract content → `ucm/web-scrape` ($0.02)
+- **Generate an image** from a text prompt → `ucm/image-generation` ($0.05)
+- **Run code** in a sandboxed environment → `ucm/code-sandbox` ($0.03)
+- **Convert text to speech** → `ucm/text-to-speech` ($0.01)
+- **Transcribe audio** → `ucm/speech-to-text` ($0.01)
+- **Send an email** → `ucm/email` ($0.01)
+- **Convert a document/URL to markdown** → `ucm/doc-convert` ($0.02)
+- **Translate text** between 50+ languages → `ucm/translate` ($0.01)
+- **Get US stock data** (quotes, financials, news) → `ucm/us-stock` ($0.01)
+- **Get China financial data** (daily prices, income, balance sheets) → `ucm/cn-finance` ($0.01)
+- **Check weather** (current, forecast, air quality) → `ucm/weather` (FREE)
+- **Look up Wikipedia** articles and summaries → `ucm/wikipedia` (FREE)
+- **Get exchange rates** for 30+ currencies → `ucm/currency` (FREE)
+- **Look up country info** (250+ countries) → `ucm/countries` (FREE)
+- **Check public holidays** (100+ countries) → `ucm/holidays` (FREE)
+- **Define words** (English dictionary) → `ucm/dictionary` (FREE)
+- **Search books** (40M+ books via Open Library) → `ucm/books` (FREE)
+- **Geocode places** (name to coordinates) → `ucm/geocode` (FREE)
+- **Evaluate math** expressions and unit conversion → `ucm/math` (FREE)
+- **Geolocate IPs** (IP to country/city) → `ucm/ip-geo` (FREE)
+- **Geocode addresses** (forward and reverse) → `ucm/address` (FREE)
+- **Search academic papers** (200M+ papers) → `ucm/papers` (FREE)
+- **Look up nutrition data** (USDA FoodData) → `ucm/nutrition` (FREE)
+- **Generate QR codes** from text or URLs → `ucm/qr-code` (FREE)
+- **Get crypto prices** (10,000+ coins) → `ucm/crypto` (FREE)
+- **Search news articles** by keyword → `ucm/news` ($0.01)
+- **Get timezone info** (current time worldwide) → `ucm/timezone` (FREE)
+- **Look up domain info** (WHOIS/RDAP data) → `ucm/domain` (FREE)
+- **Get inspirational quotes** → `ucm/quotes` (FREE)
+- **Browse Hacker News** stories → `ucm/hacker-news` (FREE)
+- **Generate test data** (names, addresses, companies) → `ucm/random-data` (FREE)
+- **Browse poetry** (search by title/author) → `ucm/poetry` (FREE)
+- **Search movies & TV shows** (IMDb ratings, cast, plot) → `ucm/movies` ($0.01)
+- **Find rhyming words or synonyms** → `ucm/datamuse` (FREE)
+- **Search universities worldwide** → `ucm/universities` (FREE)
+- **Look up postal codes** (60+ countries) → `ucm/zip-code` (FREE)
+- **Get trivia questions** → `ucm/trivia` (FREE)
+- **Get jokes** by category → `ucm/jokes` (FREE)
+- **Get random advice** → `ucm/advice` (FREE)
+- **Get activity suggestions** → `ucm/bored` (FREE)
+- **Look up Bible verses** → `ucm/bible` (FREE)
+- **Get Chuck Norris jokes** → `ucm/chuck-norris` (FREE)
+- **Search recipes** → `ucm/recipes` (FREE)
+- **Search cocktail recipes** → `ucm/cocktails` (FREE)
+- **Search breweries** → `ucm/brewery` (FREE)
+- **Look up food products** by barcode → `ucm/food-products` (FREE)
+- **Get sunrise/sunset times** → `ucm/sunrise-sunset` (FREE)
+- **Get random dog images** by breed → `ucm/dog-images` (FREE)
+- **Get cat facts** → `ucm/cat-facts` (FREE)
+- **Generate avatars** → `ucm/avatars` (FREE)
+- **Get color info and schemes** → `ucm/colors` (FREE)
+- **Generate lorem ipsum text** → `ucm/lorem-ipsum` (FREE)
+- **Get NASA astronomy photo** or Mars rover images → `ucm/nasa` (FREE)
+- **Get SpaceX launch data** → `ucm/spacex` (FREE)
+- **Track ISS position** and astronauts → `ucm/iss` (FREE)
+- **Get space flight news** → `ucm/space-news` (FREE)
+- **Search arXiv papers** → `ucm/arxiv` (FREE)
+- **Get earthquake data** → `ucm/earthquakes` (FREE)
+- **Get World Bank indicators** → `ucm/world-bank` (FREE)
+- **Search FDA drugs/recalls** → `ucm/fda` (FREE)
+- **Get UK carbon intensity** → `ucm/carbon` (FREE)
+- **Look up elevation** by coordinates → `ucm/elevation` (FREE)
+- **Predict age by name** → `ucm/agify` (FREE)
+- **Predict gender by name** → `ucm/genderize` (FREE)
+- **Predict nationality by name** → `ucm/nationalize` (FREE)
+- **Look up UK postcodes** → `ucm/uk-postcodes` (FREE)
+- **Decode vehicle VINs** → `ucm/vehicles` (FREE)
+- **Search Met Museum collection** → `ucm/met-museum` (FREE)
+- **Search Art Institute of Chicago** → `ucm/art-chicago` (FREE)
+- **Search TV shows** → `ucm/tv-shows` (FREE)
+- **Search anime and manga** → `ucm/anime` (FREE)
+- **Search iTunes content** → `ucm/itunes` (FREE)
+- **Search music metadata** → `ucm/music` (FREE)
+- **Search internet radio** → `ucm/radio` (FREE)
+- **Browse free-to-play games** → `ucm/free-games` (FREE)
+- **Compare game prices** → `ucm/game-deals` (FREE)
+- **Look up Pokemon data** → `ucm/pokemon` (FREE)
+- **Look up D&D 5e data** (monsters, spells, classes) → `ucm/dnd` (FREE)
+- **Get meme templates** → `ucm/memes` (FREE)
+- **Get your public IP** → `ucm/ip-lookup` (FREE)
+- **Generate barcodes** → `ucm/barcode` (FREE)
+- **Check Wayback Machine** snapshots → `ucm/wayback` (FREE)
+- **Look up npm packages** → `ucm/npm` (FREE)
+- **Look up PyPI packages** → `ucm/pypi` (FREE)
+- **Search GitHub repos** → `ucm/github-repos` (FREE)
+- **Get country flag images** → `ucm/country-flags` (FREE)
+- **Virtual card deck** (shuffle, draw) → `ucm/deck-of-cards` (FREE)
+- **Get Star Wars data** → `ucm/star-wars` (FREE)
+- **Get XKCD comics** → `ucm/xkcd` (FREE)
+- **Search Rick & Morty** characters/episodes → `ucm/rick-morty` (FREE)
+- **Get Nobel Prize data** → `ucm/nobel-prize` (FREE)
+- **Get historical events** (on this day) → `ucm/historical-events` (FREE)
+- **Get Kanye West quotes** → `ucm/kanye` (FREE)
+- **Search Rust crates** → `ucm/crates` (FREE)
+- **Search Docker Hub** images → `ucm/docker-hub` (FREE)
+- **Get chess puzzles** and player data → `ucm/lichess` (FREE)
+- **Look up chemical elements** → `ucm/periodic-table` (FREE)
+- **Look up airports** by IATA code → `ucm/airports` (FREE)
+- **Get random fox images** → `ucm/random-fox` (FREE)
+
+If you're unsure whether a service exists, use `/v1/discover` with a natural language description.
 
 ## Setup
 
-### Option 1: MCP Server (recommended)
+### If you already have an API key
 
-If your environment supports MCP, configure the UCM MCP Server:
-
-```json
-{
-  "mcpServers": {
-    "ucm": {
-      "command": "npx",
-      "args": ["-y", "@ucm/mcp-server@0.3.3"],
-      "env": {
-        "UCM_API_KEY": "ucm_key_..."
-      }
-    }
-  }
-}
-```
-
-No API key yet? Use the `ucm_register` tool after connecting — it creates one automatically with $1.00 free credits.
-
-### Option 2: HTTP API (works everywhere)
-
-```bash
-# Register (free)
-curl -X POST https://registry.ucm.ai/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{"name": "my-openclaw-agent"}'
-# Returns: { "api_key": "ucm_key_...", "credits": { "balance": "1.00" } }
-```
-
-Save the `UCM_API_KEY` as an environment variable:
-
+Set the environment variable:
 ```bash
 export UCM_API_KEY="ucm_key_..."
 ```
 
-### Option 3: mcporter
+### If you need to register
 
-If you have mcporter installed:
-
-```bash
-mcporter call ucm.ucm_register name=my-agent
-mcporter call ucm.ucm_discover query="search the web"
-mcporter call ucm.ucm_call service_id=ucm/web-search endpoint=search query="AI news"
-```
-
-## How to Use
-
-### Discover Services
-
-Find the right API for what you need:
+Register for free — takes one HTTP call:
 
 ```bash
-curl -X POST https://registry.ucm.ai/v1/discover \
+curl -s -X POST https://registry.ucm.ai/v1/agents/register \
   -H "Content-Type: application/json" \
-  -d '{"query": "generate an image from text"}'
+  -d '{"name": "my-agent"}'
 ```
 
-### Call a Service
+Save the returned `api_key` (shown only once). You receive $1.00 in free credits.
+
+Or run the registration script:
+```bash
+bash scripts/register.sh "my-agent"
+```
+
+## How to Call a Service
+
+One HTTP call to purchase and execute any service:
 
 ```bash
-curl -X POST https://registry.ucm.ai/v1/call \
+curl -s -X POST https://registry.ucm.ai/v1/call \
   -H "Authorization: Bearer $UCM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "service_id": "ucm/web-search",
     "endpoint": "search",
-    "body": {"query": "OpenClaw tutorials"}
+    "params": { "query": "latest AI news" }
   }'
 ```
 
-### Check Balance
+Response includes `result` (the API response), `amount_charged`, and `credits_remaining`.
+
+If the upstream API fails, credits are **automatically refunded** (`amount_charged: "0"`).
+
+## Quick Reference
+
+| Action | Method | Auth |
+|--------|--------|------|
+| Register | `POST /v1/agents/register` | None |
+| Discover services | `POST /v1/discover` | None |
+| List all services | `GET /v1/services` | None |
+| Call a service | `POST /v1/call` | Bearer token |
+| Check balance | `GET /v1/balance` | Bearer token |
+| View history | `GET /v1/history` | Bearer token |
+| Service details | `GET /v1/services/:id` | None |
+
+Base URL: `https://registry.ucm.ai`
+
+## Discover Services
+
+Search by natural language — no auth required:
 
 ```bash
-curl -H "Authorization: Bearer $UCM_API_KEY" \
-  https://registry.ucm.ai/v1/credits
+curl -s -X POST https://registry.ucm.ai/v1/discover \
+  -H "Content-Type: application/json" \
+  -d '{"need": "I need to convert a PDF to text", "limit": 3}'
 ```
 
-## Available Services (100 total)
-
-### Paid ($0.01–$0.05/call)
-
-| Service | What It Does | Price |
-|---------|-------------|-------|
-| ucm/web-search | Search the web (Tavily) | $0.01 |
-| ucm/web-scrape | Scrape web pages (Firecrawl) | $0.02 |
-| ucm/image-generation | Generate images from text (Together AI) | $0.05 |
-| ucm/code-sandbox | Execute code in sandbox (E2B) | $0.03 |
-| ucm/text-to-speech | Convert text to audio (Kokoro) | $0.01 |
-| ucm/speech-to-text | Transcribe audio (Whisper) | $0.01 |
-| ucm/email | Send emails (Resend) | $0.01 |
-| ucm/doc-convert | Convert documents (Firecrawl) | $0.02 |
-| ucm/us-stock | US stock market data (Finnhub) | $0.01 |
-| ucm/cn-finance | China financial data (Tushare) | $0.01 |
-| ucm/translate | Text translation (MyMemory) | $0.01 |
-| ucm/qr-code | Generate QR codes | $0.01 |
-| ucm/news | Latest news (NewsData) | $0.01 |
-
-### Free (87 services, $0.00)
-
-Weather, Wikipedia, currency exchange, countries, holidays, dictionary, books, geocoding, math, IP geolocation, address lookup, academic papers, nutrition, crypto prices, timezone, domain info, quotes, Hacker News, random data, poetry, movies, word associations, universities, zip codes, trivia, jokes, advice, bored activity ideas, Bible verses, Chuck Norris facts, recipes, cocktails, breweries, food products, sunrise/sunset, dog images, cat facts, avatars, colors, Lorem Ipsum, NASA, SpaceX, ISS, space news, arXiv papers, earthquakes, World Bank, FDA data, carbon intensity, elevation, age/gender/nationality prediction, UK postcodes, vehicle data, Met Museum, Art Institute of Chicago, TV shows, anime, iTunes, music, radio stations, free games, game deals, Pokemon, D&D, memes, IP lookup, barcodes, Wayback Machine, npm, PyPI, GitHub repos, country flags, deck of cards, Star Wars, xkcd, Rick & Morty, Nobel Prize, historical events, Kanye quotes, Rust crates, Docker Hub, Lichess, periodic table, airports, random fox images.
-
-## Security & Privacy
-
-### Data Flow
-
-All API calls from your agent go through the UCM registry (`registry.ucm.ai`) which proxies them to third-party providers. Your agent never communicates directly with third-party APIs and never holds their API keys.
+## Decision Flow
 
 ```
-Your Agent → registry.ucm.ai → Third-party API (Tavily, Firecrawl, etc.)
+Need an external capability?
+  ├─ Have UCM_API_KEY? → Check balance (GET /v1/balance)
+  │   ├─ Credits available → Discover → Call → Use result
+  │   ├─ Call failed → Credits auto-refunded, try alternative
+  │   └─ No credits → Tell user to add credits at dashboard.ucm.ai
+  └─ No API key? → Register first (POST /v1/agents/register)
 ```
 
-### What Data Leaves Your Machine
+## Spending Principles
 
-| Data | Destination | Purpose |
-|------|-------------|---------|
-| API key (`ucm_key_...`) | `registry.ucm.ai` | Authentication |
-| Service call parameters (e.g. search query, URL) | `registry.ucm.ai` → third-party provider | Fulfill the API request |
-| Agent name (at registration) | `registry.ucm.ai` | Account identification |
+- Most calls cost $0.01 — affordable for any task
+- If a task doesn't require an external API, don't spend credits
+- Credits are refunded on upstream failure (5xx, 429, 422)
+- Prefer services with higher relevance score from `/v1/discover`
 
-### What Data Stays Local
+## Error Handling
 
-- Your OpenClaw configuration and conversation history
-- Any results returned by API calls (stored only in your agent's context)
-- This skill file itself (instructions only; the optional MCP server runs as a separate process)
+| Error | Action |
+|-------|--------|
+| `INSUFFICIENT_CREDITS` | Tell user to add credits at dashboard.ucm.ai |
+| `SERVICE_NOT_FOUND` | Search with `/v1/discover` instead |
+| `INVALID_ENDPOINT` | Check endpoints via `GET /v1/services/:id` |
+| `RATE_LIMITED` | Wait briefly, then retry |
 
-### External Endpoints Called
+## Full Service Catalog
 
-| Endpoint | When |
-|----------|------|
-| `https://registry.ucm.ai/v1/agents/register` | One-time registration |
-| `https://registry.ucm.ai/v1/call` | Every API service call |
-| `https://registry.ucm.ai/v1/discover` | Service search |
-| `https://registry.ucm.ai/v1/services` | Browse catalog |
-| `https://registry.ucm.ai/v1/credits` | Check balance |
-
-All traffic is HTTPS. No other domains are contacted by this skill.
-
-### Trust & Safety
-
-- **No embedded scripts** — this skill file contains only instructions and HTTP call examples; the optional MCP server (`@ucm/mcp-server`) is a published npm package you can audit before installing
-- **No third-party key exposure** — UCM manages all upstream API keys server-side
-- **Audited calls** — every API call is logged with transaction ID and timestamp
-- **Auto-refund** — credits are automatically refunded on upstream failures (5xx, 429, 422)
-- **Spending limits** — credit system prevents runaway costs; $1.00 starting balance caps exposure
-- **684 tests** covering security, authentication, and all service adapters
-
-## Links
-
-- Website: https://ucm.ai
-- Docs: https://ucm.ai/docs
-- Dashboard: https://dashboard.ucm.ai
-- npm: https://www.npmjs.com/package/@ucm/mcp-server
-- GitHub: https://github.com/ucmai/skills
+For complete service details with all endpoints and parameters, see `references/service-catalog.md` or call `GET /v1/services`.
