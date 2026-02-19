@@ -1,12 +1,6 @@
 ---
 name: dialogue-audio
-description: |
-  Multi-speaker dialogue audio creation with Dia TTS.
-  Covers speaker tags, emotion control, pacing, conversation flow, and post-production.
-  Use for: podcasts, audiobooks, explainers, character dialogue, conversational content.
-  Triggers: dialogue audio, multi speaker, conversation audio, dia tts, two speakers,
-  podcast audio, character voices, voice acting, dialogue generation, conversation tts,
-  multi voice, speaker tags, dialogue recording
+description: "Multi-speaker dialogue audio creation with Dia TTS. Covers speaker tags, emotion control, pacing, conversation flow, and post-production. Use for: podcasts, audiobooks, explainers, character dialogue, conversational content. Triggers: dialogue audio, multi speaker, conversation audio, dia tts, two speakers, podcast audio, character voices, voice acting, dialogue generation, conversation tts, multi voice, speaker tags, dialogue recording"
 allowed-tools: Bash(infsh *)
 ---
 
@@ -24,6 +18,8 @@ infsh app run falai/dia-tts --input '{
   "prompt": "[S1] Have you tried the new feature yet? [S2] Not yet, but I heard it saves a ton of time. [S1] It really does. I cut my workflow in half. [S2] Okay, I am definitely trying it today."
 }'
 ```
+
+> **Install note:** The [install script](https://cli.inference.sh) only detects your OS/architecture, downloads the matching binary from `dist.inference.sh`, and verifies its SHA-256 checksum. No elevated permissions or background processes. [Manual install & verification](https://dist.inference.sh/cli/checksums.txt) available.
 
 ## Speaker Tags
 
@@ -217,9 +213,9 @@ infsh app run infsh/media-merger --input '{
 ## Related Skills
 
 ```bash
-npx skills add inferencesh/skills@text-to-speech
-npx skills add inferencesh/skills@ai-podcast-creation
-npx skills add inferencesh/skills@ai-avatar-video
+npx skills add inference-sh/skills@text-to-speech
+npx skills add inference-sh/skills@ai-podcast-creation
+npx skills add inference-sh/skills@ai-avatar-video
 ```
 
 Browse all apps: `infsh app list`
