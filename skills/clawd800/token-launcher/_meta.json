@@ -3,11 +3,16 @@
   "slug": "token-launcher",
   "displayName": "Pumpclaw",
   "latest": {
-    "version": "1.3.0",
-    "publishedAt": 1770660330671,
-    "commit": "https://github.com/openclaw/skills/commit/c5d644d925bd5581fb911c132f443e1a5dfd8885"
+    "version": "2.1.0",
+    "publishedAt": 1771469015023,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.3.0",
+      "publishedAt": 1770660330671,
+      "commit": "https://github.com/openclaw/skills/commit/c5d644d925bd5581fb911c132f443e1a5dfd8885"
+    },
     {
       "version": "1.2.0",
       "publishedAt": 1770628020215,
