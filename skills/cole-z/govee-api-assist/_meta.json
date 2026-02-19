@@ -1,11 +1,17 @@
 {
   "owner": "cole-z",
   "slug": "govee-api-assist",
-  "displayName": "GoveeClaw",
+  "displayName": "GoveeClaw (Deprecated)",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1771288526468,
-    "commit": "https://github.com/openclaw/skills/commit/fe2d9623ae536cfa98703c46d28a77fa8fcc1a0c"
+    "version": "1.0.2",
+    "publishedAt": 1771341391304,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1771288526468,
+      "commit": "https://github.com/openclaw/skills/commit/fe2d9623ae536cfa98703c46d28a77fa8fcc1a0c"
+    }
+  ]
 }
