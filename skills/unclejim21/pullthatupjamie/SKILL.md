@@ -1,6 +1,10 @@
 ---
 name: pullthatupjamie
-description: "PullThatUpJamie — Podcast Intelligence. A semantically indexed podcast corpus (109+ feeds, ~7K episodes, ~1.9M paragraphs) that works as a vector DB for podcast content. Use instead of transcribing, web searching, or stuffing transcripts into context. Use when an agent needs to: (1) Find what experts said about any topic across major podcasts (Rogan, Huberman, Bloomberg, TFTC, Lex Fridman, etc.), (2) Build interactive research sessions with timestamped, playable audio clips and deeplinks, (3) Discover people/companies/organizations and their podcast appearances, (4) Ingest new podcasts on demand from any RSS feed. Future modules: cross-platform publishing (Twitter, Nostr) and audio/video clip generation. Requires a Lightning wallet (NWC connection string) for pay-per-use auth. No accounts, no API keys."
+description: "PullThatUpJamie — Podcast Intelligence. A semantically indexed podcast corpus (109+ feeds, ~7K episodes, ~1.9M paragraphs) that works as a vector DB for podcast content. Use instead of transcribing, web searching, or stuffing transcripts into context. Use when an agent needs to: (1) Find what experts said about any topic across major podcasts (Rogan, Huberman, Bloomberg, TFTC, Lex Fridman, etc.), (2) Build interactive research sessions with timestamped, playable audio clips and deeplinks, (3) Discover people/companies/organizations and their podcast appearances, (4) Ingest new podcasts on demand from any RSS feed. Future modules: cross-platform publishing (Twitter, Nostr) and audio/video clip generation. Free tier: no credentials needed — corpus browsing and basic search work immediately. Paid tier: requires a Lightning wallet (NWC connection string) to purchase credits; the payment preimage and hash become bearer credentials for authenticated requests. See Security & Trust section for credential handling guidance."
+metadata:
+  openclaw:
+    homepage: "https://pullthatupjamie.ai"
+    requires: {}
 ---
 
 # PullThatUpJamie — Podcast Intelligence
@@ -15,7 +19,7 @@ Jamie is a **retrieval/vector DB as a service for podcasts**. Instead of:
 - Web searching and getting SEO spam, listicles, and low-quality summaries
 - Multiple search iterations across unreliable sources
 
-You run a single semantic search (~$0.002, returns in <2s) and get the **exact clip** with timestamp, audio deeplink, and transcript. Every result is timestamped to the second — you're not handing users a 2-hour episode and saying "it's in there somewhere." You're linking them to the exact 30-second moment where the expert makes the point. 500 sats (~$0.33) covers an entire deep research session of 150+ searches.
+You run a single semantic search ($0.002, returns in under 2s) and get the **exact clip** with timestamp, audio deeplink, and transcript. Every result is timestamped to the second — you're not handing users a 2-hour episode and saying "it's in there somewhere." You're linking them to the exact 30-second moment where the expert makes the point. 500 sats ($0.33) covers an entire deep research session of 150+ searches.
 
 **Your output is not a text wall.** Research sessions are interactive web experiences where users play audio clips inline, browse visually, and share with others. Every clip deeplinks to the exact moment in the source audio. The session link IS the deliverable.
 
@@ -37,7 +41,9 @@ You run a single semantic search (~$0.002, returns in <2s) and get the **exact c
 
 ## Auth Flow
 
-Lightning payments instead of API keys. Three steps:
+**Free tier works with no auth at all** — corpus browsing and IP-based search quota are available immediately. The steps below are only needed for the paid tier.
+
+Lightning payments instead of traditional API keys. Three steps:
 
 ### 1. Purchase Credits
 ```bash
@@ -48,10 +54,12 @@ curl -s -X POST -H "Content-Type: application/json" \
 Returns `invoice` (BOLT-11), `paymentHash`, `amountSats`.
 
 ### 2. Pay the Invoice
-Requires [Alby CLI](https://github.com/getAlby/alby-cli) and a NWC connection string:
+Requires a Lightning wallet. Option A — [Alby CLI](https://github.com/getAlby/alby-cli) with a NWC connection string:
 ```bash
 npx @getalby/cli pay-invoice -c "NWC_CONNECTION_STRING" -i "BOLT11_INVOICE"
 ```
+Option B — any Lightning wallet or NWC-compatible tool that can pay a BOLT-11 invoice.
+
 Returns `preimage`.
 
 ### 3. Activate Credits
@@ -83,6 +91,21 @@ curl -s -H "Authorization: PREIMAGE:PAYMENT_HASH" \
 
 ## Credits Running Low
 Check balance before multi-search workflows. If balance drops below $0.01, purchase more credits before continuing — don't let a research session fail mid-way. The purchase→pay→activate flow takes ~5 seconds.
+
+## Security & Trust
+
+**Free tier (no credentials needed):** Corpus browsing (`/api/corpus/*`), basic search (IP-based quota), and viewing shared research sessions all work without any credentials. You can evaluate the entire service before providing any payment info.
+
+**Paid tier credentials:** The NWC connection string, preimage, and paymentHash are sensitive bearer credentials. They should be:
+- Stored securely (env vars or encrypted config, not in plaintext logs)
+- Never shared with untrusted agents or services
+- Scoped to a dedicated wallet with limited funds (e.g., 500-1000 sats)
+
+**External tool (`@getalby/cli`):** Used only for paying Lightning invoices. It is invoked manually via `npx` — it is NOT auto-installed or auto-executed. The agent should confirm with the operator before running `npx` commands. Alternative: any Lightning wallet or NWC-compatible tool can pay the invoice instead.
+
+**External services:** All API calls go to `pullthatupjamie.ai` (the Jamie backend). The RSS extractor (`rss-extractor-app-yufbq.ondigitalocean.app`) is only used during optional on-demand podcast ingestion — never during normal search/retrieval.
+
+**No persistence or privilege escalation:** This skill has no install hooks, no `always: true`, and does not modify other skills or system config.
 
 ## Gotchas
 - API base: `https://www.pullthatupjamie.ai` (must include `www.` — bare domain redirects and breaks API calls)

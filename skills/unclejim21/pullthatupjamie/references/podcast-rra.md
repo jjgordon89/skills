@@ -191,16 +191,12 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Share Title",
-    "nodes": [
-      {"pineconeId": "clip_id", "x": 3, "y": 0, "z": 0, "color": "#FF9F43"}
-    ],
-    "camera": {"x": 0, "y": 0, "z": 8},
     "visibility": "public"
   }' \
   "API_BASE/api/research-sessions/SESSION_ID/share?clientId=PAYMENT_HASH"
 ```
 
-Generate circular layout: `x = R * cos(2π * i/N)`, `y = R * sin(2π * i/N)`, `z = 0`, R=3.
+`nodes` is **optional** — if omitted, the backend auto-generates a 3D layout from stored embeddings (UMAP projection). Only pass `nodes` if you need a custom layout.
 
 Shared URL: `https://www.pullthatupjamie.ai/app?sharedSession=SHARE_ID`
 
@@ -309,7 +305,7 @@ Browse `GET /api/corpus/feeds` for the full list.
 - Session response: `data.id`, NOT `id`
 - Feeds response: `data` key, NOT `feeds`
 - Always include `items` array with metadata in session creation
-- Share endpoint needs `nodes` with x/y/z coordinates
+- Share endpoint: `nodes` is optional (backend auto-layouts from embeddings if omitted)
 - `shareLink` = `pineconeId` (interchangeable)
 - RSS extractor `getFeed` is unreliable — curl RSS directly
 - `submitOnDemandRun` needs `"parameters": {}` even if empty
