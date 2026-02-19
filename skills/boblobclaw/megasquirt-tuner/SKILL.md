@@ -1,6 +1,6 @@
 ---
 name: megasquirt-tuner
-description: Megasquirt ECU tuning and calibration using TunerStudio. Use when working with Megasquirt engine management systems for: (1) VE table tuning and fuel map optimization, (2) Ignition timing maps and spark advance, (3) Idle control and warmup enrichment, (4) AFR target tuning and closed-loop feedback, (5) Sensor calibration (TPS, MAP, CLT, IAT, O2), (6) Acceleration enrichment and deceleration fuel cut, (7) Boost control and launch control setup, (8) Datalog analysis and troubleshooting, (9) Base engine configuration and injector setup, (10) Any Megasquirt/TunerStudio ECU tuning tasks.
+description: Megasquirt ECU tuning and calibration using TunerStudio. Use when working with Megasquirt engine management systems for: (1) VE table tuning and fuel map optimization, (2) Ignition timing maps and spark advance, (3) Idle control and warmup enrichment, (4) AFR target tuning and closed-loop feedback, (5) Sensor calibration (TPS, MAP, CLT, IAT, O2), (6) Acceleration enrichment and deceleration fuel cut, (7) Boost control and launch control setup, (8) Datalog analysis and troubleshooting, (9) Base engine configuration and injector setup, (10) MSQ tune file analysis and safety review, (11) Any Megasquirt/TunerStudio ECU tuning tasks.
 ---
 
 # Megasquirt ECU Tuning with TunerStudio
@@ -21,9 +21,9 @@ Pulse Width = Required Fuel × VE% × MAP × AFR Target Correction × Air Densit
 
 | Table | Purpose | Typical Resolution |
 |-------|---------|-------------------|
-| VE Table | Volumetric efficiency vs RPM/MAP | 12×12 (MS2), up to 16×16 (MS3) |
-| AFR Target | Desired air-fuel ratio vs RPM/MAP | 12×12 (MS2), up to 16×16 (MS3) |
-| Spark Advance | Ignition timing vs RPM/MAP | 12×12 (MS2), up to 16×16 (MS3) |
+| VE Table | Volumetric efficiency vs RPM/MAP | 16×16 or 12×12 |
+| AFR Target | Desired air-fuel ratio vs RPM/MAP | 12×12 |
+| Spark Advance | Ignition timing vs RPM/MAP | 12×12 or 16×16 |
 | Warmup Enrichment | Fuel correction vs coolant temp | 10-20 points |
 | TPS-based Accel | Accel enrichment vs TPSdot | 10-20 points |
 | MAP-based Accel | Accel enrichment vs MAPdot | 10-20 points |
@@ -35,18 +35,17 @@ Before tuning, verify:
 - Engine displacement and cylinder count
 - Injector flow rate (cc/min or lb/hr)
 - Injector staging (simultaneous, alternating, sequential)
-- Required Fuel — TunerStudio calculates this automatically from engine constants (displacement, number of injectors, injector flow rate, and divider). Do not hand-calculate; use the firmware's built-in calculation.
+- Required Fuel calculation matches injector size
 - Ignition input/output settings match hardware
-- Trigger wheel and ignition mode configured (use the Trigger Wizard for wheel decoder setup)
-- INI file matches installed firmware version (mismatch causes connection errors or wrong settings)
+- Trigger wheel and ignition mode configured
 
 ### 2. Sensor Calibration
-Calibrate sensors before tuning (all under **Tools** menu in TunerStudio):
-- **CLT (Coolant Temp)**: Tools → Calibrate Thermistor — select preset (GM, Ford, Bosch) or enter custom resistance pairs
-- **IAT (Intake Air Temp)**: Tools → Calibrate Thermistor — same process as CLT
-- **TPS**: Tools → Calibrate TPS — sample closed throttle and WOT positions
-- **MAP**: Tools → Calibrate MAP/Baro — verify atmospheric reading at key-on; common sensors: MPX4250 (250kPa), MPXH6400 (400kPa)
-- **O2 Sensor**: Tools → Calibrate AFR — set wideband controller voltage-to-AFR mapping
+Calibrate sensors before tuning:
+- **CLT (Coolant Temp)**: Set resistance values at known temps
+- **IAT (Intake Air Temp)**: Similar to CLT
+- **TPS**: Set closed and WOT positions (0-100%)
+- **MAP**: Verify atmospheric reading at key-on
+- **O2 Sensor**: Calibrate wideband controller output range
 
 ### 3. VE Table Tuning (Speed Density)
 
@@ -80,7 +79,7 @@ Set targets based on application:
 | Light Cruise | 14.5-15.5 | 0.99-1.06 |
 | Part Throttle | 13.5-14.5 | 0.92-0.99 |
 | WOT Naturally Aspirated | 12.5-13.0 | 0.85-0.88 |
-| WOT Turbo/Supercharged | 11.8-12.5 | 0.80-0.85 |
+| WOT Turbo/Supercharged | 11.5-12.5 | 0.78-0.85 |
 
 ### 5. Ignition Timing
 
@@ -126,21 +125,14 @@ Set targets based on application:
 
 ### 8. Acceleration Enrichment
 
-**Basic AE (TPS-based):**
+**TPS-based (Alpha-N blending):**
 - Threshold: 5-10%/sec TPSdot
 - Enrichment: 10-30% added fuel
 - Decay: 0.5-2 seconds
 
-**Basic AE (MAP-based, for ITBs):**
+**MAP-based (for MAP-dot systems):**
 - Threshold: 10-30 kPa/sec
 - Enrichment scales with rate of change
-
-**Enhanced Accel Enrichment (EAE) — Recommended for MS2/Extra:**
-- Uses a wall-wetting fuel model instead of simple TPSdot/MAPdot
-- Accounts for fuel film on intake walls that absorbs and releases fuel
-- EAE coefficients control how much fuel sticks to walls vs. enters cylinder
-- Provides smoother transient response than basic AE
-- Configure via Accel Enrich → EAE settings; tune lag compensation and RPM/CLT corrections
 
 **Cold Multiplier:**
 - Increase accel enrichment when cold (1.5-3× at -20°C)
@@ -162,50 +154,11 @@ Set targets based on application:
 - Configure retard timing during launch (0-10° BTDC)
 - Set fuel/ignition cut method
 
-### Flat Shift / Sequential Shift Cut
+### Flat Shift
 
 - Maintain throttle during shifts
-- Brief fuel/ignition cut at shift point (100-200ms)
+- Brief fuel/ignition cut at shift point
 - Retain boost between gears
-- Configure via Boost/Advanced → Sequential Shift Cut
-
-### Nitrous Control (MS2/Extra)
-
-- Supports Stage 1 and Stage 2 nitrous systems
-- Configure activation conditions (RPM window, TPS threshold, coolant temp minimum)
-- Fuel enrichment added to compensate for additional oxygen
-- Timing retard during nitrous activation
-- Configure via Boost/Advanced → Nitrous
-
-### Table Switching
-
-- MS2/Extra supports switching between multiple fuel and spark tables
-- Controlled by an input pin, CAN input, or other condition
-- Useful for: race fuel vs. pump gas, nitrous on/off, traction control intervention
-- Configure via Boost/Advanced → Table Switching Control
-
-### Programmable On/Off Outputs
-
-- Configure spare outputs to trigger based on RPM, TPS, MAP, coolant temp, or other conditions
-- Useful for: fans, shift lights, warning lights, nitrous solenoids, water/meth injection
-- Configure via Boost/Advanced → Programmable On/Off Outputs
-
-## Trigger Setup and Diagnostics
-
-### Wheel Decoder / Trigger Wizard
-Setting up the trigger pattern is one of the first and most critical configuration steps:
-- Use **Ignition Settings → Trigger Wizard** for guided setup
-- Select your trigger wheel type (e.g., 36-1, 60-2, Ford TFI, GM HEI, etc.)
-- Set the trigger angle (degrees BTDC for the trigger event)
-- Configure primary and secondary tach input noise filtering if experiencing misfires or sync loss
-
-### Tooth Logger / Composite Logger
-Essential diagnostic tools for verifying trigger signal quality:
-- **Tooth Logger**: Records raw tooth arrival times — use to verify tooth count and missing tooth detection
-- **Composite Logger**: Overlays crank and cam signals — use to verify cam sync and trigger alignment
-- **Sync Error Logger**: Captures sync loss events for diagnosing intermittent trigger issues
-- Access via the Diagnostics menu in TunerStudio
-- Always run tooth logger before first start to verify clean trigger signal
 
 ## Datalog Analysis
 
@@ -246,22 +199,8 @@ Essential diagnostic tools for verifying trigger signal quality:
 
 ## TunerStudio Specific
 
-### Burning Changes to Flash
-When you change settings in TunerStudio, changes are held in RAM until you **burn** them to the ECU's flash memory. Unburned changes are lost when the ECU powers off.
-- **Burn**: Ctrl+B or the Burn button writes current page to flash
-- VE Tables, Spark Tables, and AFR Tables support **live tuning** — changes take effect immediately in RAM without burning, but still must be burned to persist
-- Flash memory supports approximately **100,000 burn cycles** — avoid excessive rapid burns
-- Always burn after completing a tuning session
-
-### INI File
-The INI file defines the TunerStudio interface for a specific firmware version. It maps all constants, tables, output channels, menus, and gauges.
-- A **mismatch between INI file and firmware** is the most common connection/compatibility issue
-- Symptoms: "Controller code version does not match signature" error, missing menus, garbled readings
-- Fix: Download the correct INI from msextra.com matching your exact firmware version
-- TunerStudio can auto-detect and download the correct INI in most cases
-
 ### Project Setup
-1. Create new project → select firmware (MS1, MS2, MS3) — ensures correct INI file
+1. Create new project → select firmware (MS1, MS2, MS3)
 2. Load base tune (.msq file) or start from default
 3. Connect to controller (serial, USB, or Bluetooth)
 4. Sync with controller to load current settings
@@ -294,6 +233,143 @@ The INI file defines the TunerStudio interface for a specific firmware version. 
 - Disable injectors if AFR exceeds safe threshold
 - Typically 15:1+ under load
 
+## MSQ Tune File Analysis
+
+The skill can analyze `.msq` tune files to identify safety issues, optimization opportunities, and configuration problems.
+
+### Using the Analyzer
+
+Run the analysis script on any MSQ file:
+
+```bash
+python3 scripts/analyze_msq.py your_tune.msq
+```
+
+Or provide the tune file content directly for analysis.
+
+### How to Provide the MSQ File
+
+**Option 1: Paste the file content** (Recommended)
+- Open the `.msq` file in a text editor (it's plain text)
+- Copy the entire content
+- Paste it directly into the chat: "Analyze this MSQ file: [paste content]"
+
+**Option 2: Upload the file**
+- If your chat interface supports file attachments, attach the `.msq` file directly
+- The skill will read and analyze it
+
+**Option 3: Provide a file path** (if running locally)
+```bash
+python3 scripts/analyze_msq.py /path/to/your/tune.msq
+```
+
+**Security Restrictions for Script Usage:**
+- Only files with `.msq` extension are accepted
+- Path traversal sequences (`../`) are blocked
+- Symbolic links are not allowed
+- File must be a regular text file (not binary)
+
+**Option 4: Share key sections**
+If the file is large, paste specific sections you're concerned about:
+- `[veTable1]` section for fuel map review
+- `[sparkTable1]` for ignition timing
+- `[afrTable1]` for AFR targets
+- `[revLimiter]` for safety limits
+
+### Example Prompts
+
+```
+"Review this MSQ file for safety issues before I start my engine: [paste content]"
+
+"Check my VE table - does anything look suspicious? [paste veTable section]"
+
+"Analyze my ignition timing map for knock risk: [paste sparkTable section]"
+
+"I just updated my AFR targets, review them: [paste afrTable section]"
+```
+
+### What Gets Analyzed
+
+**Safety Checks:**
+- 🚨 **Critical**: AFR targets that could cause engine damage, excessive ignition timing
+- ⚠️ **Warnings**: Rev limiter not configured, suspicious VE values, high injector duty
+
+**Configuration Review:**
+- Required fuel calculation sanity check
+- VE table range and smoothness
+- AFR target appropriateness for NA vs forced induction
+- Ignition timing ranges and knock risk assessment
+- Cranking pulse widths
+- Warmup enrichment curve
+- Safety limits (rev limiter, overboost)
+
+**Optimization Opportunities:**
+- Injector duty cycle headroom
+- VE table smoothness (sudden jumps)
+- Conservative vs aggressive timing maps
+
+### Interpreting Results
+
+**Example Analysis Output:**
+```
+📋 VE Table
+----------------------------------------
+  ⚠️ VE table has very low values (15.0) - check for empty/untuned cells
+  📊 12 cells have >30% jumps from neighbors - consider smoothing
+  ✓ VE table range: 15.0 - 105.0 (avg: 62.3)
+
+📋 Ignition Timing
+----------------------------------------
+  ⚠️ High ignition advance (48°) - verify on dyno with knock detection
+  ✓ Spark advance range: 8° - 48° BTDC
+
+SUMMARY
+============================================================
+🚨 CRITICAL ISSUES: 0
+⚠️  WARNINGS: 2
+✓ Suggestions: 4
+ℹ️  Notes: 1
+```
+
+### Common Issues Detected
+
+**High Priority:**
+- No rev limiter configured
+- Lean AFR targets under load (>14.0:1 at WOT)
+- Ignition timing >45° (severe knock risk)
+- Estimated injector duty >90%
+
+**Medium Priority:**
+- VE values <20 or >120
+- Large jumps between adjacent cells (>30%)
+- Missing warmup enrichment taper
+- Cranking PW too high/low for conditions
+
+**Low Priority:**
+- Conservative timing that may leave power on table
+- Overly rich AFR targets
+- Excessive injector headroom
+
+### Tune Review Workflow
+
+1. **Before First Start:**
+   ```
+   You: "Review this base tune before I start the engine"
+   AI: [Runs analysis, flags safety issues]
+   ```
+
+2. **After Changes:**
+   ```
+   You: "I just updated my VE table, check it"
+   AI: [Analyzes for anomalies, suggests smoothing]
+   ```
+
+3. **Before Dyno/Track:**
+   ```
+   You: "Review my tune before high load testing"
+   AI: [Checks timing, AFR, safety limits, injector headroom]
+   ```
+
 ## Reference Materials
 
 For detailed documentation, see:
@@ -308,13 +384,11 @@ DC% = (Injector PW / Injection Period) × 100
 ```
 Keep under 85% for safety margin.
 
-**Required Fuel:**
-TunerStudio calculates Required Fuel automatically when you enter engine displacement, number of injectors, injector flow rate (cc/min), and the injection divider. **Do not hand-calculate** — use the firmware's built-in calculation under Basic/Load Settings → Engine Constants to avoid errors.
-
-**VE Adjustment from Measured AFR:**
+**Required Fuel Calculation:**
 ```
-New VE = Current VE × (Measured AFR / Target AFR)
+Required Fuel (ms) = (Engine CC × 5) / (Number of Injectors × Injector CC/Min) × 2
 ```
+(The ×2 accounts for 2 rotations per cycle)
 
 **Airflow Estimation:**
 ```

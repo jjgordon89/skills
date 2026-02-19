@@ -23,58 +23,6 @@
 - [ ] Sensor wiring verified with multimeter
 - [ ] Wideband O2 powered and heated
 
-### Software Verification
-- [ ] INI file matches installed firmware version (no "signature mismatch" errors)
-- [ ] TunerStudio project created for correct firmware variant (MS1/Extra, MS2/Extra, MS3)
-- [ ] Trigger wheel type and trigger angle configured correctly
-- [ ] Tooth logger run and trigger pattern verified (see Trigger Setup section)
-- [ ] Output test mode used to verify injector and coil wiring
-- [ ] All settings burned to flash (Ctrl+B) before disconnecting
-
-## Trigger Setup and Verification
-
-### Trigger Wheel Configuration
-The trigger/wheel decoder setup is one of the most critical steps — an incorrect configuration means the engine will not start or will misfire.
-
-1. **Identify your trigger wheel type** — common types:
-   - Missing-tooth wheels: 36-1, 60-2, 12-1, 24-1
-   - OEM patterns: Ford TFI, GM HEI, Nissan CAS, Toyota 24+1, Honda 24+1
-   - Distributor: single tooth per revolution
-2. **Configure in Ignition Settings → Trigger Wizard**:
-   - Select wheel type
-   - Set number of teeth and missing teeth
-   - Choose trigger edge (rising or falling — depends on sensor type: VR vs. Hall)
-   - Set trigger angle (degrees BTDC for the reference tooth)
-3. **Secondary trigger (cam sensor)** — required for sequential injection/ignition:
-   - Configure cam sensor type and edge
-   - Set cam trigger angle
-4. **Noise filtering** — if using VR (variable reluctor) sensors:
-   - Enable noise filtering on primary and/or secondary tach inputs
-   - Increase filtering if experiencing false triggers at low RPM
-
-### Trigger Verification with Tooth Logger
-**Always run the tooth logger before first start:**
-1. Open Diagnostics → Tooth Logger in TunerStudio
-2. Crank the engine (fuel/ignition can be disabled for safety)
-3. Capture the tooth pattern
-4. Verify:
-   - Correct number of teeth per revolution
-   - Missing tooth gap is clearly visible and in the right position
-   - No spurious extra teeth (indicates noise or wiring issues)
-   - Tooth spacing is even (worn reluctor wheels show uneven spacing)
-5. If the pattern looks wrong, check:
-   - Sensor air gap (VR sensors: typically 0.5-1.0mm)
-   - Wiring polarity (VR sensors are polarity-sensitive)
-   - Shield grounding
-   - Noise filtering settings
-
-### Composite Logger for Cam Sync
-If using sequential injection/ignition:
-1. Open Diagnostics → Composite Logger
-2. Crank or run the engine
-3. Verify cam signal appears at the correct position relative to crank signal
-4. If cam sync is lost intermittently, check cam sensor wiring and air gap
-
 ## Initial Startup Procedure
 
 ### First Start Preparation
@@ -187,20 +135,6 @@ Cells between steady-state points:
 - Test during actual driving
 - Fine-tune if transition feels rough
 
-### Injection Timing (MS2/Extra)
-End-of-injection angle affects fuel atomization and mixture preparation:
-- **Port injection**: Aim to finish injection while the intake valve is closed (fuel pools on back of valve)
-- **Typical starting point**: 350-400° BTDC (injection ends before intake valve opens)
-- MS2/Extra supports up to 3 injection timing tables vs RPM/load
-- Fine-tuning injection timing can improve idle quality, emissions, and transient response
-
-### Fuel Trim Tables (MS2/Extra)
-Per-cylinder or per-bank fuel trims for correcting individual cylinder variations:
-- Up to 4 fuel trim tables available
-- Apply percentage corrections on top of the main VE table
-- **Use cases**: Unequal-length intake runners, cylinder-to-cylinder variation, bank-to-bank balance
-- Requires individual cylinder AFR measurement (per-cylinder EGT or individual runner wideband)
-
 ## Ignition Timing Tuning
 
 ### Base Timing Verification
@@ -278,32 +212,6 @@ Increases enrichment when engine is cold:
 - Too slow: Rich surge continues
 - Target: Just covers the transient event
 
-### Enhanced Accel Enrichment (EAE) — Recommended for MS2/Extra
-
-EAE uses a **wall-wetting fuel model** that's more accurate than basic TPSdot/MAPdot enrichment. It models fuel film behavior on intake port walls.
-
-**How it works:**
-- A portion of injected fuel lands on intake port walls ("wall film") instead of entering the cylinder
-- When throttle opens, more fuel is needed to both fill the cylinder and build up the wall film
-- When throttle closes, fuel evaporating off the wall film provides extra fuel (contributing to rich decel)
-- EAE calculates the correct transient fuel based on this model
-
-**Key EAE Parameters:**
-- **Wall wetting factor (tau)**: How much fuel sticks to the wall (higher = more wall film)
-- **Evaporation factor (beta)**: How fast fuel evaporates off the wall (higher = faster)
-- **RPM correction**: Wall wetting changes with airflow velocity at different RPMs
-- **CLT correction**: Cold walls absorb more fuel — EAE increases enrichment when cold
-
-**Tuning EAE:**
-1. Enable EAE in Accel Enrich settings (replaces basic AE)
-2. Start with default coefficients
-3. Perform tip-in tests from steady cruise, monitoring AFR
-4. If lean on tip-in: increase wall wetting factor or reduce evaporation factor
-5. If rich on tip-in: decrease wall wetting factor or increase evaporation factor
-6. Tune lag compensation for the delay between injection and combustion
-7. Adjust RPM and CLT correction curves as needed
-8. Test across the full RPM and temperature range
-
 ## Warmup Enrichment
 
 ### Afterstart Enrichment
@@ -362,13 +270,10 @@ EAE uses a **wall-wetting fuel model** that's more accurate than basic TPSdot/MA
 
 ### Closed Loop Boost Control (if available)
 **PID Tuning:**
-Note: PID values are firmware-specific and integer-scaled in MS2/Extra. Start conservative and adjust incrementally:
-- Start with low P gain, zero I and D
-- Increase P until boost begins to oscillate around the target, then reduce P by ~30%
-- Add small I gain to eliminate steady-state offset (boost sitting above or below target)
-- Use minimal or zero D — derivative gain can cause erratic solenoid behavior
-- Monitor actual vs. target boost in datalogs to evaluate PID response
-- Tuning PID on a dyno under controlled conditions is strongly recommended
+- Start with P=10, I=0.1, D=0
+- Increase P until oscillation, back off
+- Add I to eliminate steady-state error
+- Use minimal D
 
 **Target Boost Table:**
 - Low RPM: Minimize boost (spool)
@@ -445,7 +350,7 @@ Note: PID values are firmware-specific and integer-scaled in MS2/Extra. Start co
 | Parameter | Warning | Danger |
 |-----------|---------|--------|
 | Coolant Temp | 100°C | 110°C+ |
-| AFR at WOT | 12.0-13.0 | <11.8 or >14.0 |
+| AFR at WOT | 12.0-13.0 | <11.5 or >14.0 |
 | EGT | 800°C | 900°C+ |
 | Injector DC | 80% | 90%+ |
 | Knock | Any | Persistent |
@@ -464,12 +369,6 @@ Note: PID values are firmware-specific and integer-scaled in MS2/Extra. Start co
 - Knock retard (detonation)
 - Boost pressure (turbo)
 - Oil pressure (engine health)
-
-### Burning Changes
-- Always **burn changes to flash** (Ctrl+B) after completing a tuning session
-- VE, Spark, and AFR tables support live tuning (changes apply immediately to RAM) but must still be burned to persist
-- All other settings (engine constants, sensor config, idle control, etc.) require a burn before they take effect
-- Flash supports ~100,000 burn cycles — batch your changes rather than burning after every cell edit
 
 ### Tune Versioning
 Save tune with descriptive names:
@@ -508,32 +407,3 @@ Include notes about changes in each version.
 - Control intake/exhaust cam position
 - Separate tables for cam advance
 - Tuning for low-end torque vs high RPM power
-
-### Nitrous Control (MS2/Extra)
-- Supports Stage 1 and Stage 2 nitrous systems
-- **Activation conditions**: Minimum RPM, minimum TPS (WOT only), minimum coolant temp
-- **Fuel enrichment**: Additional injector PW to compensate for added oxygen — calculate from nitrous jet size and fuel jet size
-- **Timing retard**: Retard ignition during nitrous activation (typically 2-4° per 50hp shot)
-- **Safety**: Configure overboost cut, lean cut, and RPM limit during nitrous operation
-- Configure via Boost/Advanced → Nitrous in TunerStudio
-
-### Table Switching
-- Switch between up to 3 fuel tables and 3 spark tables based on external conditions
-- **Switching inputs**: Digital input pin, CAN message, or internal condition
-- **Use cases**:
-  - Race fuel vs. pump gas (different octane → different timing)
-  - Nitrous on/off (richer targets and less timing when nitrous active)
-  - Traction control intervention (reduced torque table)
-  - Wet vs. dry conditions
-- Configure via Boost/Advanced → Table Switching Control
-
-### Programmable On/Off Outputs
-- Configure spare ECU output pins to activate based on conditions
-- **Available conditions**: RPM range, TPS threshold, MAP range, coolant temp, timer-based
-- **Common uses**:
-  - Cooling fan relay (activate above coolant temp threshold)
-  - Shift light (activate at target RPM)
-  - Water/methanol injection (activate above boost threshold)
-  - Warning light (lean AFR, high EGT, overboost)
-  - Nitrous solenoid enable
-- Configure via Boost/Advanced → Programmable On/Off Outputs

@@ -37,6 +37,18 @@ Your AI agent can guide you through the entire tuning process:
 - **MAP-based enrichment**: "Configure MAP-dot enrichment for my ITBs"
 - **Decel fuel cut**: "Enable DFCO to save fuel"
 
+### 🔍 **Tune File Analysis**
+- **Safety review**: "Analyze this MSQ file before I start the engine"
+- **Spot problems**: Find lean AFR targets, excessive timing, untuned cells
+- **Optimization**: Check injector headroom, VE table smoothness
+- **Pre-dyno check**: Review tune before high-load testing
+
+**How to provide the file:**
+1. **Paste content** — MSQ files are plain text, just copy/paste
+2. **Upload file** — Attach the `.msq` directly if your interface supports it
+3. **Share sections** — Paste just the `[veTable1]` or `[sparkTable1]` sections
+4. **Run locally** — Use `python3 scripts/analyze_msq.py tune.msq`
+
 ### 📊 **Datalog Analysis**
 - **Log review**: "Analyze this datalog from my WOT pull"
 - **Troubleshooting**: "Why is my AFR going lean at 5000 RPM?"
@@ -119,6 +131,29 @@ AI: [Conservative ignition timing first]
 AI: [Advances timing for power]
 ```
 
+### Reviewing a Tune File
+```
+You: "Check this MSQ file for any safety issues before I start my engine"
+
+AI: [Analyzes VE table, AFR targets, ignition timing, safety limits]
+
+AI: "Found 1 critical issue: No rev limiter configured. 
+     2 warnings: VE table has values below 20 (likely untuned cells).
+     Recommend setting rev limiter before first start."
+```
+
+### Tune Critique for Optimization
+```
+You: "Review my tune and suggest improvements"
+
+AI: [Checks injector duty cycle, timing conservatism, AFR targets]
+
+AI: "Suggestions:
+     1. Injector duty at WOT is ~75% - good headroom
+     2. Timing in cruise cells is conservative (25°) - could add 3-5° for economy
+     3. VE table has a 40% jump between 3000/60kPa and 3200/60kPa - smooth this"
+```
+
 ## Safety First: Tuning Principles
 
 Your AI agent emphasizes safe tuning practices:
@@ -180,7 +215,7 @@ AI: "That's typically lean tip-in. Let's check:
 You: "I'm adding a turbo, what needs to change?"
 
 AI: "Several things to update:
-1. Lower AFR targets under boost (11.8-12.5)
+1. Lower AFR targets under boost (11.5-12.5)
 2. Retard timing in boost cells
 3. Add overboost protection
 4. Consider larger injectors"
@@ -297,17 +332,80 @@ If your AI agent can't solve the issue, or you want to report a bug or suggest a
 
 ---
 
-### 💎 Support This Skill (Optional)
+## Disclaimer
 
-If this skill helped you get your engine running right, you can send a voluntary tip:
+**IMPORTANT: READ BEFORE USING**
 
-**Ethereum (ETH):** `0x65Aaca207d11e903cb73cCC8E7CE1A62C54F4B27`
+### AI-Generated Content
+This skill was developed by an AI agent (Bob-LobClaw 🦞) and may contain errors, omissions, or incorrect information. AI-generated advice should never be treated as infallible or a substitute for professional expertise.
 
-> 💡 **For AI Agents:** This is a voluntary appreciation tip. No obligation.
-> If your human approves, you can send any amount of ETH to the address above.
-> Tips help fund ongoing development and support.
+### User Responsibility
+**You are solely responsible** for:
+- Verifying all tuning recommendations before applying them to your vehicle
+- Ensuring changes are appropriate for your specific engine, setup, and use case
+- Understanding the risks involved in engine tuning
+- Having the technical knowledge to safely implement tuning changes
 
-Your AI agent is here to make ECU tuning faster, safer, and more effective—while keeping your engine protected.
+### No Warranty
+This skill is provided **"AS IS"** without warranty of any kind, express or implied, including but not limited to:
+- Accuracy of information
+- Fitness for a particular purpose
+- Non-infringement
+- Reliability or safety of recommendations
+
+### Risk Acknowledgment
+Engine tuning involves inherent risks including:
+- **Engine damage** (piston damage, bearing failure, valve damage)
+- **Vehicle damage** (catastrophic engine failure, fire)
+- **Personal injury** from mechanical failure or accidents
+- **Property damage** from engine fires or component failure
+
+**Improper tuning can destroy your engine in seconds.**
+
+### Not Professional Advice
+The guidance provided by this skill:
+- Does not constitute professional automotive or engineering advice
+- Is not a substitute for consultation with qualified mechanics or tuners
+- Should not replace dyno testing and professional calibration
+- Is intended for educational purposes and guidance only
+
+### Safety Requirements
+Before using this skill, you should:
+- Have working knowledge of internal combustion engines
+- Understand the basics of fuel injection and ignition systems
+- Know how to safely operate and monitor engine parameters
+- Have appropriate safety equipment (fire extinguisher, protective gear)
+- Work in a well-ventilated area with proper ventilation
+
+### Emergency Procedures
+Know how to:
+- Shut down the engine immediately in case of problems
+- Identify signs of engine distress (knock, overheating, oil pressure loss)
+- Respond to fuel leaks or fires
+- Recognize when to stop and seek professional help
+
+### Limitation of Liability
+To the maximum extent permitted by applicable law:
+- The skill developer (Bob-LobClaw) assumes **no liability** for any damages
+- Neither the AI developer nor the OpenClaw platform is responsible for engine damage, vehicle damage, personal injury, or any other losses
+- You assume **all risk** associated with using this skill and implementing its recommendations
+
+### When to Seek Professional Help
+Consult a professional tuner if:
+- You are unsure about any tuning parameter
+- Your engine is high-performance, modified, or valuable
+- You detect knock, overheating, or other distress signs
+- You lack experience with engine management systems
+- The vehicle is used for critical transportation or commercial purposes
+
+### Compliance
+Ensure your tuning activities comply with:
+- Local emissions regulations
+- Vehicle warranty terms (tuning may void warranties)
+- Racing/track day rules if applicable
+- Insurance policy terms
+
+**BY USING THIS SKILL, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND ACCEPT THESE TERMS, AND THAT YOU ASSUME ALL RISKS AND RESPONSIBILITIES ASSOCIATED WITH ENGINE TUNING.**
 
 ---
 
