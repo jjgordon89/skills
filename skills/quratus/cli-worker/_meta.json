@@ -1,0 +1,11 @@
+{
+  "owner": "quratus",
+  "slug": "cli-worker",
+  "displayName": "CLI Worker Skill (Kimi CLI)",
+  "latest": {
+    "version": "0.1.2",
+    "publishedAt": 1771494089936,
+    "commit": null
+  },
+  "history": []
+}
