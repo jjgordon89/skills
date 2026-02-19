@@ -86,5 +86,25 @@ The script automatically detects if compatible local skills (like `skills/feishu
 - **Review Mode**: Use `--review` for sensitive environments.
 - **Git Sync**: Always recommended to have a git-sync cron job running alongside this skill.
 
+## Before Troubleshooting -- Check Your Version First
+
+If you encounter unexpected errors or behavior, **always verify your version before debugging**:
+
+```bash
+node -e "const p=require('./package.json'); console.log(p.version)"
+```
+
+If you are not on the latest release, update first -- most reported issues are already fixed in newer versions:
+
+```bash
+# If installed via git
+git pull && npm install
+
+# If installed via npm (global install)
+npm install -g evolver@latest
+```
+
+Latest releases and changelog: `https://github.com/autogame-17/evolver/releases`
+
 ## License
 MIT

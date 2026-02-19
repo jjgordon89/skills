@@ -468,7 +468,7 @@ const CRITICAL_PROTECTED_PREFIXES = [
   'skills/feishu-post/',
   'skills/feishu-card/',
   'skills/feishu-doc/',
-  'skills/common/',
+  'skills/skill-tools/',
   'skills/clawhub/',
   'skills/clawhub-batch-undelete/',
   'skills/git-sync/',
@@ -782,7 +782,7 @@ function buildAutoGene({ signals, intent }) {
         '.git', 'node_modules',
         'skills/feishu-evolver-wrapper', 'skills/feishu-common',
         'skills/feishu-post', 'skills/feishu-card', 'skills/feishu-doc',
-        'skills/common', 'skills/clawhub', 'skills/clawhub-batch-undelete',
+        'skills/skill-tools', 'skills/clawhub', 'skills/clawhub-batch-undelete',
         'skills/git-sync',
       ],
     },
@@ -941,6 +941,7 @@ function solidify({ intent, summary, dryRun = false, rollbackOnFailure = true } 
 
   const sourceType = lastRun && lastRun.source_type ? String(lastRun.source_type) : 'generated';
   const reusedAssetId = lastRun && lastRun.reused_asset_id ? String(lastRun.reused_asset_id) : null;
+  const reusedChainId = lastRun && lastRun.reused_chain_id ? String(lastRun.reused_chain_id) : null;
 
   const event = {
     type: 'EvolutionEvent',
@@ -1080,7 +1081,8 @@ function solidify({ intent, summary, dryRun = false, rollbackOnFailure = true } 
     const visibility = String(process.env.EVOLVER_DEFAULT_VISIBILITY || 'public').toLowerCase();
     const minPublishScore = Number(process.env.EVOLVER_MIN_PUBLISH_SCORE) || 0.78;
 
-    // Skip publishing if: disabled, private, reused asset, or below minimum score
+    // Skip publishing if: disabled, private, direct-reused asset, or below minimum score.
+    // 'reference' mode produces a new capsule inspired by hub -- eligible for publish.
     if (autoPublish && visibility === 'public' && sourceType !== 'reused' && (capsule.outcome.score || 0) >= minPublishScore) {
       try {
         const { buildPublishBundle, httpTransportSend } = require('./a2aProtocol');
@@ -1094,8 +1096,6 @@ function solidify({ intent, summary, dryRun = false, rollbackOnFailure = true } 
           if (geneUsed && geneUsed.type === 'Gene' && geneUsed.id) {
             publishGene = sanitizePayload(geneUsed);
           } else {
-            // Synthesize minimal Gene from capsule data so bundle validation passes
-            var { computeAssetId: computeId } = require('./a2aProtocol');
             publishGene = {
               type: 'Gene',
               id: capsule.gene || ('gene_auto_' + (capsule.id || Date.now())),
@@ -1103,20 +1103,22 @@ function solidify({ intent, summary, dryRun = false, rollbackOnFailure = true } 
               signals_match: Array.isArray(capsule.trigger) ? capsule.trigger : [],
               summary: capsule.summary || '',
             };
-            publishGene.asset_id = computeId(publishGene);
           }
+          publishGene.asset_id = computeAssetId(publishGene);
 
           var sanitizedCapsule = sanitizePayload(capsule);
-          // Ensure Gene has asset_id
-          if (!publishGene.asset_id) {
-            var { computeAssetId: computeId2 } = require('./a2aProtocol');
-            publishGene.asset_id = computeId2(publishGene);
-          }
+          sanitizedCapsule.asset_id = computeAssetId(sanitizedCapsule);
+
+          var sanitizedEvent = (event && event.type === 'EvolutionEvent') ? sanitizePayload(event) : null;
+          if (sanitizedEvent) sanitizedEvent.asset_id = computeAssetId(sanitizedEvent);
+
+          var publishChainId = reusedChainId || null;
 
           var msg = buildPublishBundle({
             gene: publishGene,
             capsule: sanitizedCapsule,
-            event: event && event.type === 'EvolutionEvent' ? sanitizePayload(event) : null,
+            event: sanitizedEvent,
+            chainId: publishChainId,
           });
           var result = httpTransportSend(msg, { hubUrl });
           // httpTransportSend returns a Promise
@@ -1144,13 +1146,47 @@ function solidify({ intent, summary, dryRun = false, rollbackOnFailure = true } 
     } else {
       const reason = !autoPublish ? 'auto_publish_disabled'
         : visibility !== 'public' ? 'visibility_private'
-        : sourceType === 'reused' ? 'skip_reused_asset'
+        : sourceType === 'reused' ? 'skip_direct_reused_asset'
         : 'below_min_score';
       publishResult = { attempted: false, reason };
     }
   }
 
-  return { ok: success, event, capsule, gene: geneUsed, constraintCheck, validation, validationReport, blast, publishResult };
+  // --- Auto-complete Hub task ---
+  // If this evolution cycle was driven by a Hub task, mark it as completed
+  // with the produced capsule's asset_id. Runs after publish so the Hub
+  // can link the task result to the published asset.
+  let taskCompleteResult = null;
+  if (!dryRun && success && lastRun && lastRun.active_task_id) {
+    const resultAssetId = capsule && capsule.asset_id ? capsule.asset_id : (capsule && capsule.id ? capsule.id : null);
+    if (resultAssetId) {
+      try {
+        const { completeTask } = require('./taskReceiver');
+        const taskId = String(lastRun.active_task_id);
+        console.log(`[TaskComplete] Completing task "${lastRun.active_task_title || taskId}" with asset ${resultAssetId}`);
+        const completed = completeTask(taskId, resultAssetId);
+        if (completed && typeof completed.then === 'function') {
+          completed
+            .then(function (ok) {
+              if (ok) {
+                console.log('[TaskComplete] Task completed successfully on Hub.');
+              } else {
+                console.log('[TaskComplete] Hub rejected task completion (non-fatal).');
+              }
+            })
+            .catch(function (err) {
+              console.log('[TaskComplete] Failed (non-fatal): ' + (err && err.message ? err.message : err));
+            });
+        }
+        taskCompleteResult = { attempted: true, task_id: taskId, asset_id: resultAssetId };
+      } catch (e) {
+        console.log('[TaskComplete] Error (non-fatal): ' + e.message);
+        taskCompleteResult = { attempted: false, reason: e.message };
+      }
+    }
+  }
+
+  return { ok: success, event, capsule, gene: geneUsed, constraintCheck, validation, validationReport, blast, publishResult, taskCompleteResult };
 }
 
 module.exports = {

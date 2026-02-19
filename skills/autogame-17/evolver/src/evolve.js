@@ -28,6 +28,7 @@ const {
   memoryGraphPath,
 } = memoryAdapter;
 const { readStateForSolidify, writeStateForSolidify } = require('./gep/solidify');
+const { fetchTasks, selectBestTask, claimTask, taskToSignals } = require('./gep/taskReceiver');
 const { buildMutation, isHighRiskMutationAllowed } = require('./gep/mutation');
 const { selectPersonalityForRun } = require('./gep/personality');
 const { clip, writePromptArtifact, renderSessionsSpawnCall } = require('./gep/bridge');
@@ -851,6 +852,32 @@ async function run() {
     recentEvents,
   });
 
+  // --- Hub Task Auto-Claim ---
+  // Fetch available tasks from Hub, pick the best one, auto-claim it,
+  // and inject its signals so the evolution cycle focuses on it.
+  let activeTask = null;
+  try {
+    const hubTasks = await fetchTasks();
+    if (hubTasks.length > 0) {
+      const best = selectBestTask(hubTasks);
+      if (best) {
+        const alreadyClaimed = best.status === 'claimed';
+        const claimed = alreadyClaimed || await claimTask(best.id || best.task_id);
+        if (claimed) {
+          activeTask = best;
+          const taskSignals = taskToSignals(best);
+          // Prepend task signals (high priority) so selector picks relevant genes
+          for (const sig of taskSignals) {
+            if (!signals.includes(sig)) signals.unshift(sig);
+          }
+          console.log(`[TaskReceiver] ${alreadyClaimed ? 'Resuming' : 'Claimed'} task: "${best.title || best.id}" (${taskSignals.length} signals injected)`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`[TaskReceiver] Fetch/claim failed (non-fatal): ${e.message}`);
+  }
+
   const recentErrorMatches = recentMasterLog.match(/\[ERROR|Error:|Exception:|FAIL|Failed|"isError":true/gi) || [];
   const recentErrorCount = recentErrorMatches.length;
 
@@ -1168,12 +1195,15 @@ async function run() {
             : [],
         drift: !!IS_RANDOM_DRIFT,
         selected_by: selectedBy,
-        source_type: hubHit && hubHit.hit ? 'reused' : 'generated',
+        source_type: hubHit && hubHit.hit ? (hubHit.mode === 'direct' ? 'reused' : 'reference') : 'generated',
         reused_asset_id: hubHit && hubHit.hit ? (hubHit.asset_id || null) : null,
         reused_source_node: hubHit && hubHit.hit ? (hubHit.source_node_id || null) : null,
+        reused_chain_id: hubHit && hubHit.hit ? (hubHit.chain_id || null) : null,
         baseline_untracked: baselineUntracked,
         baseline_git_head: baselineHead,
         blast_radius_estimate: blastRadiusEstimate,
+        active_task_id: activeTask ? (activeTask.id || activeTask.task_id || null) : null,
+        active_task_title: activeTask ? (activeTask.title || null) : null,
       };
     writeStateForSolidify(prevState);
   } catch (e) {
@@ -1299,7 +1329,7 @@ ${mutationDirective}
       `selected_capsule: ${selectedCapsuleId ? String(selectedCapsuleId) : '(none)'}`,
       `mutation_category: ${mutation && mutation.category ? String(mutation.category) : '(none)'}`,
       `force_innovation: ${forceInnovation ? 'true' : 'false'}`,
-      `source_type: ${hubHit && hubHit.hit ? 'reused' : 'generated'}`,
+      `source_type: ${hubHit && hubHit.hit ? (isDirectReuse ? 'reused' : 'reference') : 'generated'}`,
       `hub_reuse_mode: ${isDirectReuse ? 'direct' : hubMatchedBlock ? 'reference' : 'none'}`,
     ].join('\n');
     console.log(`[THOUGHT_PROCESS]\n${thought}\n[/THOUGHT_PROCESS]`);

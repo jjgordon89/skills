@@ -21,6 +21,7 @@ const crypto = require('crypto');
 const { getGepAssetsDir } = require('./paths');
 const { computeAssetId } = require('./contentHash');
 const { captureEnvFingerprint } = require('./envFingerprint');
+const { getDeviceId } = require('./deviceId');
 
 const PROTOCOL_NAME = 'gep-a2a';
 const PROTOCOL_VERSION = '1.0.0';
@@ -32,7 +33,11 @@ function generateMessageId() {
 
 function getNodeId() {
   if (process.env.A2A_NODE_ID) return String(process.env.A2A_NODE_ID);
-  const raw = process.cwd() + '|' + (process.env.AGENT_NAME || 'default');
+  const deviceId = getDeviceId();
+  const agentName = process.env.AGENT_NAME || 'default';
+  // Include cwd so multiple evolver instances in different directories
+  // on the same machine get distinct nodeIds without manual config.
+  const raw = deviceId + '|' + agentName + '|' + process.cwd();
   return 'node_' + crypto.createHash('sha256').update(raw).digest('hex').slice(0, 12);
 }
 
@@ -115,13 +120,17 @@ function buildPublishBundle(opts) {
   var signature = crypto.createHmac('sha256', nodeSecret).update(signatureInput).digest('hex');
   var assets = [gene, capsule];
   if (event && event.type === 'EvolutionEvent') assets.push(event);
+  var publishPayload = {
+    assets: assets,
+    signature: signature,
+  };
+  if (o.chainId && typeof o.chainId === 'string') {
+    publishPayload.chain_id = o.chainId;
+  }
   return buildMessage({
     messageType: 'publish',
     senderId: o.nodeId,
-    payload: {
-      assets: assets,
-      signature: signature,
-    },
+    payload: publishPayload,
   });
 }
 
