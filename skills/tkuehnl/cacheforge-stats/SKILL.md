@@ -1,9 +1,21 @@
 ---
 name: cacheforge-stats
-description: CacheForge terminal dashboard — usage, savings, and performance metrics.
+version: 1.0.0
+description: CacheForge terminal dashboard — usage, savings, and performance metrics. See exactly where your tokens go.
+author: CacheForge
 license: MIT
 homepage: https://app.anvil-ai.io
 user-invocable: true
+tags:
+  - cacheforge
+  - metrics
+  - dashboard
+  - ai-agents
+  - token-optimization
+  - llm
+  - observability
+  - discord
+  - discord-v2
 metadata: {"openclaw":{"emoji":"📊","homepage":"https://app.anvil-ai.io","primaryEnv":"CACHEFORGE_API_KEY","requires":{"bins":["python3"],"env":["CACHEFORGE_API_KEY"]}}}
 ---
 
