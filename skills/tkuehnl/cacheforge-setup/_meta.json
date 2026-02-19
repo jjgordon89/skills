@@ -1,11 +1,17 @@
 {
   "owner": "tkuehnl",
   "slug": "cacheforge-setup",
-  "displayName": "CacheForge Setup",
+  "displayName": "Cacheforge Setup",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1771322646527,
-    "commit": "https://github.com/openclaw/skills/commit/1e6ecc17ff896af173ea20f83ca589544e14ec83"
+    "version": "1.0.0",
+    "publishedAt": 1771471457195,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1771322646527,
+      "commit": "https://github.com/openclaw/skills/commit/1e6ecc17ff896af173ea20f83ca589544e14ec83"
+    }
+  ]
 }

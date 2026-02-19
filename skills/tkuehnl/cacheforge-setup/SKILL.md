@@ -1,9 +1,22 @@
 ---
 name: cacheforge-setup
-description: Set up CacheForge — register, configure upstream, get your API key in 30 seconds.
+version: 1.0.0
+description: Set up CacheForge — register, configure upstream, get your API key in 30 seconds. One line of config, zero code changes.
+author: CacheForge
 license: MIT
 homepage: https://app.anvil-ai.io
 user-invocable: true
+tags:
+  - cacheforge
+  - setup
+  - onboarding
+  - ai-agents
+  - token-optimization
+  - llm
+  - openai
+  - proxy
+  - discord
+  - discord-v2
 metadata: {"openclaw":{"emoji":"⚒️","homepage":"https://app.anvil-ai.io","requires":{"bins":["python3"]}}}
 ---
 
