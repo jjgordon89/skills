@@ -3,11 +3,16 @@
   "slug": "the-uninscribed",
   "displayName": "The Uninscribed",
   "latest": {
-    "version": "1.13.1",
-    "publishedAt": 1771271718705,
-    "commit": "https://github.com/openclaw/skills/commit/b51dce58221193bea76aebf62b8f8fed7cd056c8"
+    "version": "2.2.0",
+    "publishedAt": 1771448186441,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.13.1",
+      "publishedAt": 1771271718705,
+      "commit": "https://github.com/openclaw/skills/commit/b51dce58221193bea76aebf62b8f8fed7cd056c8"
+    },
     {
       "version": "1.12.0",
       "publishedAt": 1771268868294,
