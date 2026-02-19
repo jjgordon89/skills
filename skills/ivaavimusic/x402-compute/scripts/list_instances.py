@@ -11,7 +11,7 @@ import sys
 
 import requests
 
-from wallet_signing import load_wallet_address
+from wallet_signing import load_wallet_address, create_compute_auth_headers
 
 BASE_URL = "https://compute.x402layer.cc"
 
@@ -20,9 +20,11 @@ def list_instances() -> dict:
     """List all compute instances for the current wallet."""
     wallet = load_wallet_address(required=True)
 
+    path = f"/compute/instances?wallet={wallet}"
+    auth_headers = create_compute_auth_headers("GET", path)
     response = requests.get(
         f"{BASE_URL}/compute/instances",
-        headers={"x-wallet-address": wallet},
+        headers=auth_headers,
         params={"wallet": wallet},
         timeout=30,
     )
@@ -38,9 +40,10 @@ def list_instances() -> dict:
         status = inst.get("status", "unknown")
         label = inst.get("label", inst.get("id", "N/A"))
         ip = inst.get("ip_address", "pending")
-        plan = inst.get("plan", "N/A")
+        plan = inst.get("plan") or inst.get("vultr_plan") or "N/A"
+        region = inst.get("region") or inst.get("vultr_region") or "N/A"
         expires = inst.get("expires_at", "N/A")
-        print(f"  [{status:8s}] {label:20s}  {plan:30s}  IP: {ip:16s}  Expires: {expires}")
+        print(f"  [{status:11s}] {label:20s}  {plan:16s}  {region:6s}  IP: {ip:16s}  Expires: {expires}")
 
     return data
 

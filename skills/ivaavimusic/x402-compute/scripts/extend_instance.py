@@ -12,6 +12,10 @@ Usage:
 
 Example:
   python extend_instance.py abc-123 --hours 720  # extend by 1 month
+
+AWAL mode:
+  export X402_USE_AWAL=1
+  export COMPUTE_API_KEY="x402c_..."  # required for compute management auth
 """
 
 import argparse
@@ -20,7 +24,8 @@ import sys
 
 import requests
 
-from wallet_signing import is_awal_mode, load_payment_signer, load_wallet_address
+from awal_bridge import awal_pay_url
+from wallet_signing import is_awal_mode, load_payment_signer, load_wallet_address, create_compute_auth_headers
 
 BASE_URL = "https://compute.x402layer.cc"
 
@@ -35,22 +40,34 @@ def _find_base_accept_option(challenge: dict) -> dict:
 
 def extend_instance(instance_id: str, hours: int = 720, network: str = "base") -> dict:
     """Extend a compute instance with x402 payment."""
-    wallet = load_wallet_address(required=True)
-
     body = {
         "extend_hours": hours,
         "network": network,
     }
+    body_json = json.dumps(body, separators=(",", ":"))
 
     print(f"Extending instance {instance_id} by {hours} hours...")
 
     # Step 1: Get 402 challenge
+    path = f"/compute/instances/{instance_id}/extend"
+    try:
+        auth_headers = create_compute_auth_headers("POST", path, body_json)
+    except Exception as exc:
+        if is_awal_mode():
+            return {
+                "error": (
+                    "AWAL mode for compute extension requires COMPUTE_API_KEY. "
+                    "Create it once using private-key mode via create_api_key.py."
+                ),
+                "details": str(exc),
+            }
+        return {"error": f"Failed to build auth headers: {exc}"}
     response = requests.post(
         f"{BASE_URL}/compute/instances/{instance_id}/extend",
-        json=body,
+        data=body_json,
         headers={
             "Content-Type": "application/json",
-            "x-wallet-address": wallet,
+            **auth_headers,
         },
         timeout=30,
     )
@@ -65,8 +82,28 @@ def extend_instance(instance_id: str, hours: int = 720, network: str = "base") -
     challenge = response.json()
 
     if is_awal_mode():
-        print("AWAL mode not yet supported for compute extension. Use private-key mode.")
-        return {"error": "AWAL not supported for compute yet"}
+        # Compute management auth requires signature headers or X-API-Key.
+        # In AWAL mode, use a pre-created COMPUTE_API_KEY for auth headers.
+        wallet = load_wallet_address(required=False)
+        print("Payment mode: AWAL (Base)")
+        result = awal_pay_url(
+            f"{BASE_URL}/compute/instances/{instance_id}/extend",
+            method="POST",
+            data=body,
+            headers={
+                "Content-Type": "application/json",
+                **auth_headers,
+                **({"x-wallet-address": wallet} if wallet else {}),
+            },
+        )
+        if "error" in result:
+            return result
+
+        order = result.get("order", {}) if isinstance(result, dict) else {}
+        if order:
+            print("✅ Instance extended!")
+            print(f"   New Expiry: {order.get('expires_at', 'N/A')}")
+        return result
 
     signer = load_payment_signer()
     base_option = _find_base_accept_option(challenge)
@@ -78,13 +115,14 @@ def extend_instance(instance_id: str, hours: int = 720, network: str = "base") -
     x_payment = signer.create_x402_payment_header(pay_to=pay_to, amount=amount)
 
     # Step 2: Pay and extend
+    auth_headers = create_compute_auth_headers("POST", path, body_json)
     response = requests.post(
         f"{BASE_URL}/compute/instances/{instance_id}/extend",
-        json=body,
+        data=body_json,
         headers={
             "Content-Type": "application/json",
             "X-Payment": x_payment,
-            "x-wallet-address": signer.wallet,
+            **auth_headers,
         },
         timeout=60,
     )

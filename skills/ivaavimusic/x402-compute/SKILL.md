@@ -1,6 +1,6 @@
 ---
 name: x402-compute
-version: 1.0.2
+version: 1.0.3
 description: |
   This skill should be used when the user asks to "provision GPU instance",
   "spin up a cloud server", "list compute plans", "browse GPU pricing",
@@ -42,6 +42,8 @@ Provision and manage GPU/VPS instances paid with USDC via the x402 payment proto
 **Currency:** USDC  
 **Protocol:** HTTP 402 Payment Required
 
+**Access Note:** Provide an SSH public key when provisioning. Passwords are not returned by the API.
+
 ---
 
 ## Quick Start
@@ -63,6 +65,12 @@ export WALLET_ADDRESS="0x..."
 ```bash
 npx skills add coinbase/agentic-wallet-skills
 export X402_USE_AWAL=1
+export COMPUTE_API_KEY="x402c_..."   # required for compute management auth in AWAL mode
+```
+
+Create `COMPUTE_API_KEY` once with private-key mode:
+```bash
+python {baseDir}/scripts/create_api_key.py --label "my-agent"
 ```
 
 ---
@@ -84,8 +92,10 @@ export X402_USE_AWAL=1
 | `browse_plans.py` | List available GPU/VPS plans with pricing |
 | `browse_regions.py` | List deployment regions |
 | `provision.py` | Provision a new instance (x402 payment) |
+| `create_api_key.py` | Create an API key for agent access (optional) |
 | `list_instances.py` | List your active instances |
 | `instance_details.py` | Get details for a specific instance |
+| `get_one_time_password.py` | Retrieve one-time root password fallback |
 | `extend_instance.py` | Extend instance lifetime (x402 payment) |
 | `destroy_instance.py` | Destroy an instance |
 
@@ -115,22 +125,31 @@ python {baseDir}/scripts/browse_plans.py --type vcg
 # Check available regions
 python {baseDir}/scripts/browse_regions.py
 
+# Generate a dedicated SSH key once (recommended for agents)
+ssh-keygen -t ed25519 -N "" -f ~/.ssh/x402_compute
+
 # Provision an instance (triggers x402 payment)
-python {baseDir}/scripts/provision.py vcg-a100-1c-2g-6gb lax --months 1 --label "my-gpu"
+python {baseDir}/scripts/provision.py vcg-a100-1c-2g-6gb lax --months 1 --label "my-gpu" --ssh-key-file ~/.ssh/x402_compute.pub
 
 # ⚠️ After provisioning, wait 2-3 minutes for Vultr to complete setup
-# Then fetch your credentials (IP, root password):
+# Then fetch your instance details (IP, status):
 python {baseDir}/scripts/instance_details.py <instance_id>
 ```
 
 ### B. Manage Instances
 
 ```bash
+# Optional: create a reusable API key (avoids message signing each request)
+python {baseDir}/scripts/create_api_key.py --label "my-agent"
+
 # List all your instances
 python {baseDir}/scripts/list_instances.py
 
 # Get details for one instance
 python {baseDir}/scripts/instance_details.py <instance_id>
+
+# Optional fallback if no SSH key was provided during provisioning
+python {baseDir}/scripts/get_one_time_password.py <instance_id>
 
 # Extend by 1 month
 python {baseDir}/scripts/extend_instance.py <instance_id> --hours 720
@@ -167,7 +186,8 @@ python {baseDir}/scripts/destroy_instance.py <instance_id>
 |----------|--------------|-------------|
 | `PRIVATE_KEY` | Base payments (private-key mode) | EVM private key (0x...) |
 | `WALLET_ADDRESS` | All operations | Your wallet address |
-| `X402_USE_AWAL` | AWAL mode | Set `1` to enable Coinbase Agentic Wallet |
+| `COMPUTE_API_KEY` | AWAL mode / optional | Reusable API key for compute management endpoints |
+| `X402_USE_AWAL` | AWAL mode | Set `1` to enable Coinbase Agentic Wallet for Base payments |
 | `X402_AUTH_MODE` | Auth selection (optional) | `auto`, `private-key`, or `awal` |
 
 ---
