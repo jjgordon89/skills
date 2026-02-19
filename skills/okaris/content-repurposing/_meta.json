@@ -3,9 +3,15 @@
   "slug": "content-repurposing",
   "displayName": "Content Repurposing",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1770656679797,
-    "commit": "https://github.com/openclaw/skills/commit/6655ee3a99bd431cd7cc4441417ba4ddce2e8179"
+    "version": "0.1.5",
+    "publishedAt": 1771403124999,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1770656679797,
+      "commit": "https://github.com/openclaw/skills/commit/6655ee3a99bd431cd7cc4441417ba4ddce2e8179"
+    }
+  ]
 }

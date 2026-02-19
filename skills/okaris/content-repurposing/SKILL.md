@@ -1,12 +1,6 @@
 ---
 name: content-repurposing
-description: |
-  Content atomization — turn one piece of content into many formats.
-  Covers blog-to-thread, blog-to-carousel, podcast-to-blog, video-to-quotes, and more.
-  Use for: content marketing, social media, multi-platform distribution, content strategy.
-  Triggers: content repurposing, repurpose content, content atomization, content recycling,
-  one to many content, multi platform content, cross post, adapt content, reformat content,
-  blog to thread, blog to video, podcast to blog, content multiplication
+description: "Content atomization — turn one piece of content into many formats. Covers blog-to-thread, blog-to-carousel, podcast-to-blog, video-to-quotes, and more. Use for: content marketing, social media, multi-platform distribution, content strategy. Triggers: content repurposing, repurpose content, content atomization, content recycling, one to many content, multi platform content, cross post, adapt content, reformat content, blog to thread, blog to video, podcast to blog, content multiplication"
 allowed-tools: Bash(infsh *)
 ---
 
@@ -26,6 +20,8 @@ infsh app run falai/flux-dev-lora --input '{
   "height": 1024
 }'
 ```
+
+> **Install note:** The [install script](https://cli.inference.sh) only detects your OS/architecture, downloads the matching binary from `dist.inference.sh`, and verifies its SHA-256 checksum. No elevated permissions or background processes. [Manual install & verification](https://dist.inference.sh/cli/checksums.txt) available.
 
 ## The Content Pyramid
 
@@ -245,10 +241,10 @@ For each piece of long-form content, create:
 ## Related Skills
 
 ```bash
-npx skills add inferencesh/skills@ai-social-media-content
-npx skills add inferencesh/skills@ai-image-generation
-npx skills add inferencesh/skills@text-to-speech
-npx skills add inferencesh/skills@twitter-automation
+npx skills add inference-sh/skills@ai-social-media-content
+npx skills add inference-sh/skills@ai-image-generation
+npx skills add inference-sh/skills@text-to-speech
+npx skills add inference-sh/skills@twitter-automation
 ```
 
 Browse all apps: `infsh app list`
