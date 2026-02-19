@@ -14,6 +14,11 @@ class BaseCommerceClient:
     """
     def __init__(self, base_url: str, brand_id: str):
         self.base_url = base_url.rstrip('/')
+        
+        # Security: Enforce HTTPS for production endpoints
+        if not self.base_url.startswith('https://') and not any(h in self.base_url for h in ['localhost', '127.0.0.1']):
+            raise ValueError(f"Insecure URL blocked: Commerce API must use HTTPS. Provided: {self.base_url}")
+            
         self.brand_id = brand_id
         
         # 标准 Clawdbot 凭证目录

@@ -88,6 +88,8 @@ def main():
     
     prof_p = subparsers.add_parser("update-profile", help="Update user profile")
     prof_p.add_argument("--name", help="Nickname/Display Name")
+    prof_p.add_argument("--phone", help="Phone number")
+    prof_p.add_argument("--email", help="Email address")
     prof_p.add_argument("--province", help="Province")
     prof_p.add_argument("--city", help="City")
     prof_p.add_argument("--address", help="Detailed address")

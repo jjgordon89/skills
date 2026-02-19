@@ -1,29 +1,9 @@
 ---
 name: standard-agentic-commerce-engine
-version: 1.4.5
+version: 1.4.8
 description: A production-ready universal engine for Agentic Commerce. This tool enables autonomous agents to interact with any compatible headless e-commerce backend through a standardized protocol. It provides out-of-the-box support for discovery, cart operations, and secure user management.
 tags: [ecommerce, shopping-agent, commerce-engine, standard-protocol, headless-commerce, agentic-web]
-metadata:
-  clawdbot:
-    emoji: 🛒
-    requires:
-      bins:
-        - python3
-      tools:
-        - web_search
-        - web_fetch
-      env:
-        - name: COMMERCE_URL
-          description: Target API base URL (e.g. https://api.brand.com/v1)
-        - name: COMMERCE_BRAND_ID
-          description: Unique slug for the brand to differentiate credential storage
-      paths:
-        - ~/.clawdbot/credentials/agent-commerce-engine/
-    install:
-      - id: python-deps
-        kind: pip
-        package: requests
-        label: "Install Python dependencies"
+metadata: {"clawdbot":{"emoji":"🛒","requires":{"bins":["python3"],"tools":["web_search","web_fetch"],"env":[{"name":"COMMERCE_URL","description":"Target API base URL"},{"name":"COMMERCE_BRAND_ID","description":"Unique slug for the brand"}],"paths":["~/.clawdbot/credentials/agent-commerce-engine/"]},"install":[{"id":"python-deps","kind":"pip","package":"requests","label":"Install Python dependencies"}]}}
 ---
 
 # Standard Agentic Commerce Engine
@@ -50,6 +30,7 @@ To ensure transparency and protect user data, the Standard Agentic Commerce Engi
 
 ### 2. Secure Transmission
 - **Token-based Auth**: Uses `x-api-token` headers for authentication. Raw passwords are only transmitted once during the `login` or `register` phase to exchange for a token.
+- **HTTPS Enforcement**: As of v1.4.7, the engine strictly enforces HTTPS for all remote communication to prevent credential interception.
 - **Encrypted Transport**: All communication with the backend MUST be over HTTPS to ensure tokens are protected in transit.
 
 ### 3. Anonymous Tracking (Visitor ID)
@@ -82,7 +63,7 @@ Follow these logical flows to ensure a high-quality user experience:
 - **Logic**: The API is stateless. Actions requiring identity will return `401 Unauthorized` if credentials aren't saved.
 - **Commands**:
     1. View profile: `python3 scripts/commerce.py get-profile`
-    2. Update details: `python3 scripts/commerce.py update-profile --name "Name" --address "..."`
+    2. Update details: `python3 scripts/commerce.py update-profile --name "Name" --address "..." --phone "..." --email "..."`
 - **Required Data**: Respect the schema of the specific brand's backend.
 
 ### 3. Registration Flow
