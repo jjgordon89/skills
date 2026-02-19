@@ -1,0 +1,11 @@
+{
+  "owner": "james-southendsolutions",
+  "slug": "camino-route",
+  "displayName": "Route between two locations",
+  "latest": {
+    "version": "0.2.0",
+    "publishedAt": 1771301273047,
+    "commit": null
+  },
+  "history": []
+}
