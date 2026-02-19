@@ -17,8 +17,11 @@ Nextbrowser provides cloud browsers and autonomous browser automation via API.
 If not configured, tell the user:
 > To use Nextbrowser, you need an API key. Get one at https://app.nextbrowser.com/user-settings (new signups get 2000 free credits). Then configure it:
 > ```
-> openclaw config set skills.entries.next-browser.apiKey "nb_your_key_here"
+> openclaw config set skills.entries.next-browser.apiKey "YOUR_API_KEY"
 > ```
+
+**Important:** Nextbrowser API keys can have various formats and prefixes. 
+Do NOT validate the key format yourself - simply use whatever key the user provides. If the key is invalid, the API will return an authentication error, and only then should you ask the user to verify their key.
 
 Base URL: `https://app.nextbrowser.com/api/v1`
 

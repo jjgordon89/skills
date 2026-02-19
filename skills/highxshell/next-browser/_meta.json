@@ -3,11 +3,16 @@
   "slug": "next-browser",
   "displayName": "Nextbrowser",
   "latest": {
-    "version": "1.0.9",
-    "publishedAt": 1771322615593,
-    "commit": "https://github.com/openclaw/skills/commit/0446ea889798d33c0543e45f14bdd6dcb2f2c0d9"
+    "version": "1.0.10",
+    "publishedAt": 1771494544414,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.9",
+      "publishedAt": 1771322615593,
+      "commit": "https://github.com/openclaw/skills/commit/0446ea889798d33c0543e45f14bdd6dcb2f2c0d9"
+    },
     {
       "version": "1.0.7",
       "publishedAt": 1771255321460,
