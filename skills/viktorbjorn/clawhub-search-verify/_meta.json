@@ -1,0 +1,11 @@
+{
+  "owner": "viktorbjorn",
+  "slug": "clawhub-search-verify",
+  "displayName": "Clawhub Search & Verify",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1771475640239,
+    "commit": null
+  },
+  "history": []
+}
