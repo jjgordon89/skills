@@ -101,6 +101,7 @@ def update_memory(meal_name, food_item, nutrition_info, notes=""):
     now = datetime.datetime.now()
     date_string = now.strftime("%Y-%m-%d")
     filename = f"/root/clawd/memory/{date_string}.md"
+    obsidian_filename = f"/root/clawd/obsidian-vault/memory/{date_string}.md"
 
     # Get targets
     targets = get_macronutrient_targets()
@@ -145,6 +146,34 @@ def update_memory(meal_name, food_item, nutrition_info, notes=""):
         if targets['calories']:
             remaining_cal = targets['calories'] - totals['calories']
             print(f"剩余额度: {remaining_cal:.0f} kcal")
+        
+        # Copy to Obsidian vault
+        try:
+            import shutil
+            shutil.copy2(filename, obsidian_filename)
+            print(f"✅ 已同步到 Obsidian: {obsidian_filename}")
+        except Exception as e:
+            print(f"⚠️ Obsidian 同步失败: {e}")
+        
+        # Push to GitHub
+        try:
+            import subprocess
+            obsidian_dir = "/root/clawd/obsidian-vault"
+            date_str = now.strftime("%Y-%m-%d")
+            
+            # Git add, commit, push
+            subprocess.run(["git", "-C", obsidian_dir, "add", "-A"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", obsidian_dir, "commit", "-m", f"Update diet log for {date_str}", "--allow-empty"], check=False, capture_output=True)
+            result = subprocess.run(["git", "-C", obsidian_dir, "push", "origin", "master"], check=False, capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"✅ 已推送到 GitHub")
+            else:
+                # Try pull and push again
+                subprocess.run(["git", "-C", obsidian_dir, "pull", "origin", "master", "--rebase"], check=False, capture_output=True)
+                subprocess.run(["git", "-C", obsidian_dir, "push", "origin", "master"], check=False, capture_output=True)
+                print(f"✅ 已推送到 GitHub (after rebase)")
+        except Exception as e:
+            print(f"⚠️ GitHub 推送失败: {e}")
     except Exception as e:
         print(f"Error writing to file: {e}")
 
