@@ -1,12 +1,6 @@
 ---
 name: landing-page-design
-description: |
-  Landing page conversion optimization with layout rules, hero section design, and CTA psychology.
-  Covers above-the-fold formula, social proof placement, mobile design, and F-pattern reading.
-  Use for: startup landing pages, product pages, SaaS marketing, conversion optimization.
-  Triggers: landing page, hero section, above the fold, conversion optimization,
-  landing page design, cta button, hero image, landing page layout, saas landing page,
-  product page design, conversion rate, landing page best practices
+description: "Landing page conversion optimization with layout rules, hero section design, and CTA psychology. Covers above-the-fold formula, social proof placement, mobile design, and F-pattern reading. Use for: startup landing pages, product pages, SaaS marketing, conversion optimization. Triggers: landing page, hero section, above the fold, conversion optimization, landing page design, cta button, hero image, landing page layout, saas landing page, product page design, conversion rate, landing page best practices"
 allowed-tools: Bash(infsh *)
 ---
 
@@ -31,6 +25,8 @@ infsh app run tavily/search-assistant --input '{
   "query": "best SaaS landing page examples 2024 conversion rate"
 }'
 ```
+
+> **Install note:** The [install script](https://cli.inference.sh) only detects your OS/architecture, downloads the matching binary from `dist.inference.sh`, and verifies its SHA-256 checksum. No elevated permissions or background processes. [Manual install & verification](https://dist.inference.sh/cli/checksums.txt) available.
 
 ## Above-the-Fold Formula
 
@@ -239,9 +235,9 @@ infsh app run infsh/html-to-image --input '{
 ## Related Skills
 
 ```bash
-npx skills add inferencesh/skills@ai-image-generation
-npx skills add inferencesh/skills@web-search
-npx skills add inferencesh/skills@prompt-engineering
+npx skills add inference-sh/skills@ai-image-generation
+npx skills add inference-sh/skills@web-search
+npx skills add inference-sh/skills@prompt-engineering
 ```
 
 Browse all apps: `infsh app list`
