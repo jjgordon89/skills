@@ -49,7 +49,9 @@ export async function runWorktree(args: string[]): Promise<number> {
     const basePath = getWorktreeBasePath();
     const worktreePath = resolveTaskIdPath(basePath, taskId);
     if (!worktreePath) {
-      console.error("Invalid taskId: must be alphanumeric and hyphens only (no path traversal).");
+      console.error(
+        "Invalid taskId: must be alphanumeric and hyphens only (no path traversal)."
+      );
       return 1;
     }
     try {

@@ -3,6 +3,7 @@
  * KIMI_CLI_PATH (or similar) is set by an untrusted environment.
  * Must not contain shell metacharacters or spaces; used with spawn(..., { shell: false }).
  */
+// eslint-disable-next-line no-control-regex
 const SAFE_CLI_PATH_REGEX = /^[^\s;|&$`"'<>\x00-\x1f]+$/;
 const MAX_LEN = 512;
 

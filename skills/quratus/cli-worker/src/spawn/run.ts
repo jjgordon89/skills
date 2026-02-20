@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { getSafeKimiCliPath } from "../safe-cli-path.js";
+import { sanitizePrompt } from "../sanitize.js";
 
 export interface RunResult {
   exitCode: number | null;
@@ -13,19 +14,8 @@ export interface RunOptions {
   timeoutMs?: number;
 }
 
-/**
- * Sanitize prompt before passing to subprocess. Prevents argument injection.
- * - Strips null bytes (can truncate argv).
- * - Replaces other C0 control chars (except tab, newline, CR) with space so
- *   downstream cannot be confused by control sequences.
- * We use spawn() with an array of args (no shell), so the prompt is a single
- * argument; this is defense-in-depth. Exported for tests.
- */
-export function sanitizePrompt(prompt: string): string {
-  return prompt
-    .replace(/\0/g, "")
-    .replace(/[\x01-\x08\x0b\x0c\x0e-\x1f]/g, " ");
-}
+// Re-export sanitizePrompt for backward compatibility with existing tests
+export { sanitizePrompt };
 
 /**
  * Run Kimi CLI with prompt, capture stdout line-by-line.

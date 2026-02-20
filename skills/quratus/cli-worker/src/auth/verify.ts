@@ -84,7 +84,8 @@ export function verifyKimiRun(): VerifyResult {
     shell: false,
   });
   if (result.status === 0) return { ok: true };
-  const msg = result.error?.message ?? result.stderr?.trim() ?? `exit ${result.status}`;
+  const msg =
+    result.error?.message ?? result.stderr?.trim() ?? `exit ${result.status}`;
   return {
     ok: false,
     reason: "run_failed",

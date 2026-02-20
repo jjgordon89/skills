@@ -3,11 +3,16 @@
   "slug": "cli-worker",
   "displayName": "CLI Worker Skill (Kimi CLI)",
   "latest": {
-    "version": "0.2.4",
-    "publishedAt": 1771504944623,
-    "commit": "https://github.com/openclaw/skills/commit/70ff7868d1dd4b0772780d37107f6282347da5d9"
+    "version": "0.3.0",
+    "publishedAt": 1771520798905,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.2.4",
+      "publishedAt": 1771504944623,
+      "commit": "https://github.com/openclaw/skills/commit/70ff7868d1dd4b0772780d37107f6282347da5d9"
+    },
     {
       "version": "0.2.3",
       "publishedAt": 1771504074273,

@@ -1,6 +1,7 @@
-export function generateAgentsMd(task) {
+const DEFAULT_TITLE = "OpenClaw Kimi Worker - Task Instructions";
+export function generateAgentsMd(task, title = DEFAULT_TITLE) {
     const lines = [
-        "# OpenClaw Kimi Worker - Task Instructions",
+        `# ${title}`,
         "",
         "Execute the assigned task in this worktree. Report when done.",
         "",

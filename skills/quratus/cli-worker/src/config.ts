@@ -1,9 +1,23 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import type { ProviderId } from "./providers/types.js";
+
+export interface CliWorkerConfig {
+  /** CLI provider to use: kimi, claude, or opencode */
+  provider?: ProviderId;
+}
+
+export interface SkillsConfig {
+  ["cli-worker"]?: CliWorkerConfig;
+}
 
 export interface OpenClawConfig {
   worktree?: { basePath?: string };
+  /** CLI worker specific configuration */
+  cliWorker?: CliWorkerConfig;
+  /** Skills configuration (alternative to cliWorker) */
+  skills?: SkillsConfig;
   [key: string]: unknown;
 }
 

@@ -1,8 +1,13 @@
 import type { TaskInput } from "../types.js";
 
-export function generateAgentsMd(task: TaskInput): string {
+const DEFAULT_TITLE = "OpenClaw Kimi Worker - Task Instructions";
+
+export function generateAgentsMd(
+  task: TaskInput,
+  title: string = DEFAULT_TITLE
+): string {
   const lines: string[] = [
-    "# OpenClaw Kimi Worker - Task Instructions",
+    `# ${title}`,
     "",
     "Execute the assigned task in this worktree. Report when done.",
     "",

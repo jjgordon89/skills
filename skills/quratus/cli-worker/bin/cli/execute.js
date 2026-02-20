@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { verifyAll } from "../auth/verify.js";
-import { runKimi } from "../spawn/run.js";
-import { parseStreamJson } from "../parser/stream-json.js";
+import { getConfig } from "../config.js";
+import { getProviderFromConfig, isValidProviderId, VALID_PROVIDER_IDS, } from "../providers/index.js";
 import { generateAgentsMd } from "../templates/agents-md.js";
 import { writeManifest } from "../manifest/write.js";
 import { getRepoPath } from "../worktree/repo.js";
@@ -21,6 +20,7 @@ function parseArgs(args) {
     const constraints = [];
     const successCriteria = [];
     let relevantFiles = [];
+    let providerFlag;
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--repo" && args[i + 1]) {
             repoFlag = args[i + 1];
@@ -58,6 +58,11 @@ function parseArgs(args) {
             i++;
             continue;
         }
+        if (args[i] === "--provider" && args[i + 1]) {
+            providerFlag = args[i + 1];
+            i++;
+            continue;
+        }
         if (!args[i].startsWith("--")) {
             prompt = args[i];
             break;
@@ -72,17 +77,28 @@ function parseArgs(args) {
         constraints,
         successCriteria,
         relevantFiles,
+        providerFlag,
     };
 }
 const AGENTS_MD = "AGENTS.md";
 export async function runExecute(args) {
     const parsed = parseArgs(args);
-    const { prompt, outputFormat, cwd } = parsed;
+    const { prompt, outputFormat, cwd, providerFlag } = parsed;
     if (!prompt) {
-        console.error('Usage: cli-worker execute "<prompt>" [--output-format text|json] [--constraint "X"] [--success "Y"] [--files "path1,path2"]');
+        console.error('Usage: cli-worker execute "<prompt>" [--output-format text|json] [--constraint "X"] [--success "Y"] [--files "path1,path2"] [--provider kimi|claude|opencode]');
         return 1;
     }
-    const auth = verifyAll();
+    // Validate provider flag if provided
+    if (providerFlag && !isValidProviderId(providerFlag)) {
+        console.error(`✗ Unknown provider: ${providerFlag}`);
+        console.error(`\nValid providers: ${VALID_PROVIDER_IDS.join(", ")}`);
+        return 1;
+    }
+    // Get config and resolve provider
+    const config = getConfig();
+    const provider = getProviderFromConfig(config, providerFlag);
+    // Verify provider is authenticated
+    const auth = await Promise.resolve(provider.verify());
     if (!auth.ok) {
         console.error("✗", auth.detail ?? auth.reason);
         return 1;
@@ -102,7 +118,8 @@ export async function runExecute(args) {
     else {
         worktreePath = cwd;
     }
-    const reportPath = path.join(worktreePath, ".openclaw", "kimi-reports", `${taskId}.json`);
+    // Use provider-specific report subdir
+    const reportPath = path.join(worktreePath, ".openclaw", provider.reportSubdir(), `${taskId}.json`);
     const task = {
         prompt,
         worktreePath,
@@ -114,7 +131,8 @@ export async function runExecute(args) {
     };
     try {
         writeManifest(taskId, task, worktreePath, reportPath);
-        const agentsMd = generateAgentsMd(task);
+        // Use provider-specific AGENTS.md title
+        const agentsMd = generateAgentsMd(task, provider.agentsMdTitle());
         fs.writeFileSync(path.join(worktreePath, AGENTS_MD), agentsMd, "utf-8");
     }
     catch (err) {
@@ -124,18 +142,20 @@ export async function runExecute(args) {
     const timeoutMs = parsed.timeoutMinutes != null
         ? parsed.timeoutMinutes * 60 * 1000
         : undefined;
-    const result = await runKimi(prompt, worktreePath, { timeoutMs });
+    // Run using the provider
+    const result = await provider.run(prompt, worktreePath, { timeoutMs });
     if (result.exitCode !== 0) {
         const exitCode = result.exitCode ?? 1;
         const stderrMsg = result.stderr ? `: ${result.stderr.trim()}` : "";
-        console.error(`Kimi failed (exit ${exitCode})${stderrMsg}`);
+        console.error(`${provider.displayName} failed (exit ${exitCode})${stderrMsg}`);
         return exitCode;
     }
     if (outputFormat === "text") {
         result.stdoutLines.forEach((line) => console.log(line));
         return 0;
     }
-    const { finalText } = parseStreamJson(result.stdoutLines);
+    // Parse using the provider's parser
+    const { finalText } = provider.parseStdout(result.stdoutLines);
     if (finalText)
         console.log(finalText);
     return 0;
