@@ -1,0 +1,11 @@
+{
+  "owner": "pfrederiksen",
+  "slug": "synology-backup",
+  "displayName": "Synology Backup",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771547851357,
+    "commit": null
+  },
+  "history": []
+}
