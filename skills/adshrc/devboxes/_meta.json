@@ -3,11 +3,16 @@
   "slug": "devboxes",
   "displayName": "Openclaw Devboxes Skill",
   "latest": {
-    "version": "1.3.1",
-    "publishedAt": 1771361966904,
-    "commit": "https://github.com/openclaw/skills/commit/48e273e463b0449ba064bbc1cca729fa4b39a522"
+    "version": "1.3.2",
+    "publishedAt": 1771428667308,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.3.1",
+      "publishedAt": 1771361966904,
+      "commit": "https://github.com/openclaw/skills/commit/48e273e463b0449ba064bbc1cca729fa4b39a522"
+    },
     {
       "version": "1.2.1",
       "publishedAt": 1771264827732,
