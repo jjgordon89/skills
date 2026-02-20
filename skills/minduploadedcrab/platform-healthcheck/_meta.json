@@ -1,0 +1,11 @@
+{
+  "owner": "minduploadedcrab",
+  "slug": "platform-healthcheck",
+  "displayName": "Platform Healthcheck",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771533597867,
+    "commit": null
+  },
+  "history": []
+}
