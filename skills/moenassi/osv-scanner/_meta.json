@@ -1,0 +1,11 @@
+{
+  "owner": "moenassi",
+  "slug": "osv-scanner",
+  "displayName": "OSV Scanner",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771509965390,
+    "commit": null
+  },
+  "history": []
+}
