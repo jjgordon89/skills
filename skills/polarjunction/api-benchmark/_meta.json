@@ -1,0 +1,11 @@
+{
+  "owner": "polarjunction",
+  "slug": "api-benchmark",
+  "displayName": "API Benchmark",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1771534862856,
+    "commit": null
+  },
+  "history": []
+}
