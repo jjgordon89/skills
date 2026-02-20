@@ -1,6 +1,6 @@
 ---
 name: hyperstack
-description: "Typed graph memory for multi-agent coordination. Replace GOALS.md + DECISIONS.md with queryable cards and relations. Ask 'what blocks task X?' and get exact answers, not text blobs."
+description: "Typed graph memory for multi-agent coordination. Replace GOALS.md + DECISIONS.md with queryable cards and relations. Ask 'what blocks task X?' and get exact answers. Ask 'what depends on this card?' and trace full impact. Ask 'what's related to this?' and get scored recommendations. Ask anything in plain English — smart search picks the right mode automatically. Pin cards to protect them. Prune stale memory. Commit agent outcomes as decisions. Zero LLM cost."
 user-invocable: true
 homepage: https://cascadeai.dev/hyperstack
 metadata:
@@ -9,6 +9,7 @@ metadata:
     requires:
       env:
         - HYPERSTACK_API_KEY
+        - HYPERSTACK_WORKSPACE
     primaryEnv: HYPERSTACK_API_KEY
 ---
 
@@ -16,22 +17,29 @@ metadata:
 
 ## What this does
 
-Replaces markdown-file coordination (GOALS.md, DECISIONS.md, WORKING.md) with a typed knowledge graph that any agent can query.
+Replaces markdown-file coordination (GOALS.md, DECISIONS.md, WORKING.md) with a typed knowledge graph that any agent can query. Five graph traversal modes — forward, impact, recommend, smart search, and time-travel — cover every relational question an agent needs to ask. Memory pruning removes stale cards. TTL scratchpad handles working memory. Feedback commit turns successful outcomes into permanent decisions.
 
-**Before** (current OpenClaw multi-agent):
+**Before** (current multi-agent):
 ```
 # DECISIONS.md (append-only)
 - 2026-02-15: Use Clerk for auth (coder-agent)
 - 2026-02-16: Migration blocks production deploy (ops-agent)
 ```
-"What blocks deploy?" → `grep -r "blocks.*deploy" *.md` → manual, fragile
+"What breaks if we change auth?" → grep through every file → manual, fragile, slow
 
 **After** (HyperStack):
 ```
-"What blocks deploy?" → hs_blockers deploy-prod → [migration-23] Auth migration to Clerk
+"What breaks if we change auth?"    → hs_impact use-clerk → [auth-api, deploy-prod, billing-v2]
+"What blocks deploy?"               → hs_blockers deploy-prod → [migration-23]
+"What's related to stripe?"         → hs_recommend use-stripe → scored list of related cards
+"What depends on the API?"          → hs_smart_search "what depends on the API?" → auto-routed
+"Clean up old memory"               → hs_prune dry=true → preview, then prune
+"Agent completed a task"            → hs_commit → outcome stored as decided card
 ```
 
 Typed relations. Exact answers. Zero LLM cost.
+
+---
 
 ## Tools
 
@@ -41,8 +49,31 @@ Search the shared knowledge graph. Hybrid semantic + keyword matching.
 hs_search({ query: "authentication setup" })
 ```
 
+### hs_smart_search ✨ NEW in v1.0.18
+Agentic RAG — automatically routes to the best retrieval mode (search, graph traversal, or impact analysis) based on the query. Use this when you're unsure which mode to use, or for natural language queries. Returns results plus the mode that was used.
+```
+hs_smart_search({ query: "what depends on the auth system?" })
+→ routed to: impact
+→ [auth-api] API Service — via: triggers
+→ [billing-v2] Billing v2 — via: depends-on
+→ [deploy-prod] Production Deploy — via: blocks
+
+hs_smart_search({ query: "authentication setup" })
+→ routed to: search
+→ Found 3 memories: ...
+
+# Optional: hint a starting card slug
+hs_smart_search({ query: "what breaks if this changes?", slug: "use-clerk" })
+```
+
+When to use:
+- When you're not sure whether to use hs_search, hs_graph, or hs_impact
+- Natural language queries about dependencies, relationships, or context
+- Multi-agent flows where the querying agent doesn't know the graph shape
+- The 4-agent demo pattern: Agent 4 calls hs_smart_search and gets the full chain automatically
+
 ### hs_store
-Store a card in the graph. Auto-tags with your agent ID.
+Store a card in the graph. Auto-tags with your agent ID. Supports pinning to protect from pruning. Supports TTL for temporary scratchpad cards.
 ```
 hs_store({
   slug: "use-clerk",
@@ -51,7 +82,27 @@ hs_store({
   type: "decision",
   links: "auth-api:triggers,alice:decided"
 })
+
+# Pin a card so it's never pruned
+hs_store({
+  slug: "core-auth-decision",
+  title: "Core Auth Decision",
+  body: "...",
+  type: "decision",
+  pinned: true
+})
+
+# Scratchpad card with TTL — auto-deletes after expiry
+hs_store({
+  slug: "task-scratch-001",
+  title: "Working memory for current task",
+  body: "Intermediate reasoning step...",
+  type: "scratchpad",
+  ttl: "2026-02-21T10:00:00Z"
+})
 ```
+
+Valid cardTypes: `general`, `person`, `project`, `decision`, `preference`, `workflow`, `event`, `account`, `signal`, `scratchpad`
 
 ### hs_decide
 Record a decision with full provenance — who decided, what it affects, what it blocks.
@@ -65,6 +116,61 @@ hs_decide({
 })
 ```
 
+### hs_commit ✨ NEW in v1.0.19
+Commit a successful agent outcome as a permanent decision card, auto-linked to the source task via `decided` relation. Teaches agents to learn from what worked. Full version history, embeddings, and webhooks fire on commit.
+```
+hs_commit({
+  taskSlug: "task-auth-refactor",
+  outcome: "Successfully migrated all auth middleware to Clerk. Zero regressions.",
+  title: "Auth Refactor Completed",
+  keywords: ["clerk", "auth", "completed"]
+})
+→ {
+    committed: true,
+    slug: "commit-task-auth-refactor-1234567890",
+    linkedTo: "task-auth-refactor",
+    relation: "decided",
+    cardType: "decision"
+  }
+```
+
+When to use:
+- After a task completes successfully — commit the outcome so future agents learn from it
+- To build procedural memory — what worked, not just what was planned
+- Before closing a session — commit any decisions made so they persist
+
+### hs_prune ✨ NEW in v1.0.19
+Remove stale cards that haven't been updated in N days and are not referenced by any other card. Pinned cards and TTL scratchpad cards are never pruned. Always run with `dry=true` first to preview.
+```
+# Preview what would be pruned — safe, no deletions
+hs_prune({ days: 30, dry: true })
+→ {
+    dryRun: true,
+    wouldPrune: 3,
+    skipped: 2,
+    cards: [{ slug: "old-task", title: "...", lastUpdated: "..." }],
+    protected: [{ slug: "still-linked", title: "..." }]
+  }
+
+# Execute the prune
+hs_prune({ days: 30 })
+→ { pruned: 3, skipped: 2, message: "Pruned 3 cards..." }
+
+# Aggressive cleanup
+hs_prune({ days: 7, dry: true })
+```
+
+Safety guarantees:
+- Cards linked by other cards are NEVER pruned (graph integrity preserved)
+- Pinned cards (`pinned: true`) are NEVER pruned
+- TTL scratchpad cards are handled by their own expiry — not touched by prune
+- `dry=true` always safe — preview only, zero deletions
+
+When to use:
+- Periodic maintenance: remove abandoned tasks and outdated notes
+- Before a major refactor: clean stale context that might confuse retrieval
+- Always dry-run first, inspect the list, then execute
+
 ### hs_blockers
 Check what blocks a task/card. Returns exact typed blockers, not fuzzy search results.
 ```
@@ -73,7 +179,7 @@ hs_blockers({ slug: "deploy-prod" })
 ```
 
 ### hs_graph
-Traverse the knowledge graph from a starting card. See connections, ownership, dependencies. Supports time-travel: pass a timestamp to reconstruct the graph as it was at any point in time.
+Traverse the knowledge graph forward from a starting card. See connections, ownership, dependencies. Supports time-travel: pass a timestamp to reconstruct the graph at any point in time.
 ```
 hs_graph({ from: "auth-api", depth: 2 })
 → nodes: [auth-api, use-clerk, migration-23, alice]
@@ -81,6 +187,28 @@ hs_graph({ from: "auth-api", depth: 2 })
 
 # Time-travel: see the graph at a specific moment
 hs_graph({ from: "auth-api", depth: 2, at: "2026-02-15T03:00:00Z" })
+```
+
+### hs_impact ✨ NEW in v1.0.16
+Reverse traversal — find everything that depends on or is affected by a given card.
+```
+hs_impact({ slug: "use-clerk" })
+→ "Impact of [use-clerk]: 3 cards depend on this
+   [auth-api] API Service (project) — via: triggers
+   [billing-v2] Billing v2 (project) — via: depends-on
+   [deploy-prod] Production Deploy (workflow) — via: blocks"
+
+# Filter by relation type
+hs_impact({ slug: "use-clerk", relation: "depends-on" })
+```
+
+### hs_recommend ✨ NEW in v1.0.16
+Find cards most related to a given card by shared graph neighbourhood (co-citation scoring).
+```
+hs_recommend({ slug: "use-stripe" })
+→ "Related cards for [use-stripe] — 4 found:
+   [billing-v2] Billing v2 (project) — score: 4
+   [use-clerk] Use Clerk for auth (decision) — score: 3"
 ```
 
 ### hs_my_cards
@@ -91,87 +219,95 @@ hs_my_cards()
 ```
 
 ### hs_ingest
-Auto-extract cards from raw text. Paste a conversation transcript, meeting notes, or project description — HyperStack extracts people, decisions, preferences, and tech stack mentions. Zero LLM cost (regex-based). Best for onboarding: go from 0 to populated graph in seconds.
+Auto-extract cards from raw text. Zero LLM cost (regex-based).
 ```
 hs_ingest({ text: "We're using Next.js 14 and PostgreSQL. Alice decided to use Clerk for auth." })
-→ "✅ Created 3 cards from 78 chars:
-  [tech-nextjs] Next.js 14 (preference)
-  [tech-postgresql] PostgreSQL (preference)
-  [decision-use-clerk] Use Clerk for auth (decision)"
+→ "✅ Created 3 cards from 78 chars"
 ```
 
 ### hs_inbox
-Check for cards directed at this agent by other agents. Enables multi-agent coordination through shared memory — Agent A stores a signal for Agent B, Agent B picks it up via inbox.
+Check for cards directed at this agent by other agents.
 ```
 hs_inbox({})
-→ "Inbox for cursor-mcp: 1 card(s)
-  [review-needed] Review auth migration (signal) from=claude-desktop-mcp"
+→ "Inbox for cursor-mcp: 1 card(s)"
+```
+
+### hs_stats (Pro+)
+Get token savings stats and memory usage for this workspace.
+```
+hs_stats()
+→ "Cards: 24 | Tokens stored: 246 | Saving: 94% — $2.07/mo"
 ```
 
 ### hs_webhook (Team+)
-Register a webhook so this agent gets notified in real time when cards are directed at it. Agent A stores a blocker → Agent B gets notified automatically.
+Register a webhook for real-time agent notifications.
 ```
-hs_webhook({
-  url: "https://your-server.com/webhook",
-  events: "card.created,signal.received"
-})
+hs_webhook({ url: "https://your-server.com/webhook", events: "card.created,signal.received" })
 ```
 
-### hs_stats ✨ NEW in v1.0.15
-Get token savings stats and memory usage for this workspace. Shows how much context HyperStack is saving vs loading everything into context. Requires Pro plan.
+### hs_agent_tokens (Team+)
+Create, list, and revoke scoped per-agent tokens.
 ```
-hs_stats()
-→ "HyperStack Stats for workspace: default
-   Cards: 24 | Tokens stored: 246 | Stale: 0
-   Without HyperStack: 246 tokens/msg ($11.07/mo)
-   With HyperStack:    200 tokens/msg ($9.00/mo)
-   Saving: 15% — $2.07/mo
-   
-   Card breakdown:
-   decisions: 8 | preferences: 6 | general: 10"
+hs_agent_tokens({ action: "create", name: "Researcher Agent", agentId: "researcher", canRead: ["*"], canWrite: ["general", "signal"] })
 ```
 
-### hs_agent_tokens (Team+) ✨ NEW in v1.0.15
-Create, list, and revoke scoped per-agent tokens. Instead of sharing one master API key across all agents, give each agent only the permissions it needs. Requires Team plan.
-```
-# Create a scoped token for a specific agent
-hs_agent_tokens({
-  action: "create",
-  name: "Researcher Agent",
-  agentId: "researcher",
-  canRead: ["*"],
-  canWrite: ["general", "signal"],
-  allowedStacks: ["general", "decisions"]
-})
-→ "Created token for researcher: hsa_abc123...
-   Read: all | Write: general, signal | Stacks: general, decisions"
+---
 
-# List all agent tokens
-hs_agent_tokens({ action: "list" })
+## The Six Graph Modes
 
-# Revoke a token
-hs_agent_tokens({ action: "revoke", id: "token-id" })
-```
+HyperStack's graph API covers every relational question an agent needs to ask:
+
+| Mode | Tool | Question answered |
+|------|------|-------------------|
+| Smart | `hs_smart_search` | Ask anything — auto-routes to the right mode |
+| Forward | `hs_graph` | What does this card connect to? |
+| Impact | `hs_impact` | What depends on this card? What breaks if it changes? |
+| Recommend | `hs_recommend` | What's topically related, even without direct links? |
+| Time-travel | `hs_graph` with `at=` | What did the graph look like at a given moment? |
+| Prune | `hs_prune` | What stale memory is safe to remove? |
+
+---
+
+## Memory Model
+
+HyperStack now covers the full agent memory lifecycle:
+
+| Memory type | Tool | Behaviour |
+|-------------|------|-----------|
+| Long-term facts | `hs_store` | Permanent, searchable, graph-linked |
+| Working memory | `hs_store` with `ttl=` + `type=scratchpad` | Auto-deletes after TTL |
+| Outcomes / learning | `hs_commit` | Commits what worked as a decided card |
+| Stale cleanup | `hs_prune` | Removes unused cards, preserves graph integrity |
+| Protected facts | `hs_store` with `pinned=true` | Never pruned, always kept |
+
+---
 
 ## Multi-Agent Setup
 
 Each agent gets its own ID. Cards are auto-tagged so you can see who created what.
 
 Recommended roles:
-- **coordinator**: Routes tasks, monitors blockers (`hs_blockers`, `hs_graph`, `hs_decide`)
-- **researcher**: Investigates, stores findings (`hs_search`, `hs_store`, `hs_ingest`)
-- **builder**: Implements, records tech decisions (`hs_store`, `hs_decide`, `hs_blockers`)
+- **coordinator**: Routes tasks, monitors blockers (`hs_blockers`, `hs_impact`, `hs_graph`, `hs_decide`)
+- **researcher**: Investigates, stores findings (`hs_search`, `hs_recommend`, `hs_store`, `hs_ingest`)
+- **builder**: Implements, records tech decisions (`hs_store`, `hs_decide`, `hs_commit`, `hs_blockers`)
+- **memory-agent**: Maintains graph health (`hs_prune`, `hs_stats`, `hs_smart_search`)
+
+---
 
 ## Setup
 
-### Option A: VPS / Self-hosted agent (recommended)
-Run the SDK on your own machine or VPS. Authenticate via browser — no manual key management.
-```bash
-npm i hyperstack-core
-npx hyperstack-core login          # opens browser, approve device, done
-npx hyperstack-core init openclaw-multiagent
+### Option A: MCP (Claude Desktop / Cursor / VS Code / Windsurf)
+```json
+{
+  "mcpServers": {
+    "hyperstack": {
+      "command": "npx",
+      "args": ["-y", "hyperstack-mcp"],
+      "env": { "HYPERSTACK_API_KEY": "hs_your_key" }
+    }
+  }
+}
 ```
-Credentials are saved to `~/.hyperstack/credentials.json`. All commands and tools authenticate automatically.
 
 ### Option B: OpenClaw environment variable
 1. Get free API key: https://cascadeai.dev/hyperstack
@@ -183,101 +319,84 @@ Credentials are saved to `~/.hyperstack/credentials.json`. All commands and tool
 import { createOpenClawAdapter } from "hyperstack-core/adapters/openclaw";
 const adapter = createOpenClawAdapter({ agentId: "builder" });
 await adapter.onSessionStart({ agentName: "Builder", agentRole: "Implementation" });
-// adapter.tools: hs_search, hs_store, hs_decide, hs_blockers, hs_graph, hs_my_cards, hs_ingest
 await adapter.onSessionEnd({ summary: "Completed auth migration" });
 ```
 
-### How it works
-The SDK runs on your machine/VPS. Every `hs_store`, `hs_search`, `hs_blockers` call hits the HyperStack API. You own your agent. We host the graph.
+---
 
-Free: 10 cards, keyword search.
-Pro ($29/mo): 100 cards, graph traversal, semantic search, time-travel debugging, token savings stats.
-Team ($59/mo): 500 cards, 5 team API keys, webhooks, unlimited workspaces, scoped agent tokens.
+## When to use each tool
 
-## When to use
+| Moment | Tool |
+|--------|------|
+| Start of session | `hs_search` + `hs_recommend` for context |
+| Not sure which mode | `hs_smart_search` — auto-routes |
+| New project / onboarding | `hs_ingest` to auto-populate from existing docs |
+| Decision made | `hs_decide` with rationale and links |
+| Task completed | `hs_commit` — commit outcome as decided card |
+| Task blocked | `hs_store` with `blocks` relation |
+| Before starting work | `hs_blockers` to check dependencies |
+| Before changing a card | `hs_impact` to check blast radius |
+| Discovery | `hs_recommend` to find related context |
+| Working memory | `hs_store` with `ttl=` + `type=scratchpad` |
+| Periodic cleanup | `hs_prune dry=true` → inspect → `hs_prune` |
+| Debug a bad decision | `hs_graph` with `at` timestamp |
+| Cross-agent signal | `hs_store` with `targetAgent` → other agent checks `hs_inbox` |
+| Check efficiency | `hs_stats` to see token savings |
+| Lock down agents | `hs_agent_tokens` per agent |
 
-- **Start of session**: `hs_search` for relevant context
-- **New project/onboarding**: `hs_ingest` to auto-populate from existing docs
-- **Decision made**: `hs_decide` with rationale and links
-- **Task blocked**: `hs_store` with `blocks` relation
-- **Before starting work**: `hs_blockers` to check dependencies
-- **Debug a bad decision**: `hs_graph` with `at` timestamp to see what the agent knew
-- **Cross-agent signal**: `hs_store` with `targetAgent` → other agent checks `hs_inbox`
-- **Check efficiency**: `hs_stats` to see token savings and memory health
-- **Lock down agents**: `hs_agent_tokens` to give each agent only what it needs
+---
 
 ## Data safety
 
 NEVER store passwords, API keys, tokens, PII, or credentials. Cards should be safe in a data breach. Always confirm with user before storing.
 
+---
+
+## Pricing
+
+Free: 10 cards, keyword search, REST API + MCP
+Pro ($29/mo): 100 cards, graph traversal (all modes), semantic search, analytics
+Team ($59/mo): 500 cards, 5 team API keys, webhooks, scoped agent tokens
+Business ($149/mo): 2,000 cards, 20 members, SSO
+
+---
+
 ## Changelog
 
+### v1.0.19 (Feb 20, 2026)
+
+#### ✨ `hs_prune` — Memory Pruning with Dry-Run
+Removes stale cards not updated in N days that are not referenced by any other card. Safety-first: linked cards, pinned cards, and TTL scratchpad cards are never touched. Always use `dry=true` first to preview what would be pruned before executing. Returns full list of what was pruned and what was protected with reasons.
+
+#### ✨ `hs_commit` — Feedback-Driven Memory (Agent Learning)
+Commits a successful task outcome as a permanent `decision` card auto-linked to the source task via `decided` relation. Builds procedural memory — agents accumulate what worked, not just what was planned. Full version history, embeddings, and webhooks fire on every commit.
+
+#### ✨ `pinned` field on cards
+Set `pinned: true` on any card to protect it from pruning permanently. Use for core architecture decisions, critical constraints, or any card that must never be deleted regardless of age. Exposed in all GET responses.
+
+#### ✨ `scratchpad` cardType
+New `scratchpad` cardType for temporary working memory. Combine with `ttl=` for auto-expiring cards. TTL scratchpad cards are excluded from pruning — they manage their own lifecycle.
+
+#### ✨ TTL lazy expiry
+Cards with a `ttl` datetime auto-delete on next GET request after expiry. No cron job needed. Expiry count returned in list responses as `expired: N`.
+
+### v1.0.18 (Feb 20, 2026)
+- Added `hs_smart_search` — Agentic RAG routing (mode=auto)
+- Synced with MCP v1.6.0, hyperstack-py v1.1.0, hyperstack-langgraph v1.3.0
+
+### v1.0.17 (Feb 19, 2026)
+- Metadata fix: declared HYPERSTACK_WORKSPACE env var requirement
+
+### v1.0.16 (Feb 19, 2026)
+- Added `hs_impact` — reverse graph traversal
+- Added `hs_recommend` — co-citation scoring
+
 ### v1.0.15 (Feb 17, 2026)
-
-#### ✨ `hs_stats` — Token Savings & Memory Health (Pro+)
-Previously there was no way for an agent to know how much context HyperStack was saving or how healthy its memory was. `hs_stats` calls the analytics endpoint and returns a full report:
-- **Cards stored** and total tokens in memory
-- **Token savings comparison** — what you'd spend loading everything into context vs using HyperStack's selective retrieval
-- **Monthly cost savings** in dollars (based on 100 msgs/day at GPT-4 rates)
-- **Card breakdown by stack** — how many decisions, preferences, projects etc.
-- **Last 7 days activity** — reads, writes, token usage
-- **Stale card count** — cards not updated in 30+ days that may need review
-
-Use case: agents can call `hs_stats` at the end of a session to report efficiency gains. Also the strongest argument for upgrading from Free to Pro.
-
-#### ✨ `hs_agent_tokens` — Scoped Per-Agent Permissions (Team+)
-Previously all agents shared one master API key, meaning any agent could read or write any card. This was a blocker for teams putting sensitive data in HyperStack — a rogue or compromised agent could read everything.
-
-`hs_agent_tokens` lets you create scoped tokens per agent:
-- **canRead** — restrict which card types the agent can read (`general`, `decision`, `preference`, `person`, `project`, `workflow`, `signal`, or `*` for all)
-- **canWrite** — restrict which card types the agent can write
-- **allowedStacks** — restrict which stacks the agent can access
-- **expiresIn** — optional TTL in seconds for temporary access
-- Tokens are prefixed `hsa_` (agent-scoped) vs `hs_` (master key) so you can tell them apart
-- Revoke any token instantly without rotating your master key
-
-Use case: give your researcher agent read-only access to decisions, give your builder agent write access to projects only, give a third-party skill access to nothing sensitive.
+- Added `hs_stats` — token savings & memory health (Pro+)
+- Added `hs_agent_tokens` — scoped per-agent permissions (Team+)
 
 ### v1.0.14 (Feb 17, 2026)
-
-#### ✨ `hs_ingest` — Auto-Extract Cards from Raw Text (zero LLM cost)
-Before v1.0.14, populating HyperStack required manually calling `hs_store` for every card. Starting from scratch meant a lot of upfront work.
-
-`hs_ingest` takes raw text — a conversation transcript, meeting notes, project description, or any unstructured text — and automatically extracts structured cards using regex pattern matching. No LLM cost, no API calls to OpenAI.
-
-What it detects:
-- **Decisions** — "we decided", "chose X over Y", "went with"
-- **Preferences** — "I prefer", "we always use", "don't use"
-- **People** — "Alice is the lead", "owned by", "responsible for"
-- **Projects** — "we're building", "our backend", "milestone"
-- **Workflows** — "first X then Y", "whenever we", "pipeline"
-- **Tech stack** — auto-detects 40+ frameworks, databases, and services and bundles them into a single tech-stack card
-
-Use case: paste your entire project README or a team meeting transcript and go from 0 to a populated knowledge graph in seconds.
-
-#### ✨ `hs_inbox` — Agent-Directed Card Retrieval
-Before v1.0.14, agents could store cards with a `targetAgent` field but had no dedicated tool to check for cards directed at them. `hs_inbox` polls for cards where `targetAgent` matches the current agent's ID, optionally filtered by timestamp so agents only see new messages since their last check.
-
-Use case: Agent A finishes a task and stores a signal card directed at Agent B. Agent B calls `hs_inbox` at the start of its session and picks up the handoff automatically — no shared file system, no message queue needed.
-
-#### ✨ `hs_webhook` / `hs_webhooks` — Real-Time Agent Notifications (Team+)
-Instead of polling `hs_inbox`, Team plan agents can register a webhook URL and get notified in real time when cards are directed at them. Supports event filtering (`card.created`, `card.updated`, `signal.received`, or `*` for all). HMAC secret signing for verification.
-
-#### 🔧 OAuth Device Flow for CLI Login
-`npx hyperstack-core login` now uses RFC 8628 OAuth device flow. CLI displays a short code, user approves in browser, credentials saved automatically. No more manual copy-pasting of API keys for VPS/self-hosted agents.
+- Added `hs_ingest`, `hs_inbox`, `hs_webhook` / `hs_webhooks`
 
 ### v1.0.13 and earlier — Core Foundation
-
-The original HyperStack toolset that established the core value proposition:
-
-- **`hs_search`** — Hybrid keyword + semantic search across all cards. Keyword search is free, semantic search (vector similarity via pgvector) requires Pro. Returns ranked results with relevance scores.
-
-- **`hs_store`** — Create or update a card with full metadata: slug, title, body, cardType, keywords, links with typed relations (owns, triggers, blocks, depends-on, reviews, notifies, approved, decided), sourceAgent, targetAgent.
-
-- **`hs_decide`** — Specialized decision recorder. Creates a decision card with provenance — who decided, what it affects, what it blocks. Automatically creates typed graph edges so decisions are queryable by relation, not just text.
-
-- **`hs_blockers`** — The headline feature. Given a card slug, traverses the graph with `relation=blocks` filter and returns exact typed blockers. "What blocks deploy-prod?" returns the exact cards, not a fuzzy search result. Deterministic, $0 cost.
-
-- **`hs_graph`** — Full graph traversal from any starting node. Configurable depth (1-3 hops), relation filter, and time-travel (`at` timestamp to reconstruct the graph as it was at any past moment). Requires Pro plan.
-
-- **`hs_my_cards`** — List all cards created by the current agent. Useful for agents to audit their own memory footprint.
+- `hs_search`, `hs_store`, `hs_decide`, `hs_blockers`, `hs_graph`, `hs_my_cards`
