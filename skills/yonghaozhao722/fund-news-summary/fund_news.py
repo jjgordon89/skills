@@ -56,6 +56,12 @@ MARKETS = {
         "keywords": ["gold", "XAU", "COMEX", "贵金属", "现货黄金"],
         "tool": "finnhub.news.retrieve.v1",
         "tool_params": {"category": "general"}  # gold新闻在general中
+    },
+    "polymarket": {
+        "name": "Polymarket / 预测市场",
+        "emoji": "🔮",
+        "keywords": ["Polymarket", "prediction market", "预测市场", "去中心化预测"],
+        "tool": "web_search"
     }
 }
 
@@ -528,6 +534,209 @@ class MarketNewsFetcher:
             logger.error(f"获取黄金新闻异常: {e}")
             return []
 
+    async def get_polymarket_news(self) -> List[Dict]:
+        """
+        获取 Polymarket / 预测市场相关新闻
+        使用 brave_search.web.search.list.v1 工具搜索最新新闻
+        """
+        logger.info("获取 Polymarket / 预测市场新闻...")
+        try:
+            # 搜索 brave 工具
+            search_id, _ = await self.qveris.search_tools("brave web search")
+            if not search_id:
+                logger.warning("无法获取搜索ID，使用默认ID")
+                search_id = "pm-search-default"
+            
+            pm_news = []
+            brave_tool = "brave_search.web.search.list.v1"
+            
+            # 搜索1: Polymarket 最新新闻
+            try:
+                result = await self.qveris.execute_tool(
+                    brave_tool,
+                    search_id,
+                    {"q": "Polymarket news latest today", "count": 5}
+                )
+                
+                if result.get("success"):
+                    data = result.get("data", {})
+                    results = self._parse_search_results(data)
+                    
+                    logger.info(f"Polymarket 新闻搜索原始结果数: {len(results)}")
+                    
+                    for item in results[:5]:
+                        if isinstance(item, dict):
+                            title = item.get("title", item.get("name", ""))
+                            # 过滤掉介绍性/非新闻内容
+                            if self._is_news_content(title, item.get("url", "")):
+                                desc = item.get("snippet", item.get("description", item.get("content", "")))
+                                url = item.get("url", item.get("link", ""))
+                                source = self._extract_source(item, url)
+                                
+                                news_item = {
+                                    "title": title,
+                                    "summary": desc[:150] if len(desc) > 150 else desc,
+                                    "source": source,
+                                    "url": url,
+                                    "category": "news"
+                                }
+                                pm_news.append(news_item)
+                    
+                    logger.info(f"Polymarket 新闻筛选完成，共 {len(pm_news)} 条")
+                else:
+                    logger.warning(f"Polymarket 搜索未成功: {result.get('error', 'unknown')}")
+            except Exception as e:
+                logger.warning(f"Polymarket 搜索失败: {e}")
+            
+            # 搜索2: 预测市场行业动态
+            if len(pm_news) < 3:
+                try:
+                    result = await self.qveris.execute_tool(
+                        brave_tool,
+                        search_id,
+                        {"q": "prediction market crypto betting news 2025 2026", "count": 4}
+                    )
+                    
+                    if result.get("success"):
+                        data = result.get("data", {})
+                        results = self._parse_search_results(data)
+                        
+                        for item in results[:4]:
+                            if isinstance(item, dict):
+                                title = item.get("title", item.get("name", ""))
+                                # 避免重复且过滤非新闻内容
+                                if not any(n["title"] == title for n in pm_news) and self._is_news_content(title, item.get("url", "")):
+                                    desc = item.get("snippet", item.get("description", ""))
+                                    url = item.get("url", item.get("link", ""))
+                                    source = self._extract_source(item, url)
+                                    
+                                    news_item = {
+                                        "title": title,
+                                        "summary": desc[:150] if len(desc) > 150 else desc,
+                                        "source": source,
+                                        "url": url,
+                                        "category": "industry"
+                                    }
+                                    pm_news.append(news_item)
+                        
+                        logger.info(f"预测市场行业新闻补充完成，共 {len(pm_news)} 条")
+                except Exception as e:
+                    logger.warning(f"预测市场行业新闻搜索失败: {e}")
+            
+            # 搜索3: 预测市场特定事件新闻
+            if len(pm_news) < 3:
+                try:
+                    result = await self.qveris.execute_tool(
+                        brave_tool,
+                        search_id,
+                        {"q": "Polymarket election crypto price prediction results", "count": 3}
+                    )
+                    
+                    if result.get("success"):
+                        data = result.get("data", {})
+                        results = self._parse_search_results(data)
+                        
+                        for item in results[:3]:
+                            if isinstance(item, dict):
+                                title = item.get("title", item.get("name", ""))
+                                if not any(n["title"] == title for n in pm_news) and self._is_news_content(title, item.get("url", "")):
+                                    desc = item.get("snippet", item.get("description", ""))
+                                    url = item.get("url", item.get("link", ""))
+                                    source = self._extract_source(item, url)
+                                    
+                                    news_item = {
+                                        "title": title,
+                                        "summary": desc[:150] if len(desc) > 150 else desc,
+                                        "source": source,
+                                        "url": url,
+                                        "category": "events"
+                                    }
+                                    pm_news.append(news_item)
+                        
+                        logger.info(f"预测市场事件新闻补充完成，共 {len(pm_news)} 条")
+                except Exception as e:
+                    logger.warning(f"预测市场事件新闻搜索失败: {e}")
+            
+            return pm_news[:6]
+            
+        except Exception as e:
+            logger.error(f"获取 Polymarket 新闻异常: {e}")
+            return []
+    
+    def _parse_search_results(self, data: dict) -> list:
+        """解析搜索结果"""
+        results = []
+        if isinstance(data, dict):
+            if "data" in data and isinstance(data["data"], dict):
+                results = data["data"].get("results", data["data"].get("web", {}).get("results", []))
+            elif "results" in data:
+                results = data["results"]
+            elif "web" in data and isinstance(data["web"], dict):
+                results = data["web"].get("results", [])
+            elif "organic" in data:
+                results = data["organic"]
+        return results
+    
+    def _is_news_content(self, title: str, url: str) -> bool:
+        """判断是否为新闻内容而非介绍页面"""
+        if not title:
+            return False
+        
+        title_lower = title.lower()
+        url_lower = url.lower() if url else ""
+        
+        # 排除介绍性/主页内容
+        exclude_patterns = [
+            "| the world's largest prediction market",
+            "| polymarket",
+            "- wikipedia",
+            "home | ",
+            "official site",
+            "about us",
+            "what is",
+            "how to",
+            "guide to",
+            "tutorial",
+            "wiki",
+            "definition",
+            "meaning of"
+        ]
+        
+        for pattern in exclude_patterns:
+            if pattern in title_lower:
+                return False
+        
+        # 排除官网主页和维基百科
+        if "polymarket.com" in url_lower and ("blog" not in url_lower and "news" not in url_lower):
+            return False
+        if "wikipedia.org" in url_lower:
+            return False
+        
+        # 包含新闻特征
+        news_indicators = [
+            "news", "report", "says", "announces", "launches", "raises", 
+            "acquires", "partners", "expands", "grows", "surges", "drops",
+            "regulators", "sec", "cftc", "lawsuit", "legal", "ban", "approval",
+            "trading", "volume", "market", "prediction", "betting", "election",
+            "crypto", "blockchain", "defi", "web3"
+        ]
+        
+        return any(ind in title_lower for ind in news_indicators)
+    
+    def _extract_source(self, item: dict, url: str) -> str:
+        """提取新闻来源"""
+        source = item.get("source", item.get("domain", ""))
+        if not source and url:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(url)
+                source = parsed.netloc.replace("www.", "")
+            except:
+                source = "News"
+        if not source:
+            source = "News"
+        return source
+
 
 class FundNewsGenerator:
     """基金新闻生成器 - 多市场版本"""
@@ -563,6 +772,7 @@ class FundNewsGenerator:
             self.fetcher.get_europe_news(),
             self.fetcher.get_japan_news(),
             self.fetcher.get_gold_news(),
+            self.fetcher.get_polymarket_news(),
             return_exceptions=True
         )
         
@@ -570,6 +780,7 @@ class FundNewsGenerator:
         europe_news = results[1] if not isinstance(results[1], Exception) else []
         japan_news = results[2] if not isinstance(results[2], Exception) else []
         gold_news = results[3] if not isinstance(results[3], Exception) else []
+        polymarket_news = results[4] if not isinstance(results[4], Exception) else []
         
         elapsed = time.monotonic() - start_time
         logger.info(f"新闻获取完成，耗时: {elapsed:.2f} 秒")
@@ -651,6 +862,30 @@ class FundNewsGenerator:
             report_lines.append("• 暂无最新黄金新闻")
             report_lines.append("")
         
+        # 🔮 Polymarket / 预测市场
+        report_lines.extend([
+            "🔮 **Polymarket / 预测市场**",
+            ""
+        ])
+        if polymarket_news:
+            for news in polymarket_news[:4]:
+                title = news.get("title", "无标题")
+                summary = news.get("summary", "")[:100]
+                if summary and len(news.get("summary", "")) > 100:
+                    summary += "..."
+                source = news.get("source", "未知")
+                category = news.get("category", "")
+                cat_tag = f" [{category}]" if category else ""
+                report_lines.append(f"• **{title}**{cat_tag}")
+                if summary:
+                    report_lines.append(f"  └ {summary} (*{source}*)")
+                else:
+                    report_lines.append(f"  └ (*{source}*)")
+                report_lines.append("")
+        else:
+            report_lines.append("• 暂无最新预测市场新闻")
+            report_lines.append("")
+        
         # 🎯 基金相关要点
         report_lines.extend([
             "🎯 **基金相关要点**",
@@ -680,6 +915,14 @@ class FundNewsGenerator:
         else:
             report_lines.append("• 黄金ETF: 关注地缘政治风险和美元指数走势")
         
+        # Polymarket / 预测市场要点
+        if polymarket_news:
+            report_lines.append("• 预测市场: Polymarket 平台活跃度及热门事件值得跟踪")
+            report_lines.append("• 加密预测: 去中心化预测市场与加密货币联动性增强")
+        else:
+            report_lines.append("• 预测市场: 关注 Polymarket 等平台热门预测事件")
+            report_lines.append("• 自动化交易: 预测市场量化策略及跟单机会")
+        
         report_lines.append("")
         
         # ⚠️ 风险提示
@@ -691,6 +934,8 @@ class FundNewsGenerator:
         report_lines.append("• 欧洲股市受地缘政治及欧洲央行货币政策影响")
         report_lines.append("• 日本股市受日元汇率波动及日本央行政策影响")
         report_lines.append("• 黄金价格受地缘政治风险及美元指数走势影响")
+        report_lines.append("• 预测市场存在流动性风险及监管不确定性")
+        report_lines.append("• 自动化交易策略需严格风控，避免过度杠杆")
         report_lines.append("• QDII基金受汇率波动影响，投资需谨慎")
         report_lines.append("")
         
@@ -723,7 +968,13 @@ class FundNewsGenerator:
             "• 地缘政治风险推升避险需求",
             "• 关注美元指数走势",
             "",
+            "🔮 **Polymarket / 预测市场**",
+            "• 关注平台热门预测事件及交易量变化",
+            "• 去中心化预测市场与加密货币联动",
+            "",
             "⚠️ **风险提示**",
+            "• 预测市场存在监管不确定性和流动性风险",
+            "• 自动化交易需严格风控",
             "• QDII基金受汇率波动影响，投资需谨慎",
             "",
             "📊 数据来源: 备用数据"
@@ -741,7 +992,7 @@ async def main():
         
         print(report)
         
-        # 保存到 Obsidian vault
+        # 保存到 Obsidian vault (中文版本)
         today_str = datetime.now().strftime("%Y-%m-%d")
         obsidian_dir = "/root/clawd/obsidian-vault/reports/fund"
         os.makedirs(obsidian_dir, exist_ok=True)
@@ -751,6 +1002,47 @@ async def main():
             f.write(report)
         
         logger.info(f"报告已保存到 {output_path}")
+        
+        # 自动同步到 GitHub (先提交本地更改，再 pull，再 push)
+        try:
+            import subprocess
+            os.chdir("/root/clawd/obsidian-vault")
+            
+            # 先提交本地更改
+            logger.info("正在提交本地更改...")
+            subprocess.run(["git", "add", "-A"], check=False)
+            commit_result = subprocess.run(
+                ["git", "commit", "-m", f"Update fund report {today_str}"],
+                capture_output=True, text=True
+            )
+            if commit_result.returncode == 0:
+                logger.info("本地更改已提交")
+            
+            # 获取远程更新 (使用 merge 策略)
+            logger.info("正在同步 GitHub 仓库...")
+            pull_result = subprocess.run(
+                ["git", "pull", "origin", "master", "--no-rebase"],
+                capture_output=True, text=True
+            )
+            if pull_result.returncode == 0:
+                logger.info("成功拉取远程更新")
+            else:
+                logger.warning(f"拉取远程更新失败: {pull_result.stderr}")
+            
+            # 推送
+            push_result = subprocess.run(
+                ["git", "push", "origin", "master"],
+                capture_output=True, text=True
+            )
+            
+            if push_result.returncode == 0:
+                logger.info("✅ 已自动同步到 GitHub")
+            else:
+                logger.warning(f"GitHub 推送失败: {push_result.stderr}")
+                
+        except Exception as e:
+            logger.warning(f"GitHub 同步失败: {e}")
+        
         return report
         
     except Exception as e:
