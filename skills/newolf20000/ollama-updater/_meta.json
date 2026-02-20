@@ -1,0 +1,11 @@
+{
+  "owner": "newolf20000",
+  "slug": "ollama-updater",
+  "displayName": "Ollama Updater",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1771549141678,
+    "commit": null
+  },
+  "history": []
+}
