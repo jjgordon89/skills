@@ -90,8 +90,7 @@ clawhub install cacheforge
 
 Built by **[CacheForge](https://app.anvil-ai.io/)**.
 
-CacheForge helps reduce wasted LLM spend on agent workflows (results vary by provider/workload).
-Start with: `clawhub install cacheforge`
+CacheForge can cut agent token spend by **up to 30%** on tool-heavy workflows. Results vary by provider and workload.
 
 ## License
 
