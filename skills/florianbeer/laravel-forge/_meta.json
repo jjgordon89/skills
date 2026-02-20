@@ -1,0 +1,11 @@
+{
+  "owner": "florianbeer",
+  "slug": "laravel-forge",
+  "displayName": "Laravel Forge",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771580750420,
+    "commit": null
+  },
+  "history": []
+}
