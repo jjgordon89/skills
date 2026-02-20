@@ -1,12 +1,11 @@
 ---
 name: beauty-generation-free
 description: FREE AI image generation service for creating professional portrait images of attractive people with diverse customization options. Supports 140+ nationalities, multiple styles, and comprehensive character customization. Fast generation (3-5 seconds) with built-in content safety filters.
-version: 1.2.26
+version: 1.2.27
 metadata:
   openclaw:
     requires:
       bins:
-        - python3
         - curl
     emoji: "🎨"
     homepage: https://gen1.diversityfaces.org
@@ -21,14 +20,26 @@ metadata:
 
 ## ⚙️ Quick Start
 
-This skill is pre-configured with a free API key - **no setup needed**, just use it directly:
+This skill uses curl to generate images. Just run these commands:
 
 ```bash
-python3 scripts/generate.py --prompt "A beautiful woman with long hair"
+# Step 1: Submit generation request
+curl -X POST https://gen1.diversityfaces.org/api/generate/custom \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  -d '{"full_prompt": "A beautiful woman with long hair", "width": 1024, "height": 1024}'
+
+# Step 2: Poll status (replace PROMPT_ID with the ID from step 1)
+curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  https://gen1.diversityfaces.org/api/status/PROMPT_ID
+
+# Step 3: Download image (replace FILENAME with the filename from step 2)
+curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  "https://gen1.diversityfaces.org/api/image/FILENAME?format=webp" \
+  -o beauty.webp
 ```
 
 **System Requirements:**
-- Python 3
 - curl
 
 ---
@@ -88,56 +99,11 @@ Just run the script and start generating images immediately.
 ### ⚡ How to Generate Images
 
 **Prerequisites:**
-- Python 3 installed
 - curl installed
 
 ---
 
-**Method 1: Using generate.py (Recommended)**
-
-```bash
-# Just run the script - API key is already configured
-python3 scripts/generate.py --prompt "YOUR_ENGLISH_PROMPT_HERE"
-```
-
-**What the script does automatically:**
-1. Uses the pre-configured free API key
-2. Submits your prompt to API
-3. Polls status every 0.5 seconds
-4. Downloads image when ready (1-2 seconds)
-5. Saves locally and returns file path
-6. **Total time: 3-5 seconds**
-
-**Examples:**
-
-```bash
-# Professional woman portrait
-python3 scripts/generate.py --prompt "A 28-year-old professional woman with shoulder-length brown hair, wearing a navy blue blazer, confident smile, modern office background"
-
-# Handsome man portrait
-python3 scripts/generate.py --prompt "A handsome 30-year-old man with short dark hair and beard, wearing casual denim jacket, warm expression, outdoor urban setting"
-
-# Fashion model
-python3 scripts/generate.py --prompt "A stylish young woman with long flowing hair, wearing elegant black dress, confident pose, minimalist studio background"
-
-# Character design
-python3 scripts/generate.py --prompt "A fantasy character with silver hair and ethereal features, wearing flowing robes, mysterious expression, magical forest background"
-
-# Quick test with default prompt
-python3 scripts/generate.py --test
-
-# Custom size
-python3 scripts/generate.py --prompt "YOUR_PROMPT" --width 1024 --height 1024
-
-# Custom output directory
-python3 scripts/generate.py --prompt "YOUR_PROMPT" --output-dir ./my_images
-```
-
----
-
-**Method 2: Using curl (Alternative)**
-
-If you can't use Python, use curl commands:
+**Using curl (Only Method)**
 
 ```bash
 # Step 1: Submit generation request
@@ -174,7 +140,7 @@ curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
 
 ---
 
-**After generation (both methods):**
+**After generation:**
 - **Display the image to user immediately**
 - Don't just show the file path
 - User should see the actual image within 5 seconds
@@ -219,14 +185,12 @@ curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
 
 ### 🔧 Technical Details (For Reference Only)
 
-**You don't need to use these directly - `generate.py` handles everything.**
-
 **API Configuration:**
 - **Base URL**: `https://gen1.diversityfaces.org`
 - **Endpoint**: `/api/generate/custom`
 - **Authentication**: Pre-configured with free API key `ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI`
 
-**Parameters (handled by generate.py):**
+**Parameters:**
 - `full_prompt`: Your English description
 - `width`: 256-2048, multiple of 8, default 1024
 - `height`: 256-2048, multiple of 8, default 1024
@@ -308,14 +272,15 @@ Before sending response to user, verify:
 ### 🚀 Performance Optimization
 
 **For fastest results:**
-1. Always update skill first: ``
-2. Use the `generate.py` script (it's optimized for speed)
-3. Display image to user immediately after generation
+1. Use curl commands directly
+2. Display image to user immediately after generation
 
 **Expected timeline:**
 ```
 User request → Create prompt (instant)
-           → Run generate.py (3-5s total)
+           → Submit curl request (1-2s)
+           → Poll status (0.5-1s)
+           → Download image (0.5-1s)
            → Display to user (instant)
            → TOTAL: 3-5 seconds
 ```
@@ -362,17 +327,20 @@ User request → Create prompt (instant)
 
 **Quick Command Reference:**
 ```bash
-# Generate image with prompt
-python3 scripts/generate.py --prompt "YOUR_PROMPT"
+# Step 1: Submit generation request
+curl -X POST https://gen1.diversityfaces.org/api/generate/custom \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  -d '{"full_prompt": "YOUR_PROMPT", "width": 1024, "height": 1024}'
 
-# Quick test
-python3 scripts/generate.py --test
+# Step 2: Check status (replace PROMPT_ID)
+curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  https://gen1.diversityfaces.org/api/status/PROMPT_ID
 
-# Custom size
-python3 scripts/generate.py --prompt "YOUR_PROMPT" --width 1024 --height 1024
-
-# Custom output directory
-python3 scripts/generate.py --prompt "YOUR_PROMPT" --output-dir ./images
+# Step 3: Download image (replace FILENAME)
+curl -H "X-API-Key: ak_OymjErKQRs-brINJuHFxKwIbxbZHq2KRiEzYthnwxMI" \
+  "https://gen1.diversityfaces.org/api/image/FILENAME?format=webp" \
+  -o beauty.webp
 ```
 
 **For Reference:**
