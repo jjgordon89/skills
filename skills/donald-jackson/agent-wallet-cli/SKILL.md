@@ -72,10 +72,12 @@ agent-wallet-cli export [--password <pw>] --confirm [--name <name>]
 ### Addresses & Balances
 ```bash
 agent-wallet-cli address --token <wlt_...> [--chain ethereum|solana] [--account-index 0]
-agent-wallet-cli balance --token <wlt_...> --chain <chain> [--network mainnet] [--token-address usdc]
+agent-wallet-cli balance --token <wlt_...> --chain <chain> [--network <network>] [--token-address usdc]
 ```
 
-**Important:** `--token` is the session token (wlt_...), `--token-address` is the coin/token contract or alias.
+**Important:** `--chain` is **required** for balance/send/history. `--token` is the session token (wlt_...), `--token-address` is the coin/token contract or alias.
+
+**L2 networks:** For Base, Polygon, Arbitrum use `--chain ethereum --network base` (etc). Default network is `mainnet`.
 
 ### Transfers
 ```bash
@@ -137,7 +139,9 @@ agent-wallet-cli networks --reset ethereum:mainnet                 # reset to de
 | ethereum | mainnet, sepolia, polygon, arbitrum, base, base-sepolia |
 | solana | mainnet, devnet |
 
-EVM L2s (Base, Polygon, Arbitrum) are `--chain ethereum --network <l2name>`.
+EVM L2s (Base, Polygon, Arbitrum) use `--chain ethereum --network <l2name>`.
+
+**`--chain` is required** for balance, send, history, approve, allowance, transfer-from, approvals, and sign.
 
 ## Token Aliases
 
