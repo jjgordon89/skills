@@ -101,9 +101,7 @@ If using FIS 3.1 components:
 | `memory_manager.py` | Use QMD / OpenClaw memory search |
 | `skill_registry.py` | Use SKILL.md + QMD |
 | `deadlock_detector.py` | Set `timeout_minutes` in tickets |
-| `subagent_lifecycle.py` | Use JSON tickets directly |
-
-**Archived in:** `archive/deprecated/`
+| `subagent_lifecycle.py` (3.1) | **JSON tickets directly** |
 
 ---
 

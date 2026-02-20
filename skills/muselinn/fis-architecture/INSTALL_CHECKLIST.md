@@ -96,17 +96,18 @@ echo "✅ FIS 3.2 structure ready"
 
 ## Uninstallation
 
-To remove FIS 3.2:
+To remove FIS 3.2 (skill only, preserves your data):
 
 ```bash
-# Simply remove the skill directory
+# Remove the skill directory only
 rm -rf ~/.openclaw/workspace/skills/fis-architecture
 
-# Optional: Remove shared hub data
-rm -rf ~/.openclaw/fis-hub/
-
-# Note: This does not affect OpenClaw core files
+# Your data in fis-hub/ is NOT affected
+# To also remove data (WARNING: deletes your tickets/results):
+# rm -rf ~/.openclaw/fis-hub/
 ```
+
+**Note**: The `fis-hub/` directory contains your tickets, results, and knowledge. It is NOT removed by default. Only delete it if you explicitly want to erase all FIS data.
 
 ---
 

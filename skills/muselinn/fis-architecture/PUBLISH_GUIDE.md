@@ -11,7 +11,7 @@
 | Git repository | ✅ Initialized |
 | GitHub remote | ✅ Connected (MuseLinn/fis-architecture) |
 | Files updated | ✅ FIS 3.2 documentation |
-| Deprecated archived | ✅ Old components moved to `archive/deprecated/` |
+| Legacy components | ✅ Removed from release (preserved in GitHub history) |
 
 ---
 
@@ -33,26 +33,14 @@ fis-architecture/
 ├── REVIEW.md               # Review notes
 ├── package.json            # ClawHub metadata
 ├── lib/                    # Tools
-│   ├── badge_generator_v7.py      # ✅ Badge generation (kept)
-│   ├── badge_generator.py         # ✅ Legacy badge gen
+│   ├── badge_generator_v7.py      # ✅ Badge generation (current)
 │   ├── badge_generator_ascii.py   # ✅ ASCII badge gen
-│   ├── badge_image_pil.py         # ✅ PIL utilities
-│   ├── badge_template.html        # ✅ HTML template
 │   ├── fis_lifecycle.py           # ✅ Lifecycle helpers
 │   ├── fis_subagent_tool.py       # ✅ CLI helper
-│   ├── multi_worker_demo.py       # ✅ Demo script
-│   ├── task_router.py             # ✅ Task routing
-│   └── fis_config.py              # ✅ Config utilities
-├── archive/                # Archived components
-│   └── deprecated/         # ⭐ FIS 3.1 deprecated files
-│       ├── README.md       # Migration guide
-│       ├── memory_manager.py
-│       ├── skill_registry.py
-│       ├── deadlock_detector.py
-│       └── subagent_lifecycle.py
+│   ├── fis_config.py              # ✅ Config utilities
+│   └── multi_worker_demo.py       # ✅ Demo script
+├── archive/                # Empty (legacy 3.1 in GitHub history only)
 └── examples/               # Usage examples
-    ├── init_fis31.py       # ⚠️ Legacy init (3.1 only)
-    ├── subagent_pipeline.py # ⚠️ Legacy pipeline
     └── generate_badges.py  # ✅ Badge generation demo
 ```
 
@@ -61,7 +49,7 @@ fis-architecture/
 ## Pre-Release Checklist
 
 - [ ] All documentation updated to 3.2
-- [ ] Deprecated files moved to `archive/deprecated/`
+- [ ] Legacy components removed from release (preserved in GitHub history)
 - [ ] Version numbers updated in:
   - `skill.json`
   - `package.json`
@@ -109,7 +97,7 @@ Breaking changes from 3.1:
 - memory_manager.py → Use QMD
 - skill_registry.py → Use SKILL.md + QMD
 - deadlock_detector.py → Use conventions
-- subagent_lifecycle.py → Use JSON tickets directly"
+- fis_lifecycle.py → Use JSON tickets directly"
 ```
 
 ### 3. Push to GitHub
@@ -159,10 +147,10 @@ git push origin v3.2.0-lite
 | memory_manager.py | QMD semantic search |
 | skill_registry.py | SKILL.md + QMD |
 | deadlock_detector.py | Simple conventions |
-| subagent_lifecycle.py | JSON tickets |
+| fis_lifecycle.py | JSON tickets |
 
 ### Migration
-See `archive/deprecated/README.md` for migration guide.
+Legacy FIS 3.1 components are preserved in GitHub repo history for reference.
 
 ### Quick Start
 ```bash

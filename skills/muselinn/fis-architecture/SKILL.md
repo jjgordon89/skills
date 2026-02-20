@@ -1,8 +1,10 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.4-lite  
+> **Version**: 3.2.6  
 > **Name**: Federal Intelligence System (联邦智能系统)  
 > **Description**: File-based multi-agent workflow framework. Core: JSON tickets + Markdown knowledge (no Python required). Optional: Python helpers in `lib/` for badge generation. Integrates with OpenClaw QMD for semantic search.
+> 
+> **Security**: See [SECURITY.md](./SECURITY.md) for subprocess usage, resource permissions, and sandboxing guidelines.
 > 
 > **Note**: Legacy FIS 3.1 components (memory_manager, skill_registry, etc.) are preserved in GitHub repo history but not included in this release. See repo for historical reference.  
 > **Status**: ✅ Stable — Simplified architecture with QMD integration
@@ -17,9 +19,9 @@
 - `lib/*.py` — Badge generation helpers (require `pip install Pillow qrcode`)
 - `lib/fis_lifecycle.py` — CLI helpers for ticket management
 
-**Requires**: `mcporter` CLI for QMD search integration ([OpenClaw QMD docs](https://docs.openclaw.ai/concepts/memory))
+**Required**: `mcporter` CLI (included with OpenClaw), `openclaw` CLI
 
-**Security**: Review Python scripts before execution. Core FIS works without them.
+**Security**: Review [SECURITY.md](./SECURITY.md) before running Python scripts or granting ticket `resources` permissions.
 
 ---
 
@@ -113,19 +115,52 @@ mv ~/.openclaw/fis-hub/tickets/active/TASK_EXAMPLE_001.json \
 
 ```json
 {
-  "ticket_id": "TASK_CYBERMAO_20260219_001",
-  "agent_id": "worker-001",
+  "ticket_id": "TASK_FIS-UAV-002_20260220_002600",
+  "agent_id": "pulse",
   "parent": "cybermao",
   "role": "worker|reviewer|researcher|formatter",
-  "task": "Task description",
-  "status": "active|completed|timeout",
-  "created_at": "2026-02-19T21:00:00",
-  "completed_at": null,
-  "timeout_minutes": 60,
-  "resources": ["file_read", "file_write", "web_search"],
-  "output_dir": "results/TASK_001/"
+  "task": {
+    "description": "UAV-GPR 旋翼干扰机理分析 - 建立数学模型",
+    "created_at": "2026-02-20T00:30:00",
+    "deadline": "2026-02-27T09:00:00",
+    "status": "active"
+  },
+  "objective": "理解旋翼干扰的物理机制，建立可解释的数学模型",
+  "scope": {
+    "must_do": [
+      "分析旋翼叶片微多普勒产生的物理过程",
+      "建立旋翼-雷达几何关系数学模型"
+    ],
+    "must_not_do": [
+      "不要急于设计滤波器或抑制方法",
+      "不要跳过机理直接谈解决"
+    ]
+  },
+  "deliverables": [
+    "干扰机理分析报告 (Markdown)",
+    "时频分析图 (matplotlib)"
+  ],
+  "resources": ["file_read", "file_write", "code_execute", "web_search"],
+  "output_dir": "fis-hub/results/TASK_FIS-UAV-002/",
+  "notes": "关键问题：旋翼干扰是怎么产生的？"
 }
 ```
+
+### Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ticket_id` | string | ✅ | Unique identifier: `TASK_{agent}_{YYYYMMDD}_{seq}` |
+| `agent_id` | string | ✅ | Assigned agent (e.g., "pulse", "worker-001") |
+| `parent` | string | ✅ | Coordinating agent (e.g., "cybermao") |
+| `role` | enum | ✅ | `worker`, `reviewer`, `researcher`, `formatter` |
+| `task` | object | ✅ | `{description, created_at, deadline, status}` |
+| `objective` | string | ❌ | High-level goal of the task |
+| `scope` | object | ❌ | `{must_do[], must_not_do[]}` boundaries |
+| `deliverables` | array | ❌ | Expected outputs/deliverables |
+| `resources` | array | ❌ | Permissions: `file_read`, `file_write`, `code_execute`, `web_search` |
+| `output_dir` | string | ❌ | Where to save results |
+| `notes` | string | ❌ | Additional context or warnings |
 
 ---
 
@@ -295,6 +330,11 @@ If you have FIS 3.1 components:
 
 ## Changelog
 
+### 2026-02-20: v3.2.5-lite Fix Module Names & Uninstall Safety
+- **Fix**: Changed dangerous `rm -rf ~/.openclaw/fis-hub/` uninstall suggestion to safe skill-only removal
+- **Fix**: Updated all `subagent_lifecycle` references to `fis_lifecycle` for consistency
+- **Docs**: Added warning that fis-hub/ contains user data and is NOT removed by default
+
 ### 2026-02-20: v3.2.4-lite Remove Archive
 - **Security**: Completely removed `archive/` directory from release (legacy 3.1 components preserved in GitHub repo history only)
 - **Documentation**: Added note about legacy components availability
@@ -346,12 +386,10 @@ If you have FIS 3.1 components:
 ├── QUICK_REFERENCE.md          # Quick command reference
 ├── AGENT_GUIDE.md              # Agent usage guide
 ├── lib/                        # Tools (not core)
-│   ├── badge_generator_v7.py   # ✅ Kept: Badge generation
-│   ├── fis_lifecycle.py        # ✅ Kept: Lifecycle helpers
-│   ├── fis_subagent_tool.py    # ✅ Kept: CLI helper
-│   ├── memory_manager.py       # ❌ Deprecated (QMD replaces)
-│   ├── skill_registry.py       # ❌ Deprecated (QMD replaces)
-│   └── deadlock_detector.py    # ❌ Deprecated
+│   ├── badge_generator_v7.py   # ✅ Badge generation
+│   ├── fis_lifecycle.py        # ✅ Lifecycle helpers
+│   ├── fis_subagent_tool.py    # ✅ CLI helper
+│   └── examples/               # Usage examples
 └── examples/                   # Usage examples
 ```
 

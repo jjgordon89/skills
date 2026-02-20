@@ -55,19 +55,17 @@
 ### 核心库
 | 模块 | 状态 | 功能 |
 |------|------|------|
-| subagent_lifecycle.py | ✅ | 生命周期 + 自动清理 + 超时检测 |
-| memory_manager.py | ✅ | 分层共享记忆 |
-| skill_registry.py | ✅ | 技能发现 |
-| deadlock_detector.py | ✅ | 死锁检测 |
-| badge_image_pil.py | ✅ | 工卡图片生成 |
+| fis_lifecycle.py | ✅ | 生命周期 + 自动清理 + 超时检测 |
+| badge_generator_v7.py | ✅ | 工卡图片生成 |
+| fis_subagent_tool.py | ✅ | CLI 工具辅助 |
+
+> **Note**: FIS 3.2 已移除 memory_manager.py, skill_registry.py, deadlock_detector.py (改用 QMD)
 
 ### 示例
 | 示例 | 状态 | 说明 |
 |------|------|------|
-| init_fis31.py | ✅ | 一键初始化 |
-| setup_agent_extension.py | ✅ | 单个 Agent 扩展 |
-| subagent_pipeline.py | ✅ | Worker-Reviewer 流水线 |
-| generate_badges.py | ✅ | 工卡生成演示 |
+| examples/generate_badges.py | ✅ | 工卡生成演示 |
+| lib/multi_worker_demo.py | ✅ | 多 Worker 流水线演示 |
 
 **完善度: 95%** ⭐⭐⭐⭐⭐
 

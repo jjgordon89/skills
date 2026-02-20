@@ -1,7 +1,7 @@
 {
   "name": "fis-architecture",
-  "version": "3.2.4-lite",
-  "description": "Federal Intelligence System (FIS) 3.2 Lite - Simplified multi-agent workflow framework. FIS manages workflow, QMD manages content. File-based ticket system with badge generation.",
+  "version": "3.2.7",
+  "description": "Federal Intelligence System (FIS) 3.2 - File-based multi-agent workflow framework. FIS manages workflow (JSON tickets), QMD manages content. Optional Python helpers for badge generation.",
   "author": "CyberMao",
   "license": "MIT",
   "keywords": [
@@ -11,8 +11,7 @@
     "tickets",
     "qmd",
     "badge",
-    "openclaw",
-    "simplified"
+    "openclaw"
   ],
   "homepage": "https://github.com/MuseLinn/fis-architecture",
   "repository": {
@@ -31,15 +30,19 @@
     "CONFIGURATION.md",
     "POST_INSTALL.md",
     "INSTALL_CHECKLIST.md",
+    "SECURITY.md",
     "lib/"
   ],
   "engines": {
     "python": ">=3.10"
   },
-  "binaries": ["mcporter"],
+  "binaries": ["mcporter", "openclaw"],
   "dependencies": {
-    "pillow": ">=9.0.0",
-    "qrcode": ">=7.0"
+    "pillow": ">=9.0.0 (optional - badge generation)",
+    "qrcode": ">=7.0 (optional - badge generation)"
+  },
+  "env": {
+    "FIS_SHARED_HUB": "Optional: Override default hub path (~/.openclaw/fis-hub)"
   },
   "openclaw": {
     "minVersion": "2026.2.15",
@@ -54,12 +57,14 @@
       "whenToUse": "Complex multi-role tasks requiring workflow tracking",
       "whenNotToUse": "Simple queries or tasks completable in < 10 minutes",
       "entryPoint": "AGENT_GUIDE.md",
-      "keyDecision": "Use decision tree to determine SubAgent delegation"
+      "keyDecision": "Use decision tree to determine SubAgent delegation",
+      "securityNote": "Review SECURITY.md before granting code_execute permissions"
     },
     "postInstall": {
       "required": false,
-      "message": "FIS 3.2 requires no initialization. Create ticket files directly.",
-      "docs": "POST_INSTALL.md"
+      "message": "Core FIS requires no initialization. Optional: pip install Pillow qrcode for badge generation.",
+      "docs": "POST_INSTALL.md",
+      "security": "SECURITY.md"
     }
   }
 }
