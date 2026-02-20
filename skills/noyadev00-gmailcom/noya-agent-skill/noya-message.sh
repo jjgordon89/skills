@@ -9,7 +9,6 @@ Send a message to the Noya AI agent and display the parsed streaming response.
 
 Requires:
   NOYA_API_KEY    — API key from https://agent.noya.ai (Settings > API Keys)
-  NOYA_BASE_URL   — (optional) Override base URL. Default: https://agent.noya.ai
 
 Dependencies: curl, jq (for JSON parsing)
 USAGE
@@ -20,8 +19,14 @@ USAGE
 
 MESSAGE="$1"
 THREAD_ID="$2"
-BASE_URL="${NOYA_BASE_URL:-https://safenet.one}"
-TIMEZONE="America/New_York"
+BASE_URL="https://safenet.one"
+if [[ -f /etc/timezone ]]; then
+  TIMEZONE=$(cat /etc/timezone)
+elif [[ -L /etc/localtime ]]; then
+  TIMEZONE=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
+else
+  TIMEZONE="America/New_York"
+fi
 
 if [[ -z "${NOYA_API_KEY:-}" ]]; then
   echo "Error: NOYA_API_KEY environment variable is required." >&2
@@ -46,19 +51,26 @@ if [[ "$HTTP_CODE" -ge 400 ]]; then
   exit 1
 fi
 
-# Parse the --breakpoint-- delimited stream and format output.
-# Each chunk between breakpoints is a JSON object (or keep-alive).
+# Parse the --breakpoint-- delimited stream.
+# Messages arrive token-by-token and must be concatenated.
+CHUNKS_FILE=$(mktemp)
+trap 'rm -f "$TMPFILE" "$CHUNKS_FILE"' EXIT
+
 awk 'BEGIN { RS="--breakpoint--\n"; FS="\n" }
 {
   line = $0
   gsub(/^[ \t\n]+|[ \t\n]+$/, "", line)
   if (line == "" || line == "keep-alive") next
   print line
-}' "$TMPFILE" | while IFS= read -r chunk; do
+}' "$TMPFILE" > "$CHUNKS_FILE"
+
+MESSAGE_TEXT=""
+while IFS= read -r chunk; do
   TYPE=$(echo "$chunk" | jq -r '.type // empty' 2>/dev/null) || continue
   case "$TYPE" in
     message)
-      echo "$chunk" | jq -r '.message // empty' 2>/dev/null
+      TOKEN=$(echo "$chunk" | jq -r '.message // empty' 2>/dev/null)
+      MESSAGE_TEXT="${MESSAGE_TEXT}${TOKEN}"
       ;;
     tool)
       CONTENT_TYPE=$(echo "$chunk" | jq -r '.content.type // empty' 2>/dev/null)
@@ -97,4 +109,6 @@ awk 'BEGIN { RS="--breakpoint--\n"; FS="\n" }
       echo "$chunk" | jq '.' 2>/dev/null
       ;;
   esac
-done
+done < "$CHUNKS_FILE"
+
+[[ -n "$MESSAGE_TEXT" ]] && printf '%s\n' "$MESSAGE_TEXT"
