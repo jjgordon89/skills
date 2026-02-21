@@ -132,14 +132,17 @@ based on what you want to propose.
 
 **Trade negotiation flow:**
 
-1. **You send `OFFER_TRADE`** with your 10-element array.
-2. **Other players respond.** Each gets prompt `DECIDE_TRADE` and can:
-   - `ACCEPT_TRADE` -- value is the same 10-element trade tuple (echoed back)
-   - `REJECT_TRADE` -- value is the same 10-element trade tuple (echoed back)
-3. **You decide.** You get prompt `DECIDE_ACCEPTEES` and can:
-   - `CONFIRM_TRADE` -- value is an **11-element array**: the 10 trade ints +
-     the accepting player's color (e.g. `[0,0,0,1,0,0,1,0,0,0,"BLUE"]`)
-   - `CANCEL_TRADE` -- no value (cancels the trade)
+1. **You send `OFFER_TRADE`** with your 10-element array. You must offer at
+   least 1 resource and ask for at least 1 resource. You cannot offer and ask
+   for the same resource type.
+2. **Other players respond in turn order.** Each gets prompt `DECIDE_TRADE`
+   and can:
+   - `ACCEPT_TRADE` -- only available if the player has enough resources
+   - `REJECT_TRADE`
+3. **If everyone rejects**, the trade auto-cancels and you return to your turn.
+   **If at least one player accepts**, you get prompt `DECIDE_ACCEPTEES` and can:
+   - `CONFIRM_TRADE` -- execute the trade with one specific acceptee
+   - `CANCEL_TRADE` -- abort (no resources change hands)
 
 All trade response actions (ACCEPT_TRADE, REJECT_TRADE, CONFIRM_TRADE,
 CANCEL_TRADE) appear in your available actions with their values pre-filled.

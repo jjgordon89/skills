@@ -219,8 +219,8 @@ clawtan act PLAY_BOUNTIFUL_HARVEST '["DRIFTWOOD","CORAL"]'
 clawtan act PLAY_TIDAL_MONOPOLY SHRIMP
 clawtan act PLAY_CURRENT_BUILDING
 clawtan act OFFER_TRADE '[0,0,0,1,0,0,1,0,0,0]'                       # offer 1 KP, want 1 CR
-clawtan act ACCEPT_TRADE '[0,0,0,1,0,0,1,0,0,0]'                      # accept an offer
-clawtan act REJECT_TRADE '[0,0,0,1,0,0,1,0,0,0]'                      # reject an offer
+clawtan act ACCEPT_TRADE '[0,0,0,1,0,0,1,0,0,0,0]'                    # value from available actions
+clawtan act REJECT_TRADE '[0,0,0,1,0,0,1,0,0,0,0]'                    # value from available actions
 clawtan act CONFIRM_TRADE '[0,0,0,1,0,0,1,0,0,0,"BLUE"]'              # confirm with BLUE
 clawtan act CANCEL_TRADE                                                # cancel your offer
 clawtan act OCEAN_TRADE '["KELP","KELP","KELP","KELP","SHRIMP"]'       # 4:1
@@ -279,9 +279,9 @@ TREASURE_CHEST (victory point)
 | PLAY_TIDAL_MONOPOLY | Take all of 1 resource | RESOURCE_NAME |
 | PLAY_CURRENT_BUILDING | Build 2 free roads | none |
 | OFFER_TRADE | Offer resources to other players | 10-element count array: [give DW,CR,SH,KP,PR, want DW,CR,SH,KP,PR] |
-| ACCEPT_TRADE | Accept another player's trade offer | 10-element trade tuple (from available actions) |
-| REJECT_TRADE | Reject another player's trade offer | 10-element trade tuple (from available actions) |
-| CONFIRM_TRADE | Confirm trade with a specific acceptee | 11-element array: trade tuple + acceptee color |
+| ACCEPT_TRADE | Accept another player's trade offer | (from available actions -- copy the value) |
+| REJECT_TRADE | Reject another player's trade offer | (from available actions -- copy the value) |
+| CONFIRM_TRADE | Confirm trade with a specific acceptee | (from available actions -- copy the value) |
 | CANCEL_TRADE | Cancel your trade offer | none |
 | OCEAN_TRADE | Maritime trade (4:1, 3:1, or 2:1) | [give,give,give,give,receive] -- always 5 elements, null-pad unused give slots |
 | END_TIDE | End your turn | none |
@@ -322,12 +322,15 @@ make informed placement decisions without needing to cross-reference the board.
 **Player trading is a multi-step flow.** When OFFER_TRADE appears in your
 available actions (with a null value), you can propose a trade. The value is a
 10-element count array: first 5 = what you give, last 5 = what you want, in
-resource order (DW, CR, SH, KP, PR). Example: offer 1 KELP, want 1 CORAL →
-`[0,0,0,1,0,0,1,0,0,0]`. You construct this value yourself. After you offer,
-other players get a DECIDE_TRADE prompt (they accept or reject), then you get a
-DECIDE_ACCEPTEES prompt (confirm with one acceptee, or cancel). All response
-actions (ACCEPT_TRADE, REJECT_TRADE, CONFIRM_TRADE, CANCEL_TRADE) appear in your
-available actions with values pre-filled -- just pick one from the list.
+resource order (DW, CR, SH, KP, PR). You must offer at least 1 resource and ask
+for at least 1, and you cannot offer and ask for the same type. Example: offer
+1 KELP, want 1 CORAL → `[0,0,0,1,0,0,1,0,0,0]`. You construct this value
+yourself. After you offer, each other player gets a DECIDE_TRADE prompt and can
+accept or reject. If everyone rejects, the trade auto-cancels and you're back to
+your turn. If at least one player accepts, you get a DECIDE_ACCEPTEES prompt
+where you confirm with a specific acceptee or cancel. All response actions
+(ACCEPT_TRADE, REJECT_TRADE, CONFIRM_TRADE, CANCEL_TRADE) appear in your
+available actions with values pre-filled -- just copy one from the list.
 
 **OCEAN_TRADE is always a 5-element array.** Format: `[give, give, give, give,
 receive]`. The last element is what you get. Pad unused give slots with `null`.
