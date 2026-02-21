@@ -1,0 +1,11 @@
+{
+  "owner": "damustermann",
+  "slug": "claw-qwen3-tts",
+  "displayName": "Fully offline Qwen3 TTS for your agent",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771641605632,
+    "commit": null
+  },
+  "history": []
+}
