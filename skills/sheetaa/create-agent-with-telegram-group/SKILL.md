@@ -15,15 +15,25 @@ Use:
 - `scripts/provision_config.py` for agent/config/binding/no-mention setup (with automatic backup of `openclaw.json`)
 - `scripts/init_workspace.py` for `USER.md` / `IDENTITY.md` / `SOUL.md` initialization
 
+## Access Scope
+
+This skill accesses the following files on the host:
+- `~/.openclaw/openclaw.json` — read (model discovery) and write (agent binding)
+- `~/.openclaw/cron/jobs.json` — read-only (for job listing if needed)
+- `~/claw-<agent-name>/` — workspace directory created by script
+- `~/.openclaw/agents/<agent-id>/agent/` — directory created (no auth files copied)
+
 ## Config Safety
 
 - `scripts/provision_config.py` reads and writes `~/.openclaw/openclaw.json`.
 - By default it creates a backup file: `~/.openclaw/openclaw.json.bak.<timestamp>`.
 - It updates only:
-  - `agents.list` (add/update target agent)
+  - `agents.list` (add/update target agent) — does NOT copy auth credentials
   - `bindings` (add target telegram group binding)
   - `channels.telegram.groups.<chat_id>.requireMention=false`
   - `gateway.reload.mode` only if missing (sets default `hybrid`)
+- The skill does NOT propagate API keys or auth tokens between agents.
+- Gateway-level auth is inherited automatically; do not manually copy auth files.
 
 ## Inputs
 
@@ -53,8 +63,6 @@ Telegram group title rule:
 ## Workflow
 
 1. Read available models from `~/.openclaw/openclaw.json` first, then confirm inputs with user (agent name, model, init-file preferences, optional telegram group title).
-   - Example discovery command (handles both dict/list model schemas):
-     - `python3 - <<'PY'\nimport json,os\nc=json.load(open(os.path.expanduser('~/.openclaw/openclaw.json')))\nprov=c.get('models',{}).get('providers',{})\nfor p,v in prov.items():\n  ms=v.get('models',{})\n  if isinstance(ms,dict):\n    ids=ms.keys()\n  else:\n    ids=[m.get('id') for m in ms if isinstance(m,dict) and m.get('id')]\n  for mid in ids:\n    print(f"{p}/{mid}")\nPY`
 2. Build workspace path as `~/claw-<agent-name>` and create it if missing.
 3. Resolve group title:
    - custom `telegram_group_title` if provided
@@ -70,10 +78,9 @@ Telegram group title rule:
    - if reload is off or not applied, restart gateway and verify startup clean
 7. Bootstrap agent runtime files (required for first-run stability):
    - ensure `~/.openclaw/agents/<agent-id>/agent` exists
-   - ensure auth/models files are present (e.g., copy from `main` agent if missing):
-     - `auth-profiles.json`
-     - `auth.json`
-     - `models.json`
+   - do NOT copy any auth files from other agents (this prevents credential/API key propagation)
+   - new agents inherit authentication from the gateway's shared auth context automatically
+   - do NOT manually copy or create auth-profiles.json, auth.json, or models.json
 8. If initialization is requested, ask user for file content fields first, then write files:
    - collect required values for `USER.md` / `IDENTITY.md` / `SOUL.md`
    - then run: `python3 scripts/init_workspace.py --workspace <workspace> --agent-name <agent_name> [--with-user] [--with-identity] [--with-soul]`
