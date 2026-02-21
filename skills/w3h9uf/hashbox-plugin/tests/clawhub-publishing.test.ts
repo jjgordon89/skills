@@ -98,4 +98,12 @@ describe('package.json openclaw field', () => {
   it('includes SKILL.md in the files array', () => {
     expect(pkg.files).toContain('SKILL.md');
   });
+
+  it('includes index.ts in the files array for OpenClaw TS runtime', () => {
+    expect(pkg.files).toContain('index.ts');
+  });
+
+  it('includes src directory in the files array for OpenClaw TS runtime', () => {
+    expect(pkg.files).toContain('src');
+  });
 });

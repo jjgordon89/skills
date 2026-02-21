@@ -3,11 +3,16 @@
   "slug": "hashbox-plugin",
   "displayName": "@hashingcorp/hashbox-plugin",
   "latest": {
-    "version": "0.4.5",
-    "publishedAt": 1771563546083,
-    "commit": "https://github.com/openclaw/skills/commit/5f16ca6eada6270cb0796283059b2f1bc88540b2"
+    "version": "0.4.10",
+    "publishedAt": 1771636146891,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.4.5",
+      "publishedAt": 1771563546083,
+      "commit": "https://github.com/openclaw/skills/commit/5f16ca6eada6270cb0796283059b2f1bc88540b2"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1771472588623,

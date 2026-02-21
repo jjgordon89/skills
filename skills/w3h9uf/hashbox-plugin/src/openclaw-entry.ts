@@ -51,20 +51,22 @@ const plugin = {
       name: "send_hashbox_notification",
       description: "Send a push notification to the HashBox iOS app",
       parameters: Type.Object({
-        payloadType: Type.Union(
-          [Type.Literal("article"), Type.Literal("metric"), Type.Literal("audit")],
-          { description: "Type of notification payload" },
-        ),
+        payloadType: Type.Unsafe<"article" | "metric" | "audit">({
+          type: "string",
+          enum: ["article", "metric", "audit"],
+          description: "Type of notification payload",
+        }),
         channelName: Type.String({ description: "Name of the notification channel" }),
         channelIcon: Type.String({ description: "Icon/emoji for the channel" }),
         title: Type.String({ description: "Notification title" }),
-        contentOrData: Type.Union(
-          [Type.String(), Type.Array(Type.Unknown())],
-          {
-            description:
-              "Content body (string for article) or structured data (array for metric/audit)",
-          },
-        ),
+        contentOrData: Type.Unsafe<string | unknown[]>({
+          anyOf: [
+            { type: "string" },
+            { type: "array", items: {} },
+          ],
+          description:
+            "Content body (string for article) or structured data (array for metric/audit)",
+        }),
       }),
       async execute(_toolCallId: string, params: Record<string, unknown>) {
         const contentOrData = params.contentOrData as
