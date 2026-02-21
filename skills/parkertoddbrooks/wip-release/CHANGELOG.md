@@ -3,6 +3,16 @@
 
 
 
+
+
+## 1.2.3 (2026-02-21)
+
+Fix npm bin entry: remove ./ prefix so npx wip-release works globally
+
+## 1.2.2 (2026-02-21)
+
+Fix ClawHub display name and slug detection. Harden command injection fix.
+
 ## 1.2.0 (2026-02-21)
 
 Add ClawHub publish as step 9 in release pipeline. Fix command injection by replacing execSync with execFileSync argument arrays. Declare required binaries and secrets in SKILL.md metadata.

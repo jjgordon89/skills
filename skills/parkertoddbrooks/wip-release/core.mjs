@@ -264,11 +264,9 @@ function getNpmToken() {
 }
 
 function detectSkillSlug(repoPath) {
-  const skillPath = join(repoPath, 'SKILL.md');
-  if (!existsSync(skillPath)) return basename(repoPath);
-  const content = readFileSync(skillPath, 'utf8');
-  const match = content.match(/^---[\s\S]*?name:\s*(.+?)[\s\n][\s\S]*?---/);
-  return match ? match[1].trim() : basename(repoPath);
+  // Slug must be lowercase and url-safe. Use directory name, not SKILL.md name
+  // (SKILL.md name can be display-formatted like "WIP.release").
+  return basename(repoPath).toLowerCase();
 }
 
 function detectRepoSlug(repoPath) {

@@ -1,11 +1,11 @@
 {
   "name": "@wipcomputer/wip-release",
-  "version": "1.2.0",
+  "version": "1.2.3",
   "type": "module",
   "description": "Local release tool. Bumps version, updates changelog + SKILL.md, publishes to npm + GitHub.",
   "main": "core.mjs",
   "bin": {
-    "wip-release": "./cli.js"
+    "wip-release": "cli.js"
   },
   "exports": {
     ".": "./core.mjs",
