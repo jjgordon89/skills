@@ -1,6 +1,6 @@
 ---
 name: drakeling
-version: 1.0.5
+version: 1.0.6
 description: Check on your Drakeling companion creature, send it care, or see how it is feeling. Use when the user mentions their drakeling, companion creature, or wants to check in on or care for their creature.
 author: drakeling
 homepage: https://github.com/BVisagie/drakeling
