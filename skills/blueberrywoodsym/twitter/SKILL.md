@@ -11,6 +11,8 @@ This skill helps you write viral, persuasive tweets and threads optimized for X'
 
 **Keywords**: twitter, X, tweets, threads, viral content, social media, engagement, hooks, copywriting
 
+[INSTALLATION AND USE INSTRUCTIONS](https://claude.ai/public/artifacts/59bf1058-3a4c-450b-af5b-c85c13cfa8ab)
+
 ## Process Workflow
 
 ### Phase 1: Niche Research (CRITICAL)
