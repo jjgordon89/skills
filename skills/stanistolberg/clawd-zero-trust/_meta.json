@@ -1,0 +1,11 @@
+{
+  "owner": "stanistolberg",
+  "slug": "clawd-zero-trust",
+  "displayName": "Clawd Zero Trust",
+  "latest": {
+    "version": "1.1.6",
+    "publishedAt": 1771610909287,
+    "commit": null
+  },
+  "history": []
+}
