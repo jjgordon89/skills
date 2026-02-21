@@ -1,0 +1,11 @@
+{
+  "owner": "alessandropcostabr",
+  "slug": "clawhub-quarantine-installer",
+  "displayName": "ClawHub Quarantine Installer",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1771669491053,
+    "commit": null
+  },
+  "history": []
+}
