@@ -3,11 +3,16 @@
   "slug": "vt-sentinel-installer",
   "displayName": "Vt Sentinel Installer",
   "latest": {
-    "version": "1.5.2",
-    "publishedAt": 1771062545772,
-    "commit": "https://github.com/openclaw/skills/commit/4fd08d31a3d551c56851615681fff6e7ff3c6310"
+    "version": "1.6.0",
+    "publishedAt": 1771613618353,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.5.2",
+      "publishedAt": 1771062545772,
+      "commit": "https://github.com/openclaw/skills/commit/4fd08d31a3d551c56851615681fff6e7ff3c6310"
+    },
     {
       "version": "1.4.0",
       "publishedAt": 1770941771928,
