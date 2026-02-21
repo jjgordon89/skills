@@ -76,6 +76,28 @@ python3 scripts/pylon_triage_report.py \
   --assignee-id usr_kody --assignee-id usr_skyler --window-days 14 --top 5
 ```
 
+### `scripts/pylon_update_issue.py`
+Quick state/tag/assignee/custom-field updates without opening the UI.
+
+```bash
+# Move a ticket to waiting_on_customer and tag it
+python3 scripts/pylon_update_issue.py iss_123 --state waiting_on_customer --tags followup pending_ops
+
+# Set priority custom field
+python3 scripts/pylon_update_issue.py iss_456 --priority high
+```
+
+### `scripts/pylon_add_note.py`
+Drop an internal note or customer-visible reply.
+
+```bash
+# Internal note from inline text
+python3 scripts/pylon_add_note.py iss_123 --text "Looping engineering for root cause" --private
+
+# Customer reply from an HTML snippet
+python3 scripts/pylon_add_note.py iss_123 --file reply.html --html
+```
+
 ### `scripts/pylon_request.py`
 General-purpose wrapper for any Pylon endpoint. Provide the path, method, and optional params/body.
 

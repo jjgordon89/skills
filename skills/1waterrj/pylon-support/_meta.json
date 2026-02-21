@@ -3,11 +3,16 @@
   "slug": "pylon-support",
   "displayName": "Pylon Support Toolkit",
   "latest": {
-    "version": "0.2.1",
-    "publishedAt": 1771591749725,
-    "commit": "https://github.com/openclaw/skills/commit/a7660a32bb3b83227aa0509800cb0c2f3b5095d9"
+    "version": "0.3.0",
+    "publishedAt": 1771647722078,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.2.1",
+      "publishedAt": 1771591749725,
+      "commit": "https://github.com/openclaw/skills/commit/a7660a32bb3b83227aa0509800cb0c2f3b5095d9"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1771548630653,
