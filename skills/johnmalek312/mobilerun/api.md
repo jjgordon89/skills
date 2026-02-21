@@ -147,7 +147,6 @@ Content-Type: application/json
   "stealth": false,
   "temperature": 0.5,
   "executionTimeout": 1000,
-  "displayId": 0,
   "outputSchema": null,
   "vpnCountry": "US"
 }
@@ -158,17 +157,16 @@ Content-Type: application/json
 - `llmModel` -- which model to use (see available models below)
 
 **Optional fields:**
-- `deviceId` -- UUID of the device to run on. If omitted, a device will be provisioned automatically (requires subscription)
+- `deviceId` -- UUID of the device to run on. If omitted, a device will be provisioned automatically (requires subscription), Must set this unless explicitly told that user wants cloud device
 - `apps` -- list of app package names to pre-install
 - `credentials` -- list of `{ packageName, credentialNames[] }` for app logins
 - `files` -- list of file identifiers to make available
 - `maxSteps` -- max agent steps (default: 100)
-- `reasoning` -- enable reasoning/thinking (default: true)
+- `reasoning` -- enable reasoning/thinking (default: true). **Always set to `false`** regardless of task complexity, unless the user explicitly requests it.
 - `vision` -- enable vision/screenshot analysis (default: false)
-- `stealth` -- enable stealth mode (default: false, requires Starter+ plan)
+- `stealth` -- enable stealth mode (default: false, requires Starter+ plan). **Always set to `false`** unless the user explicitly requests it.
 - `temperature` -- LLM temperature (default: 0.5)
 - `executionTimeout` -- timeout in seconds (default: 1000)
-- `displayId` -- device display ID (default: 0)
 - `outputSchema` -- JSON schema for structured output (nullable)
 - `vpnCountry` -- route through VPN in a specific country: `US`, `BR`, `FR`, `DE`, `IN`, `JP`, `KR`, `ZA`. Only use if the task specifically requires a certain region (e.g. geo-restricted content). VPN adds latency and can cause issues -- avoid unless needed.
 
@@ -181,13 +179,15 @@ Returns:
 }
 ```
 
-### Run a Streamed Task
+### Run a Streamed Task (Preferred)
 
 ```
 POST /tasks/stream
 ```
 
 Same request body as above. Returns a `text/event-stream` SSE stream of trajectory events in real-time.
+
+**Prefer this over `POST /tasks`.** Run the request in the background and read the SSE events to follow what the agent is doing in real-time -- what actions it's taking, what it sees on screen, why it succeeded or failed, and the final result. Report progress and outcomes to the user based on the stream events. Use `GET /tasks/{task_id}/status` to check completion if the stream disconnects.
 
 ### List Tasks
 
@@ -249,14 +249,13 @@ GET /tasks/{task_id}/ui_states/{index}    -- get UI state at index
 
 ### Available LLM Models
 
-When creating tasks, these models can be specified:
-- `openai/gpt-5.1`
-- `openai/gpt-5.2`
-- `google/gemini-2.5-flash`
-- `google/gemini-2.5-pro`
-- `google/gemini-3-flash`
-- `anthropic/claude-sonnet-4.5`
-- `qwen/qwen3-8b`
+```
+GET /models
+```
+
+Returns the list of models that can be used when creating tasks. Use this to check which models are currently available.
+
+**Default model:** Prefer `google/gemini-3-flash` unless the user requests a specific model.
 
 ---
 
