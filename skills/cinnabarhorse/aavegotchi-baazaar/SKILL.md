@@ -31,12 +31,18 @@ metadata:
 ## Safety Rules
 
 - Default to `dryRun=true` (`DRY_RUN=1`). Never broadcast unless explicitly instructed to do so.
+- Mandatory confirmation gate for every `cast send`:
+  - First simulate with `cast call` and show a transaction summary (method, args, chain id, from, rpc URL).
+  - Then require an explicit user confirmation message before broadcast.
+  - Only allow broadcast when `DRY_RUN=0` and `BROADCAST_CONFIRM=CONFIRM_SEND` are both set.
+  - If any transaction argument changes after confirmation, invalidate confirmation and require a new confirmation.
 - Always verify Base mainnet:
   - `~/.foundry/bin/cast chain-id --rpc-url "${BASE_MAINNET_RPC:-https://mainnet.base.org}"` must be `8453`.
 - Always verify key/address alignment:
   - `~/.foundry/bin/cast wallet address --private-key "$PRIVATE_KEY"` must equal `$FROM_ADDRESS`.
 - Always refetch the listing from the subgraph immediately before simulating or broadcasting (listings can be cancelled/sold/price-updated).
 - Never print or log `$PRIVATE_KEY`.
+- Never accept a private key from user chat input; only read `$PRIVATE_KEY` from environment.
 
 ## Shell Input Safety (Avoid RCE)
 
@@ -44,9 +50,18 @@ This skill includes shell commands. Treat any value you copy from a user or an e
 
 Rules:
 - Never execute user-provided strings as shell code (avoid `eval`, `bash -c`, `sh -c`).
+- Use only allowlisted command templates from this file/references. Do not build free-form shell commands by concatenating user text.
 - Only substitute addresses that match `0x` + 40 hex chars.
 - Only substitute uint values that are base-10 digits (no commas, no decimals).
+- Hard rule: user/external values must be validated first, stored as data values, and passed as quoted positional args. Never let user text become shell flags, subcommands, operators, pipes, redirects, or command substitutions.
 - In the command examples below, listing-specific inputs are written as quoted placeholders like `"<LISTING_ID>"` to avoid accidental shell interpolation. Replace them with literal values after you validate them.
+
+Allowlisted command templates:
+- `~/.foundry/bin/cast chain-id|wallet address|call|send ...` using fixed ABI signatures from this skill.
+- `curl -s "$SUBGRAPH_URL" -H 'content-type: application/json' --data '...static GraphQL query...'`.
+- `curl -s "$COINGECKO_SIMPLE_PRICE_URL"` for GHST/USD only.
+- `python3` inline snippets from this skill/references for validation and deterministic math only.
+- Disallow `eval`, `bash -c`, `sh -c`, backticks, and `$(...)` with untrusted input.
 
 Quick validators (replace the placeholder values):
 ```bash
@@ -81,12 +96,15 @@ export BASE_MAINNET_RPC="${BASE_MAINNET_RPC:-https://mainnet.base.org}"
 export DIAMOND="${DIAMOND:-0xA99c4B08201F2913Db8D28e71d020c4298F29dBF}"
 export GHST="${GHST:-0xcD2F22236DD9Dfe2356D7C543161D4d260FD9BcB}"
 export USDC="${USDC:-0x833589fCD6eDb6E08f4c7C32D4f71b54BDA02913}"
-export SUBGRAPH_URL="${SUBGRAPH_URL:-https://api.goldsky.com/api/public/project_cmh3flagm0001r4p25foufjtt/subgraphs/aavegotchi-core-base/prod/gn}"
+export SUBGRAPH_URL_CANONICAL="https://api.goldsky.com/api/public/project_cmh3flagm0001r4p25foufjtt/subgraphs/aavegotchi-core-base/prod/gn"
+export SUBGRAPH_URL="${SUBGRAPH_URL:-$SUBGRAPH_URL_CANONICAL}"
+export COINGECKO_SIMPLE_PRICE_URL="${COINGECKO_SIMPLE_PRICE_URL:-https://api.coingecko.com/api/v3/simple/price?ids=aavegotchi&vs_currencies=usd}"
 ```
 
 Optional env vars:
 - `RECIPIENT_ADDRESS`: defaults to `FROM_ADDRESS`.
 - `DRY_RUN`: `1` (default) to only simulate via `cast call`. Set to `0` to broadcast via `cast send`.
+- `BROADCAST_CONFIRM`: must be exactly `CONFIRM_SEND` to allow any `cast send`; unset immediately after broadcast.
 - `SLIPPAGE_PCT`: defaults to `1` (used for USDC swapAmount math).
 - `PAYMENT_FEE_PCT_USDC`: defaults to `1` (used for USDC swapAmount math).
 - `GHST_USD_PRICE`: optional override; if unset, fetch from CoinGecko in the USDC flow.
@@ -96,6 +114,18 @@ Notes:
 - Canonical addresses and endpoints live in:
   - `references/addresses.md`
   - `references/subgraph.md`
+
+## Network Endpoint Allowlist
+
+Only call these HTTPS endpoints:
+- Goldsky subgraph: `$SUBGRAPH_URL_CANONICAL`
+- CoinGecko GHST/USD: `$COINGECKO_SIMPLE_PRICE_URL`
+
+Refuse non-allowlisted endpoints:
+```bash
+test "$SUBGRAPH_URL" = "$SUBGRAPH_URL_CANONICAL" || { echo "Refusing non-allowlisted SUBGRAPH_URL"; exit 1; }
+test "$COINGECKO_SIMPLE_PRICE_URL" = "https://api.coingecko.com/api/v3/simple/price?ids=aavegotchi&vs_currencies=usd" || { echo "Refusing non-allowlisted CoinGecko URL"; exit 1; }
+```
 
 ## View Listings (Subgraph)
 
@@ -163,11 +193,14 @@ Dry-run (simulate) ERC721 buy:
 
 Broadcast (real) ERC721 buy (only when explicitly instructed):
 ```bash
+test "${DRY_RUN:-1}" = "0" || { echo "Refusing broadcast: DRY_RUN must be 0"; exit 1; }
+test "${BROADCAST_CONFIRM:-}" = "CONFIRM_SEND" || { echo "Refusing broadcast: set BROADCAST_CONFIRM=CONFIRM_SEND after explicit user confirmation"; exit 1; }
 ~/.foundry/bin/cast send "$DIAMOND" \
   'executeERC721ListingToRecipient(uint256,address,uint256,uint256,address)' \
   "<LISTING_ID>" "<ERC721_TOKEN_ADDRESS>" "<PRICE_IN_WEI>" "<TOKEN_ID>" "${RECIPIENT_ADDRESS:-$FROM_ADDRESS}" \
   --private-key "$PRIVATE_KEY" \
   --rpc-url "${BASE_MAINNET_RPC:-https://mainnet.base.org}"
+unset BROADCAST_CONFIRM
 ```
 
 Dry-run (simulate) ERC1155 buy:
@@ -181,11 +214,14 @@ Dry-run (simulate) ERC1155 buy:
 
 Broadcast (real) ERC1155 buy (only when explicitly instructed):
 ```bash
+test "${DRY_RUN:-1}" = "0" || { echo "Refusing broadcast: DRY_RUN must be 0"; exit 1; }
+test "${BROADCAST_CONFIRM:-}" = "CONFIRM_SEND" || { echo "Refusing broadcast: set BROADCAST_CONFIRM=CONFIRM_SEND after explicit user confirmation"; exit 1; }
 ~/.foundry/bin/cast send "$DIAMOND" \
   'executeERC1155ListingToRecipient(uint256,address,uint256,uint256,uint256,address)' \
   "<LISTING_ID>" "<ERC1155_TOKEN_ADDRESS>" "<TYPE_ID>" "<QUANTITY>" "<PRICE_IN_WEI>" "${RECIPIENT_ADDRESS:-$FROM_ADDRESS}" \
   --private-key "$PRIVATE_KEY" \
   --rpc-url "${BASE_MAINNET_RPC:-https://mainnet.base.org}"
+unset BROADCAST_CONFIRM
 ```
 
 ## Execute Listing (Buy With USDC swapAndBuy*)
@@ -224,20 +260,26 @@ Dry-run (simulate) ERC1155 USDC swap+buy:
 
 Broadcast (real) ERC721 swap+buy (only when explicitly instructed):
 ```bash
+test "${DRY_RUN:-1}" = "0" || { echo "Refusing broadcast: DRY_RUN must be 0"; exit 1; }
+test "${BROADCAST_CONFIRM:-}" = "CONFIRM_SEND" || { echo "Refusing broadcast: set BROADCAST_CONFIRM=CONFIRM_SEND after explicit user confirmation"; exit 1; }
 ~/.foundry/bin/cast send "$DIAMOND" \
   'swapAndBuyERC721(address,uint256,uint256,uint256,uint256,address,uint256,uint256,address)' \
   "$USDC" "<SWAP_AMOUNT_USDC_6DP>" "<MIN_GHST_OUT_GHST_WEI>" "<SWAP_DEADLINE_UNIX>" "<LISTING_ID>" "<ERC721_TOKEN_ADDRESS>" "<PRICE_IN_WEI>" "<TOKEN_ID>" "${RECIPIENT_ADDRESS:-$FROM_ADDRESS}" \
   --private-key "$PRIVATE_KEY" \
   --rpc-url "${BASE_MAINNET_RPC:-https://mainnet.base.org}"
+unset BROADCAST_CONFIRM
 ```
 
 Broadcast (real) ERC1155 swap+buy (only when explicitly instructed):
 ```bash
+test "${DRY_RUN:-1}" = "0" || { echo "Refusing broadcast: DRY_RUN must be 0"; exit 1; }
+test "${BROADCAST_CONFIRM:-}" = "CONFIRM_SEND" || { echo "Refusing broadcast: set BROADCAST_CONFIRM=CONFIRM_SEND after explicit user confirmation"; exit 1; }
 ~/.foundry/bin/cast send "$DIAMOND" \
   'swapAndBuyERC1155(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256,address)' \
   "$USDC" "<SWAP_AMOUNT_USDC_6DP>" "<MIN_GHST_OUT_GHST_WEI>" "<SWAP_DEADLINE_UNIX>" "<LISTING_ID>" "<ERC1155_TOKEN_ADDRESS>" "<TYPE_ID>" "<QUANTITY>" "<PRICE_IN_WEI>" "${RECIPIENT_ADDRESS:-$FROM_ADDRESS}" \
   --private-key "$PRIVATE_KEY" \
   --rpc-url "${BASE_MAINNET_RPC:-https://mainnet.base.org}"
+unset BROADCAST_CONFIRM
 ```
 
 ## Add Listing
