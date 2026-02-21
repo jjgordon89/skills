@@ -1,0 +1,11 @@
+{
+  "owner": "sinewaveai",
+  "slug": "clawproof-security",
+  "displayName": "ClawProof Security Scanner",
+  "latest": {
+    "version": "3.10.3",
+    "publishedAt": 1771692856737,
+    "commit": null
+  },
+  "history": []
+}
