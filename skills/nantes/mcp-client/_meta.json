@@ -1,0 +1,11 @@
+{
+  "owner": "nantes",
+  "slug": "mcp-client",
+  "displayName": "Mcp Client",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1771783972794,
+    "commit": null
+  },
+  "history": []
+}
