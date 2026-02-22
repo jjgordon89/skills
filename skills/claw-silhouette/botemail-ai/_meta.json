@@ -1,0 +1,11 @@
+{
+  "owner": "claw-silhouette",
+  "slug": "botemail-ai",
+  "displayName": "Bot Email Skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771735095386,
+    "commit": null
+  },
+  "history": []
+}
