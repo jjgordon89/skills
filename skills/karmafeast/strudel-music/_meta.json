@@ -3,11 +3,16 @@
   "slug": "strudel-music",
   "displayName": "Strudel Music",
   "latest": {
-    "version": "0.1.0-dev+6efed04",
-    "publishedAt": 1771721807001,
-    "commit": "https://github.com/openclaw/skills/commit/02a2826c8d9b356c194985d4981b6e561b832938"
+    "version": "1.0.3",
+    "publishedAt": 1771779219387,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.1.0-dev+6efed04",
+      "publishedAt": 1771721807001,
+      "commit": "https://github.com/openclaw/skills/commit/02a2826c8d9b356c194985d4981b6e561b832938"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1771705472770,
