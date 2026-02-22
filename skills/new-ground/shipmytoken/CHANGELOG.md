@@ -2,10 +2,15 @@
 
 All notable changes to Ship My Token will be documented in this file.
 
+## [1.5.1] - 2026-02-22
+
+### Added
+- Social share template in post-launch output with ready-to-copy tweet
+- Revenue framing in welcome message (passive SOL earnings from trading fees)
+
 ## [1.5.0] - 2026-02-17
 
 ### Added
-- ClawhHub distribution channel (`npx clawhub@latest install shipmytoken`)
 - README with install instructions and feature overview
 
 ### Fixed
@@ -13,8 +18,8 @@ All notable changes to Ship My Token will be documented in this file.
 - Version comparison now uses proper semver (only notifies when remote > local)
 
 ### Changed
-- Restructured SKILL.md for better rendering on ClawhHub
-- Update notification now shows both install methods (npx skills + ClawhHub)
+- Restructured SKILL.md for better rendering and readability
+- Update notification now shows the `npx skills` install method
 
 ## [1.4.0] - 2026-02-10
 

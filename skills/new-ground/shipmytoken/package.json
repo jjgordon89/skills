@@ -1,6 +1,6 @@
 {
   "name": "shipmytoken",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "type": "module",
   "private": true,
   "description": "Launch Solana tokens on Pumpfun via chat. An Agent Skill for any AI agent.",

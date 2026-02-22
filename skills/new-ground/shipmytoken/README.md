@@ -4,13 +4,7 @@ Launch Solana tokens on Pumpfun by chatting with your AI agent. Zero setup, free
 
 ## Install
 
-**OpenClaw** (via [ClawhHub](https://clawhub.ai)):
-
-```bash
-npx clawhub@latest install shipmytoken
-```
-
-**Claude Code, Cursor, ChatGPT & others** (via [npx skills](https://agentskills.io)):
+**AI agents** (via [npx skills](https://agentskills.io)):
 
 ```bash
 npx skills add new-ground/shipmytoken-skill --all

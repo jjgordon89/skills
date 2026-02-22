@@ -3,11 +3,16 @@
   "slug": "shipmytoken",
   "displayName": "Ship My Token",
   "latest": {
-    "version": "1.5.0",
-    "publishedAt": 1771346193045,
-    "commit": "https://github.com/openclaw/skills/commit/449c0ed4795f484b54da10bcbc2ef8b8d649add5"
+    "version": "1.5.1",
+    "publishedAt": 1771772628391,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.5.0",
+      "publishedAt": 1771346193045,
+      "commit": "https://github.com/openclaw/skills/commit/449c0ed4795f484b54da10bcbc2ef8b8d649add5"
+    },
     {
       "version": "1.4.3",
       "publishedAt": 1771344746009,

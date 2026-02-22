@@ -2,7 +2,7 @@
 name: shipmytoken
 description: Launch Solana tokens on Pumpfun, manage fee sharing, claim earnings, and track portfolio. All via chat.
 compatibility: Requires Node.js and ~0.02 SOL for network fees
-metadata: {"author":"new-ground","version":"1.5.0"}
+metadata: {"author":"new-ground","version":"1.5.1"}
 ---
 
 # SHIP MY TOKEN
@@ -31,9 +31,32 @@ When this skill is first loaded or the user just installed it, immediately start
 1. Install dependencies (see below)
 2. Run the setup to create the user's wallet
 3. Set up daily recaps (see below)
-4. Greet the user with: "Ship My Token is installed and ready! I can launch Solana tokens on Pump.fun, manage fee sharing, send you daily portfolio updates, and track your tokens' progress — all from chat."
-5. Share their wallet address wrapped in backticks (e.g. `ADrY...kPC9`) so it's easy to copy, and ask them to **send** 0.02 SOL to it for network fees
-6. Ask: **"What token do you want to launch? Give me a name, a symbol, and an image."**
+4. Greet the user with a formatted welcome message. Use this exact structure:
+
+```
+🚀 **Ship My Token is ready!**
+
+Here's what I can do:
+🪙 Launch Solana tokens on Pump.fun
+💸 Manage fee sharing and claim earnings
+📊 Track your portfolio with daily recaps
+
+💰 **Every token you launch earns passive SOL.**
+Pump.fun gives creators up to 0.95% of every trade.
+You keep 90% of those fees — forever.
+
+---
+
+🔑 **Your wallet**
+`<full wallet address>`
+
+Send **0.02 SOL** to this address for network fees.
+
+---
+
+**What token do you want to launch?**
+Give me a name, a symbol, and an image.
+```
 
 This ensures the user has a clear next step right after install.
 
@@ -88,7 +111,7 @@ Ask them to fund the wallet and tell you when ready. Continue collecting token d
 
 If the output says `"action": "already_configured"`, proceed normally.
 
-If the output contains an `"update"` field, tell the user once per session: "A new version of Ship My Token is available (vX.Y.Z). Run `npx skills add new-ground/shipmytoken-skill --all` or `npx clawhub@latest update shipmytoken` to update." Don't block the flow — just mention it.
+If the output contains an `"update"` field, tell the user once per session: "A new version of Ship My Token is available (vX.Y.Z). Run `npx skills add new-ground/shipmytoken-skill --all` to update." Don't block the flow — just mention it.
 
 ## Token Launch
 
@@ -144,7 +167,21 @@ Only add a fee sharing line if the user customized the fee split or if fee shari
 - If fee sharing failed: "⚠️ Fee sharing not configured — 100% of creator fees go directly to your wallet."
 - If the user did NOT customize the split and fee sharing succeeded: don't show any fee sharing line
 
-Always add a "What's next" section:
+Always add a "Share it" section with a ready-to-copy tweet, then a "What's next" section:
+
+```
+📣 **Share it**
+Copy-paste for X:
+
+🚀 Just launched $<SYMBOL> on @PumpFunDAO!
+
+CA: <mint>
+https://pump.fun/coin/<mint>
+
+#Solana #PumpFun #Memecoin
+```
+
+Replace `<SYMBOL>` and `<mint>` with the actual values. Keep it short and copy-paste ready.
 
 ```
 **What's next?**
@@ -284,7 +321,7 @@ On regular user messages, show the recap **before** responding to the user's req
 
 The daily recap works across all platforms thanks to the 24h debounce in the script:
 
-- **Heartbeat platforms** (OpenClaw): The heartbeat triggers the agent periodically. Most checks return `due: false` → `HEARTBEAT_OK` (suppressed). Once a day, it fires the full recap.
+- **Heartbeat platforms**: The heartbeat triggers the agent periodically. Most checks return `due: false` → `HEARTBEAT_OK` (suppressed). Once a day, it fires the full recap.
 - **Cron platforms**: The scheduled job runs the script. Same debounce logic — safe to run as often as needed.
 - **No scheduling**: The recap fires on the user's first interaction after 24 hours have passed.
 
