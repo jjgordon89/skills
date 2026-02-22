@@ -29,6 +29,30 @@ except ImportError:
 
 # Config
 LADYBUG_DB = os.path.expanduser("~/.nima/memory/ladybug.lbug")
+
+
+def _open_db_safe(path=None, max_retries=2):
+    """Open LadybugDB with WAL corruption auto-recovery."""
+    p        = path or LADYBUG_DB
+    wal_path = p + '.wal'
+    for _attempt in range(max_retries):
+        try:
+            db   = lb.Database(p)
+            conn = lb.Connection(db)
+            try:
+                conn.execute("LOAD VECTOR")
+            except Exception:
+                pass
+            return db, conn
+        except RuntimeError as e:
+            if any(k in str(e).lower() for k in ('wal', 'corrupted')) and os.path.exists(wal_path):
+                bak = wal_path + f'.bak_{int(time.time())}'
+                os.rename(wal_path, bak)
+                print(f"nima-recall: WAL corrupted — recovered (→ {os.path.basename(bak)})",
+                      file=sys.stderr)
+            else:
+                raise
+    raise RuntimeError(f"LadybugDB failed after {max_retries} recovery attempts")
 MAX_RESULTS = 7
 TIME_WINDOW_DAYS = 90
 EMBEDDING_THRESHOLD = 0.35
@@ -52,12 +76,7 @@ def connect():
     global _db, _conn
     
     if _conn is None:
-        _db = lb.Database(LADYBUG_DB)
-        _conn = lb.Connection(_db)
-        try:
-            _conn.execute("LOAD VECTOR")
-        except:
-            pass
+        _db, _conn = _open_db_safe(LADYBUG_DB)
     return _conn
 
 def disconnect():

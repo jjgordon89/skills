@@ -1,7 +1,7 @@
 ---
 name: nima-core
 description: Neural Integrated Memory Architecture — Persistent memory, emotional intelligence, and semantic recall for AI agents. Memory pruner, VADER affect, 5 embedding providers, zero-config install. Learn more at nima-core.ai
-version: 2.4.0
+version: 2.5.0
 metadata: {"openclaw":{"emoji":"🧠","requires":{"bins":["python3","node"],"env":["NIMA_DATA_DIR"]},"optional_env":{"NIMA_EMBEDDER":"voyage|openai|local (default: local)","VOYAGE_API_KEY":"Required when NIMA_EMBEDDER=voyage","OPENAI_API_KEY":"Required when NIMA_EMBEDDER=openai"},"permissions":{"reads":["~/.openclaw/agents/*/sessions/*.jsonl"],"writes":["~/.nima/"],"network":["voyage.ai (conditional)","openai.com (conditional)"]}}}
 ---
 

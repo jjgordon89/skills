@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="nima-core",
-    version="2.4.0",
+    version="2.5.0",
     description="Biologically-inspired Dynamic Affect System for AI agents",
     long_description=open("README.md").read() if __import__("os").path.exists("README.md") else "",
     long_description_content_type="text/markdown",
@@ -17,6 +17,9 @@ setup(
         "vector": [
             "faiss-cpu>=1.7.4",
             "voyageai>=0.2.0",
+        ],
+        "hive": [
+            "redis>=4.0.0",
         ],
     },
     classifiers=[

@@ -39,6 +39,37 @@ MAX_TEXT_LENGTH = 2000
 MAX_SUMMARY_LENGTH = 500
 
 
+def _open_db_safe(db_path=None, max_retries=2):
+    """
+    Open LadybugDB with WAL corruption auto-recovery.
+    If DB fails due to corrupted WAL, renames the WAL and retries.
+    This is the HOT PATH — called on every conversation turn.
+    """
+    path     = db_path or LADYBUG_DB
+    wal_path = path + '.wal'
+
+    for attempt in range(max_retries):
+        try:
+            db   = lb.Database(path)
+            conn = lb.Connection(db)
+            try:
+                conn.execute("LOAD VECTOR")
+            except Exception:
+                pass
+            return db, conn
+        except RuntimeError as e:
+            msg = str(e).lower()
+            if any(k in msg for k in ('wal', 'corrupted', 'invalid wal')) and os.path.exists(wal_path):
+                bak = wal_path + f'.bak_{int(time.time())}'
+                os.rename(wal_path, bak)
+                print(f"nima-memory: WAL corrupted — auto-recovered (→ {os.path.basename(bak)})",
+                      file=sys.stderr)
+            else:
+                raise
+
+    raise RuntimeError(f"LadybugDB failed to open after {max_retries} recovery attempts: {path}")
+
+
 def get_next_id(conn) -> int:
     """Get next available node ID."""
     result = conn.execute("MATCH (n:MemoryNode) RETURN max(n.id) as max_id")
@@ -89,9 +120,8 @@ def store_memory(data_file: str) -> bool:
         print(f"error:data file not found: {data_file}", file=sys.stderr)
         return False
     
-    db = lb.Database(LADYBUG_DB)
-    conn = lb.Connection(db)
-    
+    db, conn = _open_db_safe(LADYBUG_DB)
+
     # Track created nodes for potential cleanup
     created_nodes = []
     
@@ -269,9 +299,8 @@ def health_check() -> dict:
         return {"ok": False, "error": f"database not found at {LADYBUG_DB}"}
     
     try:
-        db = lb.Database(LADYBUG_DB)
-        conn = lb.Connection(db)
-        
+        db, conn = _open_db_safe(LADYBUG_DB)
+
         result = conn.execute("MATCH (n:MemoryNode) RETURN count(n) as count")
         node_count = 0
         for row in result:

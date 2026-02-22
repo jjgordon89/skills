@@ -1,6 +1,6 @@
 """NIMA Core — Dynamic Affect System for AI agents."""
 
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 
 from .cognition.dynamic_affect import DynamicAffectSystem, AffectVector, get_affect_system
 from .cognition.personality_profiles import PersonalityManager, get_profile, list_profiles
@@ -64,6 +64,28 @@ __all__ = [
 try:
     from .memory_pruner import run_pruner, status as pruner_status
     __all__.extend(["run_pruner", "pruner_status"])
+except ImportError:
+    pass
+
+
+# Hive Mind / Memory Entanglement (#7)
+try:
+    from .hive_mind import HiveMind, HiveBus
+    __all__.extend(["HiveMind", "HiveBus"])
+except ImportError:
+    pass
+
+# Precognitive Memory Injection (#4)
+try:
+    from .precognition import NimaPrecognition
+    __all__.extend(["NimaPrecognition"])
+except ImportError:
+    pass
+
+# Lucid Memory Moments (#8)
+try:
+    from .lucid_moments import LucidMoments
+    __all__.extend(["LucidMoments"])
 except ImportError:
     pass
 

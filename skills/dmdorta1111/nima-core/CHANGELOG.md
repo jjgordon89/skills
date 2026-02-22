@@ -5,6 +5,39 @@ All notable changes to NIMA Core will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-02-21
+
+### Added
+- **Hive Mind** (`nima_core/hive_mind.py`) — Proposal #7: Memory Entanglement.
+  - `HiveMind` class: inject shared memory context into sub-agent prompts + capture results back to LadybugDB.
+  - `HiveBus` class: Redis pub/sub message bus for real-time agent-to-agent communication. Channels: `hive` (broadcast), `role:{role}`, `agent:{id}`, `results:{swarm_id}`.
+  - Optional: requires `redis-py` (`pip install nima-core[hive]`).
+- **Precognition** (`nima_core/precognition.py`) — Proposal #4: Precognitive Memory Injection.
+  - `NimaPrecognition` class: mine temporal patterns from LadybugDB, generate predictions via any OpenAI-compatible LLM, inject relevant precognitions into agent prompts.
+  - Configurable: `db_path`, `llm_base_url`, `llm_model`, `voyage_api_key`, `lookback_days`.
+  - Full cycle: `run_mining_cycle()` → `mine_patterns()` → `generate_precognitions()` → `store_precognitions()`.
+  - Semantic dedup via SHA-256 pattern hashing; optional Voyage embeddings.
+- **Lucid Moments** (`nima_core/lucid_moments.py`) — Proposal #8: Spontaneous Memory Surfacing.
+  - `LucidMoments` class: surface emotionally-resonant memories unbidden via any delivery callback.
+  - Scoring: age window (3–30 days), layer bonus, content richness, warm keywords.
+  - Safety: trauma keyword filter, quiet hours, min gap, daily cap.
+  - Enrichment: LLM transforms raw memories into natural "this just came to me" messages.
+  - Fully configurable: quiet hours, `min_gap_hours`, `max_per_day`, `warm_keywords`, `persona_prompt`.
+
+### Changed
+- `setup.py`: version 2.4.0 → 2.5.0, added `[hive]` extra for `redis>=4.0.0`.
+- `__init__.py`: lazy-imports for all three new modules (graceful if LadybugDB/redis unavailable).
+
+## [2.4.0] - 2026-02-20
+
+### Added
+- **Dream Consolidation** (`nima_core/dream_consolidation.py`) — nightly memory synthesis engine.
+  - Extracts `Insight` and `Pattern` objects from episodic memories via LLM.
+  - VSA-style `blend_dream_vector` for semantic compression.
+  - `DreamConsolidator` class with configurable LLM endpoint, lookback window, temperature.
+  - `nima-dream` CLI entry point for scripted/cron usage.
+- **Dream session state** — `DreamSession` dataclass tracks what was consolidated.
+
 ## [2.3.0] - 2026-02-19
 
 ### Added
