@@ -96,8 +96,8 @@ node --env-file=.env server/index.js
 
 ### From GitHub
 ```bash
-git clone https://github.com/jincocodev/openclaw-jarvis-ui-ui.git
-cd openclaw-jarvis
+git clone https://github.com/jincocodev/openclaw-jarvis-ui.git
+cd openclaw-jarvis-ui
 ./setup.sh   # auto-detects Gateway token
 node --env-file=.env server/index.js
 ```
