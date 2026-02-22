@@ -1,0 +1,11 @@
+{
+  "owner": "chandika",
+  "slug": "mirage-proxy",
+  "displayName": "Mirage Proxy",
+  "latest": {
+    "version": "0.5.17",
+    "publishedAt": 1771589043977,
+    "commit": null
+  },
+  "history": []
+}
