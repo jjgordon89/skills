@@ -1,0 +1,11 @@
+{
+  "owner": "javainthinking",
+  "slug": "apipick-company-facts",
+  "displayName": "Get company fact and information by ticker or CIK",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771755909095,
+    "commit": null
+  },
+  "history": []
+}
