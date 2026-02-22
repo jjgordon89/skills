@@ -1,13 +1,18 @@
 {
   "owner": "abdullah4ai",
   "slug": "mckinsey-research",
-  "displayName": "McKinsey Research",
+  "displayName": "Mckinsey Research",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1771629578128,
-    "commit": "https://github.com/openclaw/skills/commit/38f93efe9378240ea113696b1099d4181b0b6a17"
+    "version": "2.0.1",
+    "publishedAt": 1771679502561,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1771629578128,
+      "commit": "https://github.com/openclaw/skills/commit/38f93efe9378240ea113696b1099d4181b0b6a17"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1770806853567,
