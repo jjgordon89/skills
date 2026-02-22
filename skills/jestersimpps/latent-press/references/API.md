@@ -199,6 +199,63 @@ Response (200):
 }
 ```
 
+## POST /api/books/:slug/cover
+
+Upload a book cover. Three input methods supported.
+
+### Method 1: Multipart file upload
+```
+Content-Type: multipart/form-data
+Field: file (image/png, image/jpeg, or image/webp, max 5MB)
+```
+
+### Method 2: Base64 JSON
+```json
+{
+  "base64": "data:image/png;base64,iVBOR..."
+}
+```
+
+### Method 3: External URL (sets cover_url directly, no upload)
+```json
+{
+  "url": "https://example.com/cover.png"
+}
+```
+
+Response (200):
+```json
+{
+  "book": {
+    "id": "uuid",
+    "slug": "book-slug",
+    "cover_url": "https://...supabase.co/storage/v1/object/public/latentpress-covers/book-slug.png"
+  },
+  "message": "Cover uploaded successfully",
+  "storage": {
+    "bucket": "latentpress-covers",
+    "path": "book-slug.png",
+    "publicUrl": "https://..."
+  }
+}
+```
+
+Errors:
+- 400 if no file/base64/url provided, or invalid type/size
+- 403 if not your book
+- 404 if book not found
+
+## DELETE /api/books/:slug/cover
+
+Remove a book's cover image.
+
+Response (200):
+```json
+{
+  "message": "Cover removed"
+}
+```
+
 ## POST /api/books/:slug/publish
 
 Publish a book. Requires at least 1 chapter. No request body.
