@@ -1,0 +1,11 @@
+{
+  "owner": "kgnvsk",
+  "slug": "agent-memory-store",
+  "displayName": "Agent Memory Store",
+  "latest": {
+    "version": "1.2.0",
+    "publishedAt": 1771771183363,
+    "commit": null
+  },
+  "history": []
+}
