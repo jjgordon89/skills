@@ -98,6 +98,35 @@ python3 scripts/pylon_add_note.py iss_123 --text "Looping engineering for root c
 python3 scripts/pylon_add_note.py iss_123 --file reply.html --html
 ```
 
+### `scripts/pylon_followups.py`
+Find tickets with no updates in N days so you know where to follow up.
+
+```bash
+# My queue, flag anything idle >2 days
+python3 scripts/pylon_followups.py
+
+# Team view, 4-day threshold
+python3 scripts/pylon_followups.py --assignee-id usr_kody --assignee-id usr_phil --threshold-days 4
+```
+
+### `scripts/pylon_team_summary.py`
+Aggregated view for multiple reps. Pass `NAME=ID` pairs to see their counts + stale highlights.
+
+```bash
+python3 scripts/pylon_team_summary.py \
+  --assignee kody=usr_kody \
+  --assignee phil=usr_phil \
+  --assignee skyler=usr_skyler \
+  --stale-days 3
+```
+
+### `scripts/pylon_morning_digest.py`
+One-shot markdown digest combining your queue + team pulse. Defaults to Jordan + the core team above.
+
+```bash
+python3 scripts/pylon_morning_digest.py --stale-days 3 --limit 800
+```
+
 ### `scripts/pylon_request.py`
 General-purpose wrapper for any Pylon endpoint. Provide the path, method, and optional params/body.
 
