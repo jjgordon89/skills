@@ -1,0 +1,11 @@
+{
+  "owner": "qrost",
+  "slug": "dxf-to-image",
+  "displayName": "DXF to Image",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771654225568,
+    "commit": null
+  },
+  "history": []
+}
