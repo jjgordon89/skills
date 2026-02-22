@@ -1,0 +1,11 @@
+{
+  "owner": "24601",
+  "slug": "surrealdb",
+  "displayName": "SurrealDB 3",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1771783747470,
+    "commit": null
+  },
+  "history": []
+}
