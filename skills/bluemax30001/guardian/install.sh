@@ -56,62 +56,9 @@ if errors:
 print("Definition validation OK")
 PY
 
-# ── 4. Write pending activation marker ─────────────────────────────────────
-# This tells the AI agent (Alfred/OpenClaw) to run the full activation flow.
-# The agent reads WORKFLOW_AUTO.md on every startup/compaction — it checks
-# for this file and handles the rest automatically.
-
-WORKSPACE_DIR="$(python3 - "$ROOT_DIR" <<'PY'
-import sys
-from pathlib import Path
-skill = Path(sys.argv[1]).resolve()  # Read from argv instead of string substitution
-# Walk up to find workspace root (has MEMORY.md / AGENTS.md / SOUL.md)
-candidate = skill.parent.parent
-for marker in ("MEMORY.md", "AGENTS.md", "SOUL.md"):
-    if (candidate / marker).exists():
-        print(candidate)
-        sys.exit(0)
-# Fallback: use cwd
-print(Path.cwd())
-PY
-)"
-
-MARKER_FILE="$WORKSPACE_DIR/.guardian-activate-pending"
-
-cat > "$MARKER_FILE" << MARKER
-# Guardian Activation Pending
-# Written by: install.sh at $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-# Skill path: skills/guardian
-#
-# AGENT: You must act on this now.
-#
-# 1. Run: python3 skills/guardian/scripts/onboard.py
-# 2. Send SECTION 2 (ADMIN NOTIFICATION) to the user via their primary channel
-# 3. Send SECTION 3 (SETUP CHECKLIST) to the user
-# 4. Run: python3 skills/guardian/scripts/onboard.py --setup-crons
-# 5. Run: python3 skills/guardian/scripts/onboard.py --config-review
-#    and send that output to the user too
-# 6. Confirm to the user: Guardian is now fully operational
-# 7. Delete this file when done: rm $MARKER_FILE
-MARKER
-
 echo ""
-echo "✅ Installation complete. Activation marker written."
+echo "✅ Guardian installation complete."
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "WHAT HAPPENS NEXT"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Database initialised and definitions validated."
+echo "  Run 'python3 skills/guardian/scripts/onboard.py' to complete setup."
 echo ""
-echo "Your AI agent (Alfred/OpenClaw) will automatically:"
-echo "  • Detect this installation"
-echo "  • Send you an activation notification on Telegram/Discord"
-echo "  • Set up background scanning"
-echo "  • Walk you through your config"
-echo "  • Confirm when it's fully protecting you"
-echo ""
-echo "This usually happens within 1-2 minutes (next heartbeat)."
-echo ""
-echo "If you want to trigger it immediately, tell your agent:"
-echo "  'Guardian was just installed, please activate it'"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

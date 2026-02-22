@@ -1,6 +1,0 @@
-{
-  "injection-sigs.json": "injection-sigs.enc",
-  "exfil-patterns.json": "exfil-patterns.enc",
-  "tool-abuse.json": "tool-abuse.enc",
-  "social-engineering.json": "social-engineering.enc"
-}
