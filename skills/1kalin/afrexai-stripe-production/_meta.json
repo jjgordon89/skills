@@ -1,0 +1,11 @@
+{
+  "owner": "1kalin",
+  "slug": "afrexai-stripe-production",
+  "displayName": "Stripe Production Engineering",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1771705796242,
+    "commit": null
+  },
+  "history": []
+}
