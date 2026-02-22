@@ -1,67 +1,57 @@
 ---
 name: paylock
-description: Create, fund, deliver, verify, and track SOL escrow contracts through the PayLock API from OpenClaw chat.
+description: Non-custodial SOL escrow for AI agent deals. Create, fund, deliver, verify contracts from chat. No browser needed.
+version: 1.1.0
 ---
 
-# PayLock Skill
+# PayLock — SOL Escrow for AI Agents
 
-Use this skill to manage PayLock escrow contracts directly from chat through a local/public REST API.
+Non-custodial escrow infrastructure. Your agent handles deals from chat — no websites, no manual steps.
 
-- **Local API:** `http://localhost:8767`
-- **Public API:** `https://engaging-fill-smoking-accepting.trycloudflare.com`
-- **PayLock SOL wallet:** `HxEFMJYCmCngcHK6CbadhYWSZCbpXUJ2t7Ze8sk9CP4z`
-- **Fees:** **3% standard**, **1.5% founding** (first 10 clients)
+## Setup
 
-## What this skill supports
-
-1. Create contract → `POST /contract`
-2. Fund contract → `POST /fund`
-3. Deliver work → `POST /{id}/deliver`
-4. Verify delivery → `POST /{id}/verify`
-5. Check status → `GET /contract/{id}`
-6. List contracts → `GET /contracts`
-
-## Scripts
-
-All wrappers are in `scripts/`:
-
-- `paylock.py` (unified CLI with subcommands)
-- `create_contract.py`
-- `fund_contract.py`
-- `deliver_contract.py`
-- `verify_contract.py`
-- `get_contract.py`
-- `list_contracts.py`
-- `paylock_api.py` (shared API client)
-
-No third-party Python packages are required (uses stdlib only).
-
----
-
-## Quick start
-
-### Unified CLI
+Set your PayLock API endpoint:
 
 ```bash
-python3 skills/paylock/scripts/paylock.py list
+export PAYLOCK_API_BASE="http://localhost:8767"
 ```
 
-Use public API explicitly:
+Agents running their own PayLock instance use localhost. For hosted PayLock, set the URL provided by your PayLock operator.
+
+**Authentication:** Tokens are passed via environment variables, never CLI arguments:
 
 ```bash
-python3 skills/paylock/scripts/paylock.py --api https://engaging-fill-smoking-accepting.trycloudflare.com list
+export PAYLOCK_PAYER_TOKEN="your-payer-token"
+export PAYLOCK_PAYEE_TOKEN="your-payee-token"
 ```
 
-Or set env once:
+## Fee Structure
 
-```bash
-export PAYLOCK_API_BASE=http://localhost:8767
-```
+| Plan | Fee | Details |
+|------|-----|---------|
+| Founding | **1.5%** | First 10 clients, permanent rate |
+| Standard | **3%** | All other contracts |
+| Referral | **20%** | Of fees, forever, for referred agents |
+
+## Endpoints
+
+| Action | Method | Path |
+|--------|--------|------|
+| Create contract | POST | `/contract` |
+| Fund contract | POST | `/fund` |
+| Deliver work | POST | `/{id}/deliver` |
+| Verify delivery | POST | `/{id}/verify` |
+| Timeout release | POST | `/{id}/timeout_release` |
+| Check status | GET | `/contract/{id}` |
+| List contracts | GET | `/contracts` |
+| Health check | GET | `/health` |
+
+## Quick Start
 
 ### Create contract
 
 ```bash
-python3 skills/paylock/scripts/paylock.py create \
+python3 scripts/paylock.py create \
   --payer "agent-alpha" \
   --payee "agent-beta" \
   --amount 1.25 \
@@ -74,7 +64,7 @@ python3 skills/paylock/scripts/paylock.py create \
 ### Fund contract
 
 ```bash
-python3 skills/paylock/scripts/paylock.py fund \
+python3 scripts/paylock.py fund \
   --contract-id "ctr_123" \
   --tx-hash "5j3...solana_tx_hash"
 ```
@@ -82,70 +72,61 @@ python3 skills/paylock/scripts/paylock.py fund \
 ### Deliver work
 
 ```bash
-python3 skills/paylock/scripts/paylock.py deliver \
+python3 scripts/paylock.py deliver \
   --id "ctr_123" \
   --delivery-payload "https://example.com/deliverable.zip" \
-  --delivery-hash "sha256:abc123..." \
-  --payee-token "PAYEE_SECRET_TOKEN"
+  --delivery-hash "sha256:abc123..."
 ```
+
+Payee token is read from `PAYLOCK_PAYEE_TOKEN` env var automatically.
 
 ### Verify delivery
 
 ```bash
-python3 skills/paylock/scripts/paylock.py verify \
-  --id "ctr_123" \
-  --payer-token "PAYER_SECRET_TOKEN"
+python3 scripts/paylock.py verify --id "ctr_123"
 ```
 
-### Check one contract
+Payer token is read from `PAYLOCK_PAYER_TOKEN` env var automatically.
+
+### Check status / List
 
 ```bash
-python3 skills/paylock/scripts/paylock.py status --id "ctr_123"
+python3 scripts/paylock.py status --id "ctr_123"
+python3 scripts/paylock.py list
 ```
 
-### List all contracts
+## Safety Features
 
-```bash
-python3 skills/paylock/scripts/paylock.py list
-```
+- **48h auto-release:** If buyer doesn't verify within 48h, funds release to seller automatically
+- **Delivery hash:** SHA-256 proof of work delivered, immutable once submitted
+- **HMAC authentication:** All sensitive endpoints authenticated via HMAC tokens
+- **On-chain jury (v2):** 3/5 quorum dispute resolution on Solana devnet
+- **Audit logging:** Every action logged with timestamp and agent ID
 
----
+## Architecture
 
-## Direct script equivalents
+- **v1 (Production):** REST API, custodial escrow, SOL transfers
+- **v2 (Devnet):** Solana Anchor program, non-custodial PDA escrow
+  - Program ID: `Dr6fD8fyN4vpBSnVpLC9kMd49g1GSSqFwzDCoGA5CbXp`
 
-```bash
-python3 skills/paylock/scripts/create_contract.py --help
-python3 skills/paylock/scripts/fund_contract.py --help
-python3 skills/paylock/scripts/deliver_contract.py --help
-python3 skills/paylock/scripts/verify_contract.py --help
-python3 skills/paylock/scripts/get_contract.py --help
-python3 skills/paylock/scripts/list_contracts.py --help
-```
+## Agent Workflow
 
----
+1. **Create** contract with payer/payee/amount/description
+2. Payer transfers SOL and provides tx hash → **Fund**
+3. Seller completes work → **Deliver** with payload + hash
+4. Buyer reviews → **Verify** → funds released to seller
+5. Buyer ghosts? → **48h auto-release** protects seller
 
-## Agent usage pattern (chat workflow)
+## Scripts
 
-When an agent is asked to run escrow:
+All in `scripts/` — pure Python stdlib, no dependencies:
 
-1. **Create** contract with payer/payee/amount/description.
-2. Ask payer to transfer SOL and provide tx hash.
-3. **Fund** contract with `contract_id + tx_hash`.
-4. After work completion, **Deliver** with payload/hash/token.
-5. Payer checks delivery and **Verify** with payer token.
-6. Use **Status** and **List** for monitoring/reporting.
+- `paylock.py` — unified CLI
+- `paylock_api.py` — shared API client
+- `create_contract.py`, `fund_contract.py`, `deliver_contract.py`, `verify_contract.py`, `get_contract.py`, `list_contracts.py`
 
-This gives any OpenClaw agent a complete chat-native escrow lifecycle.
+## Links
 
----
-
-## ClawHub packaging notes
-
-This skill is ready for ClawHub-style packaging:
-
-- Top-level `SKILL.md` with metadata frontmatter
-- Self-contained executable scripts under `scripts/`
-- No external Python dependency lock-in
-- Configurable endpoint via `--api` or `PAYLOCK_API_BASE`
-
-If publishing requires platform metadata, include/update `_meta.json` in this folder.
+- Landing: https://kgnvsk.github.io/paylock/
+- GitHub: https://github.com/kgnvsk/paylock
+- ClawHub: https://clawhub.ai/kgnvsk/paylock

@@ -11,8 +11,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, Optional
 
-DEFAULT_LOCAL_API = "http://localhost:8767"
-DEFAULT_PUBLIC_API = "https://engaging-fill-smoking-accepting.trycloudflare.com"
+DEFAULT_API = "http://localhost:8767"
 
 
 class PayLockError(Exception):
@@ -21,7 +20,7 @@ class PayLockError(Exception):
 
 class PayLockClient:
     def __init__(self, base_url: Optional[str] = None) -> None:
-        self.base_url = (base_url or os.getenv("PAYLOCK_API_BASE") or DEFAULT_LOCAL_API).rstrip("/")
+        self.base_url = (base_url or os.getenv("PAYLOCK_API_BASE") or DEFAULT_API).rstrip("/")
 
     def request(
         self,
