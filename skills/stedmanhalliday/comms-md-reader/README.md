@@ -1,12 +1,12 @@
-# comms.md Reader
+# COMMS.md Reader
 
-Read and adapt to someone's comms.md before contacting them.
+Read and adapt to someone's COMMS.md before contacting them.
 
 Calibrates channel selection, timing, tone, and messaging style based on a recipient's published communication preferences.
 
 ## What it does
 
-- Fetches and parses a recipient's comms.md
+- Reads a recipient's COMMS.md from user-approved sources
 - Selects the right channel and timing based on their preferences
 - Calibrates tone to match their closeness tier and mechanics
 - Avoids their stated anti-patterns
@@ -14,10 +14,10 @@ Calibrates channel selection, timing, tone, and messaging style based on a recip
 
 ## When to use it
 
-- Drafting a message, email, or outreach to someone who has a comms.md
-- Scheduling or proposing a call with someone who has a comms.md
+- Drafting a message, email, or outreach to someone who has a COMMS.md
+- Scheduling or proposing a call with someone who has a COMMS.md
 - Checking someone's communication preferences before reaching out
 
 ## Related
 
-- **comms-md** — create a comms.md through guided interview
+- **comms-md** — create a COMMS.md through guided interview
