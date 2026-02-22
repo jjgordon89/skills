@@ -3,9 +3,15 @@
   "slug": "zvukogram",
   "displayName": "Zvukogram",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1771521727052,
-    "commit": "https://github.com/openclaw/skills/commit/2690ac7881d142a05567a6a5155b957378ff02f7"
+    "version": "1.1.2",
+    "publishedAt": 1771775238487,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1771521727052,
+      "commit": "https://github.com/openclaw/skills/commit/2690ac7881d142a05567a6a5155b957378ff02f7"
+    }
+  ]
 }

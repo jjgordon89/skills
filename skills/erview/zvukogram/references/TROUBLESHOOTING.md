@@ -4,7 +4,7 @@
 
 ### "Wrong login info"
 **Cause:** Invalid token or email  
-**Fix:** Check `~/.zvukogram.json` or environment variables
+**Fix:** Check `~/.config/zvukogram/config.json` or environment variables
 
 ### "Not correct voice"
 **Cause:** Invalid voice name  
