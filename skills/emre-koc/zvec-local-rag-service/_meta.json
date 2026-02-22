@@ -1,0 +1,11 @@
+{
+  "owner": "emre-koc",
+  "slug": "zvec-local-rag-service",
+  "displayName": "Zvec Local RAG Service",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1771694834867,
+    "commit": null
+  },
+  "history": []
+}
