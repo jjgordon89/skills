@@ -227,11 +227,25 @@ Common mistakes:
 
 ## Privacy & Security
 
-- ✅ No booking data is stored
-- ✅ No payment information is collected
-- ✅ Searches are anonymous
-- ✅ Booking happens directly on provider sites
-- ✅ Links are direct to booking platforms (no tracking)
+This skill processes **pre-booking itineraries only** — flight routes, dates, times, and prices that the user found on booking sites and wants to compare. It does **not** process booking confirmations, passenger names, passport details, payment information, or any other personally identifiable information (PII).
+
+**What is sent to the Navifare MCP server:**
+- Flight numbers, airlines, airports, dates, and times
+- Travel class and passenger count (e.g., "2 adults")
+- A reference price and currency for comparison
+
+**What is NOT sent:**
+- Passenger names or personal details
+- Booking references or confirmation numbers
+- Payment or credit card information
+- Passport or identity documents
+
+**Data handling:**
+- Searches are not linked to user accounts or identities
+- Booking happens directly on provider sites via their own links
+- No tracking or affiliate redirects
+
+For full details, see [navifare.com](https://navifare.com) and our [Terms of Service](https://navifare.com/terms).
 
 ## Contributing
 
@@ -255,6 +269,10 @@ MIT License - See main Navifare project for details.
 
 ## Version History
 
+- **v1.2.0** (2026-02-23): Privacy clarity and PII protection
+  - Detailed privacy section explaining exactly what data is and is not sent
+  - Screenshot instructions now explicitly exclude personal information
+  - Added links to navifare.com and Terms of Service
 - **v1.1.1** (2026-02-23): Consistency fixes
   - Fixed tool name inconsistencies across all docs (now consistently `flight_pricecheck` and `format_flight_pricecheck_request`)
   - Clarified round-trip only limitation across all files

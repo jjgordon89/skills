@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Navifare MCP server configured. Access to mcp__navifare-mcp tools required.
 metadata:
   author: navifare
-  version: "1.1.1"
+  version: "1.2.0"
   category: travel
   mcp_required: navifare-mcp
 allowed-tools: mcp__navifare-mcp__flight_pricecheck mcp__navifare-mcp__format_flight_pricecheck_request Read
@@ -91,7 +91,7 @@ Price: 1500 EUR, 1 adult, economy class."
 - If `needsMoreInfo: true` → Ask user for the missing information, then call this tool again with the updated details
 - If `readyForPriceCheck: true` → Proceed to Step 2 with the returned `flightData`
 
-**From Screenshots**: If user uploads an image, extract all visible flight details (airlines, times, airports, dates, price) and pass them as the `user_request` string.
+**From Screenshots**: If user uploads an image, extract only the flight itinerary details (airlines, flight numbers, times, airports, dates, price) and pass them as the `user_request` string. Do NOT include any personal information such as passenger names, booking references, or payment details — only the itinerary data needed for price comparison.
 
 **Resolving missing info**: When the tool reports missing fields:
 - For **airports**: Check `references/AIRPORTS.md` for common codes

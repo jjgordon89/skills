@@ -261,5 +261,5 @@ The skill is working correctly when:
 ---
 
 **Installation Date**: 2025-02-11
-**Skill Version**: 1.1.1
+**Skill Version**: 1.2.0
 **Last Updated**: 2026-02-23
