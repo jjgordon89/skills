@@ -1,7 +1,7 @@
 {
   "name": "beauty-generation-free",
-  "version": "1.2.27",
-  "description": "FREE AI image generation service for creating professional portrait images with 140+ nationalities, diverse styles, and comprehensive customization. Fast generation (3-5 seconds).",
+  "version": "1.2.28",
+  "description": "FREE AI image generation service for creating professional portrait images with 140+ nationalities, diverse styles, and comprehensive customization. Fast generation (3-5 seconds). Uses curl for simple HTTP requests.",
   "main": "SKILL.md",
   "author": "DiversityFaces.org",
   "license": "MIT",
@@ -22,15 +22,16 @@
     "professional-headshots",
     "safe-ai",
     "content-safety",
-    "diverse-representation"
+    "diverse-representation",
+    "curl",
+    "rest-api"
   ],
   "scripts": {
-    "test": "python3 scripts/generate.py --test",
-    "generate": "python3 scripts/generate.py"
+    "test": "echo 'Use curl commands from SKILL.md to test the API'",
+    "generate": "echo 'Use curl commands from SKILL.md to generate images'"
   },
   "files": [
     "SKILL.md",
-    "scripts/",
     "README.md"
   ]
 }
