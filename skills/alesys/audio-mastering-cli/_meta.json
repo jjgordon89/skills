@@ -1,0 +1,11 @@
+{
+  "owner": "alesys",
+  "slug": "audio-mastering-cli",
+  "displayName": "Audio Mastering CLI",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1771806012846,
+    "commit": null
+  },
+  "history": []
+}
